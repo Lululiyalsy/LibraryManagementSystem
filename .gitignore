@@ -1,0 +1,44 @@
+# Build directories
+build/
+Build/
+debug/
+release/
+cmake-build-*/
+
+# Qt generated files
+*.user
+*.autosave
+moc_*
+ui_*
+qrc_*
+*.o
+*.obj
+*.exe
+*.dll
+*.lib
+*.a
+*.so
+*.dylib
+
+# CMake generated
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*~
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Data files (optional - 如果不想提交数据文件就取消注释)
+# data/users.txt
+# data/books.txt
+# data/borrowrecords.txt
+# data/reservations.txt

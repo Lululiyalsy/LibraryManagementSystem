@@ -1,0 +1,11 @@
+10000 1 admin 123 11111111111 admin@library.com
+10001 1 manager1 123 22222222222 manager1@library.com
+10002 2 reader1 123 33333333333 reader1@library.com
+10003 2 reader2 123 44444444444 reader2@library.com
+10004 2 reader3 123 55555555555 reader3@library.com
+10005 2 reader4 123 66666666666 reader4@library.com
+10006 2 reader5 123 77777777777 reader5@library.com
+10007 2 reader6 123 88888888888 reader6@library.com
+10008 2 reader7 123 99999999999 reader7@library.com
+10009 2 reader8 123 10101010101 reader8@library.com
+10010 2 reader9 123 11111111112 reader9@library.com
