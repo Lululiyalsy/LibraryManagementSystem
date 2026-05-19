@@ -121,6 +121,10 @@ bool Reader::borrowBook(const QString& isbn) {
             if (r.getISBN() == isbn && r.getReaderID() == ID && 
                 r.getStatus() == Reservation::NOTIFIED) {
                 r.setStatus(Reservation::COMPLETED);
+                if (book && book->getReservationCount() > 0) {
+                    book->setReservationCount(book->getReservationCount() - 1);
+                }
+                dm->writeBook();
                 dm->writeReservation();
                 break;
             }
@@ -133,7 +137,11 @@ bool Reader::borrowBook(const QString& isbn) {
 // 还书（按ISBN）
 bool Reader::returnBook(const QString& isbn) {
     DataManager* dm = DataManager::getInstance();
-    return dm->updateBorrowRecord(isbn, ID);
+    bool success = dm->updateBorrowRecord(isbn, ID);
+    if (success) {
+        dm->notifyReservations(isbn);
+    }
+    return success;
 }
 
 // 续借（按ISBN）

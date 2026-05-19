@@ -518,9 +518,6 @@ bool Admin::processSingleReservation(const QString& isbn, const QString& readerI
             
             reservation.Notify();
             
-            if (book && book->getReservationCount() > 0) {
-                book->setReservationCount(book->getReservationCount() - 1);
-            }
             dm->writeBook();
             
             User* user = dm->findUserById(readerId);
@@ -635,6 +632,10 @@ bool Admin::borrowBook(const QString& isbn, const QString& readerId)
     // 如果有有效预约，更新预约状态为 COMPLETED
     if (reservationIndex >= 0) {
         reservations[reservationIndex].setStatus(Reservation::COMPLETED);
+        if (book && book->getReservationCount() > 0) {
+            book->setReservationCount(book->getReservationCount() - 1);
+        }
+        dm->writeBook();
         dm->writeReservation();
     }
     

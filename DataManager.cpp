@@ -6,6 +6,7 @@
 #include <QDir>
 #include <QDebug>
 #include <QCoreApplication>
+#include <QFileInfo>
 #include <algorithm>
 
 // （单例静态变量）：DataManager单例对象的静态指针
@@ -270,7 +271,31 @@ void DataManager::initUser()
     }
 
     file.close();
-    // qDebug() << "用户数据初始化完成，共 " << users.size() << " 个用户";
+
+    QFileInfo userFileInfo(userFilePath);
+    QString msgFilePath = userFileInfo.absolutePath() + "/messages.txt";
+    QFile msgFile(msgFilePath);
+    if (msgFile.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        QTextStream msgIn(&msgFile);
+        while (!msgIn.atEnd()) {
+            QString line = msgIn.readLine().trimmed();
+            if (line.isEmpty()) continue;
+            QStringList parts = line.split("|", Qt::KeepEmptyParts);
+            if (parts.size() < 2) continue;
+            QString readerId = parts[0];
+            ::User* u = findUserById(readerId);
+            if (u && u->getType() == 2) {
+                ::Reader* reader = dynamic_cast<::Reader*>(u);
+                if (reader) {
+                    for (int i = 1; i < parts.size(); i++) {
+                        reader->addMsg(parts[i]);
+                    }
+                }
+            }
+        }
+        msgFile.close();
+    }
 }
 
 // （用户管理）：写入用户数据到文件
@@ -297,7 +322,31 @@ void DataManager::writeUser()
     }
 
     file.close();
-    // qDebug() << "用户数据保存完成，共 " << users.size() << " 个用户";
+
+    QFileInfo userFileInfo2(userFilePath);
+    QString msgFilePath2 = userFileInfo2.absolutePath() + "/messages.txt";
+    QFile msgFile(msgFilePath2);
+    if (msgFile.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
+    {
+        QTextStream msgOut(&msgFile);
+        for (auto user : users)
+        {
+            if (user->getType() == 2) {
+                ::Reader* reader = dynamic_cast<::Reader*>(user);
+                if (reader) {
+                    std::vector<QString>& msgs = reader->getMsg();
+                    if (!msgs.empty()) {
+                        msgOut << reader->getID();
+                        for (const auto& m : msgs) {
+                            msgOut << "|" << m;
+                        }
+                        msgOut << "\n";
+                    }
+                }
+            }
+        }
+        msgFile.close();
+    }
 }
 
 //修改5.16
@@ -829,7 +878,10 @@ void DataManager::initReservation()
     }
 
     file.close();
-    // qDebug() << "预约数据初始化完成，共 " << reservations.size() << " 条预约";
+
+    for (auto& book : books) {
+        book.setReservationCount(0);
+    }
 
     for (const auto& reservation : reservations) {
         if (reservation.getStatus() == Reservation::PENDING || 
@@ -843,7 +895,6 @@ void DataManager::initReservation()
     writeBook();
 }
 
-// （预约管理）：写入预约数据到文件
 void DataManager::writeReservation()
 {
     QFile file(reservationFilePath);
@@ -983,9 +1034,8 @@ void DataManager::notifyReservations(const QString& isbn)
                 }
             }
             
-            // 向读者发送消息通知
             ::User* user = findUserById(reservation.getReaderID());
-            if (user && user->getType() == 2) // 读者类型
+            if (user && user->getType() == 2)
             {
                 ::Reader* reader = dynamic_cast<::Reader*>(user);
                 if (reader)
@@ -995,8 +1045,6 @@ void DataManager::notifyReservations(const QString& isbn)
                     reader->addMsg(msg);
                 }
             }
-            
-            book->setReservationCount(book->getReservationCount() - 1);
         }
         else
         {

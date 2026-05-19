@@ -7,7 +7,6 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
-#include <QGridLayout>
 #include <QVector>
 #include <QPair>
 #include <QStringList>
@@ -28,26 +27,19 @@ public:
     ~StatisticsWidget();
 
     void updateStatistics();
-    void setTotalUsers(int total, int admins, int readers);
-    void setTotalBooks(int total);
-    void setBorrowStats(int total, int returned, int overdue);
-    void setHotBooks(const QVector<QPair<QString, int>>& hotBooks);
-    void setOverdueRecords(const QVector<QStringList>& records);
 
 public slots:
     void onGenerateReportClicked();
+    void onRefreshStatistics();
 
 private:
     void setupUI();
 
-    QLabel *titleLabel;
-    QLabel *userStatsLabel;
-    QLabel *bookStatsLabel;
-    QLabel *borrowStatsLabel;
-    QLabel *overdueStatsLabel;
+    QTableWidget *summaryTable;
     QTableWidget *hotBooksTable;
     QTableWidget *overdueTable;
     QPushButton *generateReportBtn;
+    QPushButton *refreshBtn;
 };
 
 #endif // STATISTICSWIDGET_H
