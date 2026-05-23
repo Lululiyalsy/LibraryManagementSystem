@@ -1,5 +1,5 @@
-978-7-115-42839-0|C++ Primer Plus|Stephen Prata|Programming|5|2024-01-15 10:00:00|10|0|0
-978-7-121-29807-0|Effective C++|Scott Meyers|Programming|3|2024-02-20 14:30:00|5|0|0
+978-7-115-42839-0|C++ Primer Plus|Stephen Prata|Programming|5|2024-01-15 10:00:00|11|0|0
+978-7-121-29807-0|Effective C++|Scott Meyers|Programming|3|2024-02-20 14:30:00|6|1|0
 978-7-111-54742-0|Design Patterns|Gang of Four|Design|4|2024-03-10 09:15:00|8|0|0
 978-7-115-42875-8|Python Crash Course|Eric Matthes|Programming|6|2024-01-25 11:20:00|12|0|0
 978-7-111-52148-7|Clean Code|Robert Martin|Programming|3|2024-02-05 16:45:00|15|0|0
