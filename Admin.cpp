@@ -1,15 +1,15 @@
 #include "Admin.h"
 #include "DataManager.h"
 #include "Reader.h"
-#include "Book.h" //5.16加入头文件
+#include "Book.h"
 #include <QRandomGenerator>
 #include <QFile>
 #include <QTextStream>
 #include <QDir>
 #include <QCoreApplication>
 #include <QDebug>
-#include <QDateTime>//5.16加入头文件
-#include <algorithm>//5.16加入头文件
+#include <QDateTime>
+#include <algorithm>
 
 // 构造函数
 Admin::Admin(QString &I, QString &n, QString &pa, QString &ph, QString &e)

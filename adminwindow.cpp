@@ -109,12 +109,12 @@ void AdminWindow::setupCentralWidget()
     setupBorrowTable();
     setupReservationTable();
     setupStatisticsTable(); // 内部已经完成了 new
-    
+
     stackedWidget->addWidget(userWidget);
     stackedWidget->addWidget(bookWidget);
     stackedWidget->addWidget(borrowWidget);
     stackedWidget->addWidget(reservationWidget);
-    stackedWidget->addWidget(statisticsWidget); 
+    stackedWidget->addWidget(statisticsWidget);
 }
 
 // （初始化用户表格）：创建用户管理表格，设置列和属性
@@ -191,8 +191,8 @@ void AdminWindow::setupUserTable()
 // （初始化图书表格）：创建图书管理表格，设置列和属性
 void AdminWindow::setupBookTable()
 {
-    //修改5.16
-    // （创建图书管理容器）：创建图书管理界面的容器
+    // 修改5.16
+    //  （创建图书管理容器）：创建图书管理界面的容器
     bookWidget = new QWidget(this);
     QVBoxLayout *bookMainLayout = new QVBoxLayout(bookWidget);
 
@@ -278,8 +278,8 @@ void AdminWindow::setupBookTable()
     connect(bookClearBtn, &QPushButton::clicked, this, &AdminWindow::onBookClear);
     connect(bookSortBtn, &QPushButton::clicked, this, &AdminWindow::onBookSort);
     connect(bookSortByTimeBtn, &QPushButton::clicked, this, &AdminWindow::onBookSortByTime);
-    
-    //修改结束
+
+    // 修改结束
 }
 
 // （初始化借阅表格）：创建借阅管理表格，设置列和属性
@@ -429,7 +429,7 @@ void AdminWindow::loadUserData()
     std::vector<::User *> users = dm->getUsers();
 
     // （填充表格）：将用户数据填入表格
-    for (::User* user : users)
+    for (::User *user : users)
     {
         int row = userTable->rowCount();
         userTable->insertRow(row);
@@ -448,11 +448,13 @@ void AdminWindow::loadBookData()
 {
     DataManager *dm = DataManager::getInstance();
     bookTable->setRowCount(0);
-    
-    Admin *admin = dynamic_cast<Admin*>(currentUser);
-    if (admin) {
-        std::vector<const Book*> books = admin->findBook("", "", "", "");
-        for (const auto* book : books) {
+
+    Admin *admin = dynamic_cast<Admin *>(currentUser);
+    if (admin)
+    {
+        std::vector<const Book *> books = admin->findBook("", "", "", "");
+        for (const auto *book : books)
+        {
             int row = bookTable->rowCount();
             bookTable->insertRow(row);
             bookTable->setItem(row, 0, new QTableWidgetItem(book->getISBN()));
@@ -477,22 +479,23 @@ void AdminWindow::onBookSearch()
     QString author = bookAuthorLineEdit->text().trimmed();
     QString category = bookCategoryLineEdit->text().trimmed();
 
-    ::Admin *admin = dynamic_cast<::Admin*>(currentUser);
+    ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
     if (admin)
     {
-        std::vector<const Book*> results = admin->findBook(isbn, title, author, category);
+        std::vector<const Book *> results = admin->findBook(isbn, title, author, category);
         displayBooks(results);
     }
 }
 
 // （显示图书）：将图书数据显示到表格
-void AdminWindow::displayBooks(const std::vector<const Book*>& books)
+void AdminWindow::displayBooks(const std::vector<const Book *> &books)
 {
     bookTable->setRowCount(0);
-    for (const auto* book : books) {  // 改为指针遍历
+    for (const auto *book : books)
+    { // 改为指针遍历
         int row = bookTable->rowCount();
         bookTable->insertRow(row);
-        bookTable->setItem(row, 0, new QTableWidgetItem(book->getISBN()));  // 使用 ->
+        bookTable->setItem(row, 0, new QTableWidgetItem(book->getISBN())); // 使用 ->
         bookTable->setItem(row, 1, new QTableWidgetItem(book->getTitle()));
         bookTable->setItem(row, 2, new QTableWidgetItem(book->getAuthor()));
         bookTable->setItem(row, 3, new QTableWidgetItem(book->getCategory()));
@@ -566,12 +569,12 @@ void AdminWindow::onBookAdd()
         return;
     }
 
-    ::Admin *admin = dynamic_cast<::Admin*>(currentUser);
+    ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
     if (admin)
     {
         admin->addBook(isbn, title, author, category, stock);
 
-        std::vector<const Book*> books = admin->findAllBook();
+        std::vector<const Book *> books = admin->findAllBook();
         displayBooks(books);
     }
 
@@ -593,14 +596,14 @@ void AdminWindow::onBookDelete()
     }
     QString isbn = result.first;
 
-    ::Admin *admin = dynamic_cast<::Admin*>(currentUser);
+    ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
     if (admin)
     {
         bool success = admin->deleteBook(isbn);
 
         if (success)
         {
-            std::vector<const Book*> books = admin->findAllBook();
+            std::vector<const Book *> books = admin->findAllBook();
             displayBooks(books);
 
             QMessageBox msgBox(QMessageBox::Information, "成功", "图书删除成功！", QMessageBox::NoButton, this);
@@ -629,10 +632,10 @@ void AdminWindow::onBookUpdate()
     }
     QString isbn = result.first;
 
-    ::Admin *admin = dynamic_cast<::Admin*>(currentUser);
+    ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
     if (admin)
     {
-        Book* foundBook = DataManager::getInstance()->findBookByISBN(isbn);
+        Book *foundBook = DataManager::getInstance()->findBookByISBN(isbn);
         if (!foundBook)
         {
             QMessageBox msgBox(QMessageBox::Warning, "失败", "图书修改失败，未找到匹配的图书！", QMessageBox::NoButton, this);
@@ -696,7 +699,7 @@ void AdminWindow::onBookUpdate()
 
         if (success)
         {
-            std::vector<const Book*> books = admin->findAllBook();
+            std::vector<const Book *> books = admin->findAllBook();
             displayBooks(books);
 
             QMessageBox msgBox(QMessageBox::Information, "成功", "图书修改成功！", QMessageBox::NoButton, this);
@@ -727,11 +730,11 @@ void AdminWindow::onBookClear()
         confirmBox.exec();
         if (confirmBox.clickedButton() == yesBtn2)
         {
-            ::Admin *admin = dynamic_cast<::Admin*>(currentUser);
+            ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
             if (admin)
             {
                 admin->clearBook();
-                displayBooks(std::vector<const Book*>());
+                displayBooks(std::vector<const Book *>());
             }
 
             QMessageBox msgBox(QMessageBox::Information, "成功", "已清除所有图书！", QMessageBox::NoButton, this);
@@ -744,10 +747,10 @@ void AdminWindow::onBookClear()
 // （图书排序）：按借阅次数排序
 void AdminWindow::onBookSort()
 {
-    ::Admin *admin = dynamic_cast<::Admin*>(currentUser);
+    ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
     if (admin)
     {
-        std::vector<const Book*> sortedBooks = admin->sortBookByBorrowCount();
+        std::vector<const Book *> sortedBooks = admin->sortBookByBorrowCount();
         displayBooks(sortedBooks);
 
         QMessageBox msgBox(QMessageBox::Information, "成功", "已按借阅次数排序！", QMessageBox::NoButton, this);
@@ -759,10 +762,10 @@ void AdminWindow::onBookSort()
 // （图书排序）：按入库时间排序
 void AdminWindow::onBookSortByTime()
 {
-    ::Admin *admin = dynamic_cast<::Admin*>(currentUser);
+    ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
     if (admin)
     {
-        std::vector<const Book*> sortedBooks = admin->sortBookByInStockTime();
+        std::vector<const Book *> sortedBooks = admin->sortBookByInStockTime();
         displayBooks(sortedBooks);
 
         QMessageBox msgBox(QMessageBox::Information, "成功", "已按入库时间排序（最新优先）！", QMessageBox::NoButton, this);
@@ -770,12 +773,12 @@ void AdminWindow::onBookSortByTime()
         msgBox.exec();
     }
 }
-//修改结束
+// 修改结束
 
 // （加载借阅数据）：从数据管理器加载借阅数据到表格
 void AdminWindow::loadBorrowData()
 {
-    ::Admin *admin = dynamic_cast<::Admin*>(currentUser);
+    ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
     if (admin)
     {
         std::vector<BorrowRecord> records = admin->viewBorrowRecords();
@@ -789,15 +792,15 @@ void AdminWindow::onBorrowSearch()
     QString isbn = borrowISBNLineEdit->text().trimmed();
     QString readerId = borrowReaderIdLineEdit->text().trimmed();
 
-    ::Admin *admin = dynamic_cast<::Admin*>(currentUser);
+    ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
     if (admin)
     {
         std::vector<BorrowRecord> records = admin->viewBorrowRecords();
-        
+
         if (!isbn.isEmpty() || !readerId.isEmpty())
         {
             std::vector<BorrowRecord> filtered;
-            for (const auto& record : records)
+            for (const auto &record : records)
             {
                 bool match = true;
                 if (!isbn.isEmpty() && !record.getISBN().contains(isbn))
@@ -820,35 +823,38 @@ void AdminWindow::onBorrowSearch()
 void AdminWindow::displayBorrowRecords(const std::vector<BorrowRecord> &records)
 {
     borrowTable->setRowCount(0);
-    DataManager* dm = DataManager::getInstance();
+    DataManager *dm = DataManager::getInstance();
 
-    for (const auto& record : records)
+    for (const auto &record : records)
     {
         int row = borrowTable->rowCount();
         borrowTable->insertRow(row);
 
         borrowTable->setItem(row, 0, new QTableWidgetItem(record.getISBN()));
-        
-        Book* book = dm->findBookByISBN(record.getISBN());
+
+        Book *book = dm->findBookByISBN(record.getISBN());
         QString bookTitle = book ? book->getTitle() : "未知";
         borrowTable->setItem(row, 1, new QTableWidgetItem(bookTitle));
-        
+
         borrowTable->setItem(row, 2, new QTableWidgetItem(record.getReaderID()));
-        
-        ::User* user = dm->findUserById(record.getReaderID());
+
+        ::User *user = dm->findUserById(record.getReaderID());
         QString userName = user ? user->getName() : "未知";
         borrowTable->setItem(row, 3, new QTableWidgetItem(userName));
-        
+
         borrowTable->setItem(row, 4, new QTableWidgetItem(record.getBorrowTime().toString("yyyy-MM-dd HH:mm:ss")));
         borrowTable->setItem(row, 5, new QTableWidgetItem(record.getDueTime().toString("yyyy-MM-dd HH:mm:ss")));
-        
+
         QString returnTime = record.isReturned() ? record.getReturnTime().toString("yyyy-MM-dd HH:mm:ss") : "";
         borrowTable->setItem(row, 6, new QTableWidgetItem(returnTime));
-        
+
         QString status = "借阅中";
-        if (record.isReturned()) {
+        if (record.isReturned())
+        {
             status = "已归还";
-        } else if (record.calculateOverdueDays() > 0) {
+        }
+        else if (record.calculateOverdueDays() > 0)
+        {
             status = QString("逾期(%1天)").arg(record.calculateOverdueDays());
         }
         borrowTable->setItem(row, 7, new QTableWidgetItem(status));
@@ -878,7 +884,7 @@ void AdminWindow::onBorrowAdd()
     }
     QString readerId = result.first;
 
-    ::Admin *admin = dynamic_cast<::Admin*>(currentUser);
+    ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
     if (admin)
     {
         bool success = admin->borrowBook(isbn, readerId);
@@ -923,7 +929,7 @@ void AdminWindow::onBorrowReturn()
     }
     QString readerId = result.first;
 
-    ::Admin *admin = dynamic_cast<::Admin*>(currentUser);
+    ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
     if (admin)
     {
         bool success = admin->returnBook(isbn, readerId);
@@ -968,7 +974,7 @@ void AdminWindow::onBorrowRenew()
     }
     QString readerId = result.first;
 
-    ::Admin *admin = dynamic_cast<::Admin*>(currentUser);
+    ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
     if (admin)
     {
         bool success = admin->renewBook(isbn, readerId);
@@ -1002,7 +1008,7 @@ void AdminWindow::loadReservationData()
     std::vector<Reservation> reservations = dm->getReservations();
 
     // （填充表格）：将预约数据填入表格
-    for (const auto& reservation : reservations)
+    for (const auto &reservation : reservations)
     {
         int row = reservationTable->rowCount();
         reservationTable->insertRow(row);
@@ -1012,7 +1018,7 @@ void AdminWindow::loadReservationData()
         reservationTable->setItem(row, 2, new QTableWidgetItem(reservation.getReserveTime().toString("yyyy-MM-dd HH:mm:ss")));
         reservationTable->setItem(row, 3, new QTableWidgetItem(reservation.getStatusString()));
 
-        Book* book = dm->findBookByISBN(reservation.getISBN());
+        Book *book = dm->findBookByISBN(reservation.getISBN());
         QString bookTitle = book ? book->getTitle() : "未知";
         reservationTable->setItem(row, 4, new QTableWidgetItem(bookTitle));
     }
@@ -1021,7 +1027,8 @@ void AdminWindow::loadReservationData()
 // （加载统计数据）：从数据管理器加载统计数据到表格
 void AdminWindow::loadStatisticsData()
 {
-    if (statisticsWidget) {
+    if (statisticsWidget)
+    {
         statisticsWidget->updateStatistics();
     }
 }
@@ -1061,7 +1068,7 @@ void AdminWindow::displayUsers(const std::vector<::User *> &users)
     userTable->setRowCount(0);
 
     // （填充表格）：将用户数据填入表格
-    for (::User* user : users)
+    for (::User *user : users)
     {
         int row = userTable->rowCount();
         userTable->insertRow(row);
@@ -1134,6 +1141,14 @@ void AdminWindow::onUserAdd()
         return;
     }
     QString id = result.first;
+
+    // 检查用户ID是否已存在
+    DataManager *dm = DataManager::getInstance();
+    if (dm->findUserById(id))
+    {
+        QMessageBox::warning(this, "警告", QString("用户id %1 已存在，请重试").arg(id));
+        return;
+    }
 
     result = showInputDialog("增加用户", "请输入用户类型（1-管理员/2-读者）：", true);
     if (result.second)
@@ -1500,18 +1515,21 @@ void AdminWindow::onProcessReservation()
 
     if (confirmBox.clickedButton() == yesBtn)
     {
-        ::Admin *admin = dynamic_cast<::Admin*>(currentUser);
+        ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
         if (admin)
         {
             bool success = admin->processSingleReservation(isbn, readerId);
 
             loadReservationData();
 
-            if (success) {
+            if (success)
+            {
                 QMessageBox msgBox(QMessageBox::Information, "成功", "预约处理完成！已通知相关读者。", QMessageBox::NoButton, this);
                 msgBox.addButton("确定", QMessageBox::AcceptRole);
                 msgBox.exec();
-            } else {
+            }
+            else
+            {
                 QMessageBox msgBox(QMessageBox::Warning, "失败", "预约处理失败！可能该预约已不是待处理状态。", QMessageBox::NoButton, this);
                 msgBox.addButton("确定", QMessageBox::AcceptRole);
                 msgBox.exec();
@@ -1554,7 +1572,7 @@ void AdminWindow::onCancelReservation()
     if (confirmBox.clickedButton() == yesBtn)
     {
         // （调用后端）：调用Admin的取消预约方法
-        ::Admin *admin = dynamic_cast<::Admin*>(currentUser);
+        ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
         if (admin)
         {
             bool success = admin->cancelReservation(isbn, readerId);
