@@ -159,6 +159,8 @@ private:
     QString borrowRecordFilePath;
     // （文件路径）：预约数据文件路径
     QString reservationFilePath;
+    // （文件路径）：消息数据文件路径
+    QString messageFilePath;
 };
 
 #endif // DATAMANAGER_H

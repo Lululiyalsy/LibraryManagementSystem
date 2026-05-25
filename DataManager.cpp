@@ -50,6 +50,7 @@ DataManager::DataManager()
     bookFilePath = dataDir + "/books.txt";
     borrowRecordFilePath = dataDir + "/borrow_records.txt";
     reservationFilePath = dataDir + "/reservations.txt";
+    messageFilePath = dataDir + "/messages.txt";
 
     qDebug() << "[DataManager] 用户文件路径:" << userFilePath;
     qDebug() << "[DataManager] 文件是否存在:" << QFile::exists(userFilePath);
@@ -274,9 +275,7 @@ void DataManager::initUser()
     file.close();
 
     // 处理消息messages.txt
-    QFileInfo userFileInfo(userFilePath);
-    QString msgFilePath = userFileInfo.absolutePath() + "/messages.txt";
-    QFile msgFile(msgFilePath);
+    QFile msgFile(messageFilePath);
     if (msgFile.open(QIODevice::ReadOnly | QIODevice::Text))
     {
         QTextStream msgIn(&msgFile);
@@ -331,9 +330,7 @@ void DataManager::writeUser()
 
     file.close();
 
-    QFileInfo userFileInfo2(userFilePath);
-    QString msgFilePath2 = userFileInfo2.absolutePath() + "/messages.txt";
-    QFile msgFile(msgFilePath2);
+    QFile msgFile(messageFilePath);
     if (msgFile.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
     {
         QTextStream msgOut(&msgFile);
