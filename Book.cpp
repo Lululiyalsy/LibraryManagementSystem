@@ -30,15 +30,11 @@ QString Book::getStatus() const
     int available = stock - currentBorrowed;
     if (available <= 0)
     {
-        return "借出";
-    }
-    else if (reservationCount > 0)
-    {
-        return "预约中";
+        return "不可预约";
     }
     else
     {
-        return "可借";
+        return "可预约";
     }
 }
 

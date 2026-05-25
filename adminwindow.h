@@ -41,6 +41,10 @@ private slots:
     void onCancelReservation();
     // （退出登录）：退出按钮点击槽函数
     void onLogout();
+    // （消息管理）：消息按钮点击槽函数
+    void onMessage();
+    // （发送测试消息）：发送测试消息槽函数
+    void onSendTestMessage();
 
 signals:
     // （退出登录信号）：通知主程序退出登录
@@ -205,5 +209,15 @@ private:
     QPushButton *processReservationBtn;
     // （取消预约按钮）：取消预约按钮指针
     QPushButton *cancelReservationBtn;
+
+    // （消息管理）：初始化消息表格
+    void setupMessageWidget();
+    // （显示消息）：显示消息到消息表格
+    void displayMessages(const std::vector<QString> &messages);
+
+    // （消息容器）：消息管理界面的容器指针
+    QWidget *messageWidget;
+    // （消息表格）：消息表格指针
+    QTableWidget *messageTable;
 };
 #endif // ADMINWINDOW_H

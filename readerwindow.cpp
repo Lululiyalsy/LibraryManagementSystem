@@ -14,7 +14,7 @@ ReaderWindow::ReaderWindow(User *user, QWidget *parent)
     currentUser = user;
     resize(800, 800);
     setWindowIcon(QIcon(":/image/book.png"));
-    
+
     // 禁用关闭按钮（移除关闭按钮标志）
     setWindowFlags(windowFlags() & ~Qt::WindowCloseButtonHint);
 
@@ -41,37 +41,35 @@ void ReaderWindow::setupCentralWidget()
     toolbar->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
     addToolBar(Qt::LeftToolBarArea, toolbar);
 
-    QAction *bookSearchAction = new QAction(QIcon(":/image/readerborrow.png"), "图书查询", this);
+    QAction *bookSearchAction = new QAction(QIcon(":/image/book2.png"), "图书查询", this);
     QAction *myBorrowAction = new QAction(QIcon(":/image/readerborrow.png"), "我的借阅", this);
     QAction *myReservationAction = new QAction(QIcon(":/image/readerReservation.png"), "我的预约", this);
+    QAction *messageAction = new QAction(QIcon(":/image/message.png"), "消息管理", this);
     QAction *logoutAction = new QAction(QIcon(":/image/logout.png"), "退出登录", this);
 
     toolbar->addAction(bookSearchAction);
     toolbar->addAction(myBorrowAction);
     toolbar->addAction(myReservationAction);
+    toolbar->addAction(messageAction);
     toolbar->addAction(logoutAction);
 
     connect(bookSearchAction, &QAction::triggered, this, &ReaderWindow::switchToBookSearch);
     connect(myBorrowAction, &QAction::triggered, this, &ReaderWindow::switchToMyBorrow);
     connect(myReservationAction, &QAction::triggered, this, &ReaderWindow::switchToMyReservation);
+    connect(messageAction, &QAction::triggered, this, &ReaderWindow::onCheckMessages);
     connect(logoutAction, &QAction::triggered, this, &ReaderWindow::onLogout);
 
     setupBookSearchWidget();
     setupMyBorrowWidget();
     setupMyReservationWidget();
+    setupMessageWidget();
 
     stackedWidget->addWidget(bookSearchWidget);
     stackedWidget->addWidget(myBorrowWidget);
     stackedWidget->addWidget(myReservationWidget);
+    stackedWidget->addWidget(messageWidget);
 
     stackedWidget->setCurrentIndex(0);
-
-    // 添加消息按钮
-    msgBtn = new QPushButton("消息", this);
-    msgBtn->setStyleSheet("QPushButton { color: blue; }");
-    toolbar->addWidget(msgBtn);
-    connect(msgBtn, &QPushButton::clicked, this, &ReaderWindow::onCheckMessages);
-    updateMsgButton();
 }
 
 void ReaderWindow::setupBookSearchWidget()
@@ -443,49 +441,50 @@ QPair<QString, bool> ReaderWindow::showInputDialog(const QString &title, const Q
     return qMakePair("", true);
 }
 
-void ReaderWindow::updateMsgButton()
+// （消息管理）：初始化消息表格
+void ReaderWindow::setupMessageWidget()
 {
-    Reader *reader = dynamic_cast<Reader *>(currentUser);
-    if (reader)
+    messageWidget = new QWidget(this);
+    QVBoxLayout *mainLayout = new QVBoxLayout(messageWidget);
+
+    messageTable = new QTableWidget(this);
+    messageTable->setColumnCount(2);
+    QStringList headers = {"时间", "消息内容"};
+    messageTable->setHorizontalHeaderLabels(headers);
+    messageTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    messageTable->setSelectionBehavior(QTableWidget::SelectRows);
+
+    mainLayout->addWidget(messageTable);
+}
+
+// （显示消息）：显示消息到消息表格
+void ReaderWindow::displayMessages(const std::vector<QString> &messages)
+{
+    messageTable->setRowCount(messages.size());
+
+    for (size_t i = 0; i < messages.size(); ++i)
     {
-        int count = reader->getUnreadMsgCount();
-        if (count > 0)
-        {
-            msgBtn->setText(QString("消息 (%1)").arg(count));
-            msgBtn->setStyleSheet("QPushButton { color: red; font-weight: bold; }");
-        }
-        else
-        {
-            msgBtn->setText("消息");
-            msgBtn->setStyleSheet("QPushButton { color: blue; }");
-        }
+        QString msg = messages[i];
+        QStringList parts = msg.split("||");
+        QString time = parts.size() > 1 ? parts[0] : "";
+        QString content = parts.size() > 1 ? parts[1] : msg;
+
+        messageTable->setItem(i, 0, new QTableWidgetItem(time));
+        messageTable->setItem(i, 1, new QTableWidgetItem(content));
     }
 }
 
+// （消息管理）：消息按钮点击处理
 void ReaderWindow::onCheckMessages()
 {
     Reader *reader = dynamic_cast<Reader *>(currentUser);
     if (!reader)
-        return;
-
-    std::vector<QString> &messages = reader->getMsg();
-
-    if (messages.empty())
     {
-        QMessageBox::information(this, "消息", "暂无新消息。");
         return;
     }
 
-    QString msgText;
-    for (int i = 0; i < messages.size(); i++)
-    {
-        msgText += QString("%1. %2\n").arg(i + 1).arg(messages[i]);
-    }
-
-    QMessageBox::information(this, "我的消息", msgText);
-
-    reader->clearMsg();
-    updateMsgButton();
+    stackedWidget->setCurrentWidget(messageWidget);
+    displayMessages(reader->getMsg());
 }
 
 // （退出登录）：退出按钮点击处理

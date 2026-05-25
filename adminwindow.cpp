@@ -22,12 +22,13 @@
 #include <QMessageBox>
 #include <QInputDialog>
 #include <QLabel>
+#include <QDateTime>
 #include <vector>
 #include <algorithm>
 
 // （构造函数）：创建管理员窗口实例，初始化窗口属性和部件
 AdminWindow::AdminWindow(::User *user, QWidget *parent)
-    : QMainWindow(parent), currentUser(user), toolbar(nullptr), stackedWidget(nullptr), userWidget(nullptr), bookWidget(nullptr), borrowWidget(nullptr), reservationWidget(nullptr), userTable(nullptr), bookTable(nullptr), borrowTable(nullptr), reservationTable(nullptr), statisticsTable(nullptr), statisticsWidget(nullptr), userIdLineEdit(nullptr), userNameLineEdit(nullptr), userSearchBtn(nullptr), userAddBtn(nullptr), userDeleteBtn(nullptr), userUpdateBtn(nullptr), userClearBtn(nullptr), bookISBNLineEdit(nullptr), bookTitleLineEdit(nullptr), bookAuthorLineEdit(nullptr), bookCategoryLineEdit(nullptr), bookSearchBtn(nullptr), bookAddBtn(nullptr), bookDeleteBtn(nullptr), bookUpdateBtn(nullptr), bookClearBtn(nullptr), bookSortBtn(nullptr), bookSortByTimeBtn(nullptr), borrowISBNLineEdit(nullptr), borrowReaderIdLineEdit(nullptr), borrowSearchBtn(nullptr), borrowAddBtn(nullptr), borrowReturnBtn(nullptr), borrowRenewBtn(nullptr), processReservationBtn(nullptr), cancelReservationBtn(nullptr)
+    : QMainWindow(parent), currentUser(user), toolbar(nullptr), stackedWidget(nullptr), userWidget(nullptr), bookWidget(nullptr), borrowWidget(nullptr), reservationWidget(nullptr), userTable(nullptr), bookTable(nullptr), borrowTable(nullptr), reservationTable(nullptr), statisticsTable(nullptr), statisticsWidget(nullptr), userIdLineEdit(nullptr), userNameLineEdit(nullptr), userSearchBtn(nullptr), userAddBtn(nullptr), userDeleteBtn(nullptr), userUpdateBtn(nullptr), userClearBtn(nullptr), bookISBNLineEdit(nullptr), bookTitleLineEdit(nullptr), bookAuthorLineEdit(nullptr), bookCategoryLineEdit(nullptr), bookSearchBtn(nullptr), bookAddBtn(nullptr), bookDeleteBtn(nullptr), bookUpdateBtn(nullptr), bookClearBtn(nullptr), bookSortBtn(nullptr), bookSortByTimeBtn(nullptr), borrowISBNLineEdit(nullptr), borrowReaderIdLineEdit(nullptr), borrowSearchBtn(nullptr), borrowAddBtn(nullptr), borrowReturnBtn(nullptr), borrowRenewBtn(nullptr), processReservationBtn(nullptr), cancelReservationBtn(nullptr), messageWidget(nullptr), messageTable(nullptr)
 {
     // （设置窗口大小）：设置初始窗口大小为800x800
     resize(800, 800);
@@ -77,6 +78,8 @@ void AdminWindow::setupToolbar()
     QAction *reservationAct = new QAction(QIcon(":/image/reservation.png"), "预约管理", this);
     // （创建动作）：创建统计报表动作
     QAction *statisticsAct = new QAction(QIcon(":/image/report.png"), "统计报表", this);
+    // （创建动作）：创建消息管理动作
+    QAction *messageAct = new QAction(QIcon(":/image/message.png"), "消息管理", this);
     // （创建动作）：创建退出登录动作
     QAction *logoutAct = new QAction(QIcon(":/image/logout.png"), "退出登录", this);
 
@@ -90,6 +93,8 @@ void AdminWindow::setupToolbar()
     connect(reservationAct, &QAction::triggered, this, &AdminWindow::onReservationManagement);
     // （连接信号槽）：连接统计报表动作到槽函数
     connect(statisticsAct, &QAction::triggered, this, &AdminWindow::onStatistics);
+    // （连接信号槽）：连接消息管理动作到槽函数
+    connect(messageAct, &QAction::triggered, this, &AdminWindow::onMessage);
     // （连接信号槽）：连接退出登录动作到槽函数
     connect(logoutAct, &QAction::triggered, this, &AdminWindow::onLogout);
 
@@ -99,6 +104,7 @@ void AdminWindow::setupToolbar()
     toolbar->addAction(borrowAct);
     toolbar->addAction(reservationAct);
     toolbar->addAction(statisticsAct);
+    toolbar->addAction(messageAct);
     toolbar->addAction(logoutAct);
 }
 
@@ -116,12 +122,14 @@ void AdminWindow::setupCentralWidget()
     setupBorrowTable();
     setupReservationTable();
     setupStatisticsTable(); // 内部已经完成了 new
+    setupMessageWidget();
 
     stackedWidget->addWidget(userWidget);
     stackedWidget->addWidget(bookWidget);
     stackedWidget->addWidget(borrowWidget);
     stackedWidget->addWidget(reservationWidget);
     stackedWidget->addWidget(statisticsWidget);
+    stackedWidget->addWidget(messageWidget);
 }
 
 // （初始化用户表格）：创建用户管理表格，设置列和属性
@@ -1657,6 +1665,70 @@ void AdminWindow::onCancelReservation()
     }
 }
 
+// （消息管理）：初始化消息表格
+void AdminWindow::setupMessageWidget()
+{
+    messageWidget = new QWidget(this);
+    QVBoxLayout *mainLayout = new QVBoxLayout(messageWidget);
+
+    // 添加测试按钮
+    QPushButton *testBtn = new QPushButton("发送测试消息", this);
+    connect(testBtn, &QPushButton::clicked, this, &AdminWindow::onSendTestMessage);
+    mainLayout->addWidget(testBtn);
+
+    messageTable = new QTableWidget(this);
+    messageTable->setColumnCount(2);
+    messageTable->setHorizontalHeaderLabels(QStringList() << "时间" << "消息内容");
+    messageTable->horizontalHeader()->setStretchLastSection(true);
+    messageTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    messageTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+    messageTable->setColumnWidth(0, 150);
+
+    mainLayout->addWidget(messageTable);
+    messageWidget->setLayout(mainLayout);
+}
+
+// （显示消息）：显示消息到消息表格
+void AdminWindow::displayMessages(const std::vector<QString> &messages)
+{
+    messageTable->setRowCount(messages.size());
+    for (size_t i = 0; i < messages.size(); ++i)
+    {
+        QString msg = messages[i];
+        QString time = msg.section("|", 0, 0);
+        QString content = msg.section("|", 1, 1);
+
+        messageTable->setItem(i, 0, new QTableWidgetItem(time));
+        messageTable->setItem(i, 1, new QTableWidgetItem(content));
+    }
+}
+
+// （消息管理）：消息按钮点击处理
+void AdminWindow::onMessage()
+{
+    ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
+    if (!admin)
+    {
+        return;
+    }
+
+    stackedWidget->setCurrentWidget(messageWidget);
+    displayMessages(admin->getAllMessages());
+}
+
+// （发送测试消息）：发送测试消息槽函数
+void AdminWindow::onSendTestMessage()
+{
+    DataManager *dm = DataManager::getInstance();
+    QString testMsg = QString("测试消息：读者张三预约了图书《C++编程思想》");
+    dm->addAdminMessage(testMsg);
+
+    QMessageBox::information(this, "成功", "测试消息已发送！");
+
+    // 刷新消息表格
+    onMessage();
+}
+
 // （退出登录）：退出按钮点击处理
 void AdminWindow::onLogout()
 {
@@ -1664,7 +1736,7 @@ void AdminWindow::onLogout()
     QAbstractButton *yesBtn = confirmBox.addButton("是", QMessageBox::YesRole);
     confirmBox.addButton("否", QMessageBox::NoRole);
     confirmBox.exec();
-    
+
     if (confirmBox.clickedButton() == yesBtn)
     {
         QMessageBox::information(this, "成功", "退出登录成功！");

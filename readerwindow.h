@@ -12,6 +12,8 @@
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QMessageBox>
+#include <QDateTime>
+#include <vector>
 #include "User.h"
 #include "Book.h"
 #include "Reservation.h"
@@ -22,7 +24,7 @@ class ReaderWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit ReaderWindow(User* user, QWidget *parent = nullptr);
+    explicit ReaderWindow(User *user, QWidget *parent = nullptr);
     ~ReaderWindow();
 
 private slots:
@@ -49,10 +51,12 @@ private:
     QWidget *bookSearchWidget;
     QWidget *myBorrowWidget;
     QWidget *myReservationWidget;
+    QWidget *messageWidget;
 
     QTableWidget *bookSearchTable;
     QTableWidget *myBorrowTable;
     QTableWidget *myReservationTable;
+    QTableWidget *messageTable;
 
     QLineEdit *bookISBNLineEdit;
     QLineEdit *bookTitleLineEdit;
@@ -65,17 +69,17 @@ private:
     QPushButton *returnBtn;
     QPushButton *renewBtn;
     QPushButton *cancelReserveBtn;
-    QPushButton *msgBtn;
 
     void setupCentralWidget();
     void setupBookSearchWidget();
     void setupMyBorrowWidget();
     void setupMyReservationWidget();
-    void displayBooks(const std::vector<const Book*>& books);
+    void setupMessageWidget();
+    void displayBooks(const std::vector<const Book *> &books);
     void displayMyBorrowRecords();
     void displayMyReservations();
-    void updateMsgButton();
-    QPair<QString, bool> showInputDialog(const QString& title, const QString& label, bool isPassword = false);
+    void displayMessages(const std::vector<QString> &messages);
+    QPair<QString, bool> showInputDialog(const QString &title, const QString &label, bool isPassword = false);
 };
 
 #endif // READERWINDOW_H
