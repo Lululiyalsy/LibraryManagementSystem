@@ -240,23 +240,15 @@ int Admin::deleteBook(const QString &isbn, int decreaseStock)
     return dm->deleteBook(isbn, decreaseStock);
 }
 
-// 修改书本信息
-bool Admin::updateBook(const QString &isbn, const QString &title, const QString &author,
-                       const QString &category, int stock)
+// 修改书本信息，返回值：0=成功修改，-1=原ISBN不存在，-2=存在预约或借出无法修改，-3=新ISBN已存在
+int Admin::updateBook(const QString &oldIsbn, const QString &newIsbn, const QString &title, 
+                      const QString &author, const QString &category, int stock, 
+                      const QDateTime &inStockTime)
 {
     DataManager *dm = DataManager::getInstance();
 
-    Book *existingBook = dm->findBookByISBN(isbn);
-    if (existingBook == nullptr)
-    {
-        return false;
-    }
-
-    Book newBook(isbn, title, author, category, stock,
-                 existingBook->getInStockTime(), existingBook->getBorrowCount(),
-                 existingBook->getCurrentBorrowed(), existingBook->getReservationCount());
-
-    return dm->updateBook(isbn, newBook);
+    Book newBook(newIsbn, title, author, category, stock, inStockTime, 0, 0, 0);
+    return dm->updateBook(oldIsbn, newBook);
 }
 
 // 查找书本信息（支持多条件模糊搜索）

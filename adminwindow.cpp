@@ -660,20 +660,38 @@ void AdminWindow::onBookUpdate()
         msgBox.exec();
         return;
     }
-    QString isbn = result.first;
+    QString oldIsbn = result.first;
+
+    DataManager* dm = DataManager::getInstance();
+    Book* foundBook = dm->findBookByISBN(oldIsbn);
+    if (!foundBook)
+    {
+        QMessageBox::warning(this, "失败", QString("不存在ISBN %1，请重试").arg(oldIsbn));
+        return;
+    }
+
+    // 检查是否有预约或借出
+    if (foundBook->getReservationCount() > 0 || foundBook->getCurrentBorrowed() > 0)
+    {
+        QMessageBox::warning(this, "失败", "当前存在预约或借出，无法修改！");
+        return;
+    }
 
     ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
-    if (admin)
+    if (!admin)
     {
-        Book *foundBook = DataManager::getInstance()->findBookByISBN(isbn);
-        if (!foundBook)
-        {
-            QMessageBox msgBox(QMessageBox::Warning, "失败", "图书修改失败，未找到匹配的图书！", QMessageBox::NoButton, this);
-            msgBox.addButton("确定", QMessageBox::AcceptRole);
-            msgBox.exec();
-            return;
-        }
+        return;
     }
+
+    result = showInputDialog("修改图书", "请输入修改后的图书ISBN：", true);
+    if (result.second)
+    {
+        QMessageBox msgBox(QMessageBox::Information, "提示", "图书修改已取消！", QMessageBox::NoButton, this);
+        msgBox.addButton("确定", QMessageBox::AcceptRole);
+        msgBox.exec();
+        return;
+    }
+    QString newIsbn = result.first;
 
     result = showInputDialog("修改图书", "请输入修改后的图书书名：", true);
     if (result.second)
@@ -723,25 +741,19 @@ void AdminWindow::onBookUpdate()
         return;
     }
 
-    if (admin)
+    QDateTime inStockTime = QDateTime::currentDateTime();
+
+    int updateResult = admin->updateBook(oldIsbn, newIsbn, title, author, category, stock, inStockTime);
+
+    if (updateResult == 0)
     {
-        bool success = admin->updateBook(isbn, title, author, category, stock);
-
-        if (success)
-        {
-            std::vector<const Book *> books = admin->findAllBook();
-            displayBooks(books);
-
-            QMessageBox msgBox(QMessageBox::Information, "成功", "图书修改成功！", QMessageBox::NoButton, this);
-            msgBox.addButton("确定", QMessageBox::AcceptRole);
-            msgBox.exec();
-        }
-        else
-        {
-            QMessageBox msgBox(QMessageBox::Warning, "失败", "图书修改失败，未找到匹配的图书！", QMessageBox::NoButton, this);
-            msgBox.addButton("确定", QMessageBox::AcceptRole);
-            msgBox.exec();
-        }
+        std::vector<const Book *> books = admin->findAllBook();
+        displayBooks(books);
+        QMessageBox::information(this, "成功", "图书修改成功！");
+    }
+    else if (updateResult == -3)
+    {
+        QMessageBox::warning(this, "失败", QString("新ISBN %1 已存在，请重试").arg(newIsbn));
     }
 }
 

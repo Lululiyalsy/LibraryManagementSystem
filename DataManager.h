@@ -74,7 +74,8 @@ public:
     // 返回值：0=成功删除记录，1=库存已减少，-1=ISBN不存在，-2=存在预约或借出无法删除
     int deleteBook(const QString& isbn, int decreaseStock);
     // （图书修改）：根据ISBN修改图书信息并保存到文件
-    bool updateBook(const QString& isbn, const Book& newBook);
+    // 返回值：0=成功修改，-1=原ISBN不存在，-2=存在预约或借出无法修改，-3=新ISBN已存在
+    int updateBook(const QString& oldIsbn, const Book& newBook);
     // （图书获取）：获取所有图书
     std::vector<Book>& getBooks();
     // （图书数量）：获取图书数量

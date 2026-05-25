@@ -573,7 +573,7 @@ int DataManager::deleteBook(const QString &isbn, int decreaseStock)
             {
                 return -2; // 存在预约或借出，无法删除
             }
-            
+
             int currentStock = it->getStock();
             if (decreaseStock >= currentStock)
             {
@@ -595,24 +595,43 @@ int DataManager::deleteBook(const QString &isbn, int decreaseStock)
 }
 
 // （图书修改）：根据ISBN修改图书信息并保存到文件
-bool DataManager::updateBook(const QString &isbn, const Book &newBook)
+// 返回值：0=成功修改，-1=原ISBN不存在，-2=存在预约或借出无法修改，-3=新ISBN已存在
+int DataManager::updateBook(const QString &oldIsbn, const Book &newBook)
 {
-    for (auto &book : books)
+    for (auto it = books.begin(); it != books.end(); ++it)
     {
-        if (book.getISBN() == isbn)
+        if (it->getISBN() == oldIsbn)
         {
-            book.setTitle(newBook.getTitle());
-            book.setAuthor(newBook.getAuthor());
-            book.setCategory(newBook.getCategory());
-            book.setStock(newBook.getStock());
-            book.setInStockTime(newBook.getInStockTime());
-            book.setBorrowCount(newBook.getBorrowCount());
-            book.setCurrentBorrowed(newBook.getCurrentBorrowed());
+            // 检查是否有预约或借出
+            if (it->getReservationCount() > 0 || it->getCurrentBorrowed() > 0)
+            {
+                return -2; // 存在预约或借出，无法修改
+            }
+
+            // 检查新ISBN是否已存在（如果新ISBN与原ISBN不同）
+            if (newBook.getISBN() != oldIsbn)
+            {
+                Book *existingBook = findBookByISBN(newBook.getISBN());
+                if (existingBook != nullptr)
+                {
+                    return -3; // 新ISBN已存在
+                }
+            }
+
+            // 删除原记录
+            books.erase(it);
+
+            // 添加新记录（借阅次数、当前借出、预约人数都为0）
+            Book bookToAdd(newBook.getISBN(), newBook.getTitle(), newBook.getAuthor(),
+                           newBook.getCategory(), newBook.getStock(),
+                           newBook.getInStockTime(), 0, 0, 0);
+            books.push_back(bookToAdd);
+
             writeBook();
-            return true;
+            return 0; // 成功修改
         }
     }
-    return false;
+    return -1; // 原ISBN不存在
 }
 
 // （图书获取）：获取所有图书

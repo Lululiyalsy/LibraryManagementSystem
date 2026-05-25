@@ -53,9 +53,10 @@ public:
     // 删除书本信息，返回值：0=成功删除记录，1=库存已减少，-1=ISBN不存在，-2=存在预约或借出无法删除
     int deleteBook(const QString &isbn, int decreaseStock);
 
-    // 修改书本信息
-    bool updateBook(const QString &isbn, const QString &title, const QString &author,
-                    const QString &category, int stock);
+    // 修改书本信息，返回值：0=成功修改，-1=原ISBN不存在，-2=存在预约或借出无法修改，-3=新ISBN已存在
+    int updateBook(const QString &oldIsbn, const QString &newIsbn, const QString &title, 
+                   const QString &author, const QString &category, int stock, 
+                   const QDateTime &inStockTime);
 
     // 查找书本信息（支持多条件模糊搜索）
     std::vector<const Book *> findBook(const QString &isbn, const QString &title,
