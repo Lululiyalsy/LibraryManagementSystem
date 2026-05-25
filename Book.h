@@ -37,9 +37,6 @@ public:
     // 获取图书状态：可借/借出/预约中
     QString getStatus() const;
 
-    // 正在预约人数
-    void ReserveCount();
-
     // 析构函数
     ~Book();
 

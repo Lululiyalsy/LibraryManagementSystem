@@ -42,11 +42,6 @@ QString Book::getStatus() const
     }
 }
 
-// 正在预约人数
-void Book::ReserveCount()
-{
-}
-
 // 析构函数
 Book::~Book()
 {

@@ -1,5 +1,14 @@
 <RCC>
     <qresource prefix="/">
         <file>image/book.png</file>
+        <file>image/book2.png</file>
+        <file>image/borrow.png</file>
+        <file>image/message.png</file>
+        <file>image/readerborrow.png</file>
+        <file>image/readerReservation.png</file>
+        <file>image/report.png</file>
+        <file>image/reservation.png</file>
+        <file>image/user.png</file>
+        <file>image/exit.png</file>
     </qresource>
 </RCC>

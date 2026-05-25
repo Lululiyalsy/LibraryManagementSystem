@@ -66,15 +66,15 @@ void AdminWindow::setupToolbar()
     addToolBar(Qt::LeftToolBarArea, toolbar);
 
     // （创建动作）：创建用户管理动作
-    QAction *userAct = new QAction(QIcon(":/image/book.png"), "用户管理", this);
+    QAction *userAct = new QAction(QIcon(":/image/user.png"), "用户管理", this);
     // （创建动作）：创建图书管理动作
-    QAction *bookAct = new QAction(QIcon(":/image/book.png"), "图书管理", this);
+    QAction *bookAct = new QAction(QIcon(":/image/book2.png"), "图书管理", this);
     // （创建动作）：创建借阅管理动作
-    QAction *borrowAct = new QAction(QIcon(":/image/book.png"), "借阅管理", this);
+    QAction *borrowAct = new QAction(QIcon(":/image/borrow.png"), "借阅管理", this);
     // （创建动作）：创建预约管理动作
-    QAction *reservationAct = new QAction(QIcon(":/image/book.png"), "预约管理", this);
+    QAction *reservationAct = new QAction(QIcon(":/image/reservation.png"), "预约管理", this);
     // （创建动作）：创建统计报表动作
-    QAction *statisticsAct = new QAction(QIcon(":/image/book.png"), "统计报表", this);
+    QAction *statisticsAct = new QAction(QIcon(":/image/report.png"), "统计报表", this);
 
     // （连接信号槽）：连接用户管理动作到槽函数
     connect(userAct, &QAction::triggered, this, &AdminWindow::onUserManagement);
@@ -662,8 +662,8 @@ void AdminWindow::onBookUpdate()
     }
     QString oldIsbn = result.first;
 
-    DataManager* dm = DataManager::getInstance();
-    Book* foundBook = dm->findBookByISBN(oldIsbn);
+    DataManager *dm = DataManager::getInstance();
+    Book *foundBook = dm->findBookByISBN(oldIsbn);
     if (!foundBook)
     {
         QMessageBox::warning(this, "失败", QString("不存在ISBN %1，请重试").arg(oldIsbn));
@@ -760,6 +760,18 @@ void AdminWindow::onBookUpdate()
 // （图书清除）：清除按钮点击处理
 void AdminWindow::onBookClear()
 {
+    // 检查是否有图书存在预约或借出
+    DataManager *dm = DataManager::getInstance();
+    std::vector<Book> &books = dm->getBooks();
+    for (auto &book : books)
+    {
+        if (book.getReservationCount() > 0 || book.getCurrentBorrowed() > 0)
+        {
+            QMessageBox::warning(this, "失败", "存在预约或借出的图书，无法清除！");
+            return;
+        }
+    }
+
     QMessageBox warningBox(QMessageBox::Warning, "警告", "确定要清除所有图书信息吗？此操作不可恢复！", QMessageBox::NoButton, this);
     QAbstractButton *yesBtn1 = warningBox.addButton("是", QMessageBox::YesRole);
     warningBox.addButton("否", QMessageBox::NoRole);
@@ -810,7 +822,7 @@ void AdminWindow::onBookSortByTime()
         std::vector<const Book *> sortedBooks = admin->sortBookByInStockTime();
         displayBooks(sortedBooks);
 
-        QMessageBox msgBox(QMessageBox::Information, "成功", "已按入库时间排序（最新优先）！", QMessageBox::NoButton, this);
+        QMessageBox msgBox(QMessageBox::Information, "成功", "已按入库时间排序！", QMessageBox::NoButton, this);
         msgBox.addButton("确定", QMessageBox::AcceptRole);
         msgBox.exec();
     }
