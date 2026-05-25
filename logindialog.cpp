@@ -31,6 +31,9 @@ LoginDialog::LoginDialog(QWidget *parent)
     // 设置窗口标题
     setWindowTitle("登录");
 
+    // 禁用关闭按钮（移除关闭按钮标志）
+    setWindowFlags(windowFlags() & ~Qt::WindowCloseButtonHint);
+
     // 设置模态对话框属性
     setModal(true);
 }

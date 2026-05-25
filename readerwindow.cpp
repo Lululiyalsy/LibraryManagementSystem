@@ -12,8 +12,11 @@ ReaderWindow::ReaderWindow(User *user, QWidget *parent)
     : QMainWindow(parent)
 {
     currentUser = user;
-    resize(900, 700);
+    resize(800, 800);
     setWindowIcon(QIcon(":/image/book.png"));
+    
+    // 禁用关闭按钮（移除关闭按钮标志）
+    setWindowFlags(windowFlags() & ~Qt::WindowCloseButtonHint);
 
     if (user)
     {
@@ -38,17 +41,20 @@ void ReaderWindow::setupCentralWidget()
     toolbar->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
     addToolBar(Qt::LeftToolBarArea, toolbar);
 
-    QAction *bookSearchAction = new QAction(QIcon(":/image/book2.png"), "图书查询", this);
+    QAction *bookSearchAction = new QAction(QIcon(":/image/readerborrow.png"), "图书查询", this);
     QAction *myBorrowAction = new QAction(QIcon(":/image/readerborrow.png"), "我的借阅", this);
     QAction *myReservationAction = new QAction(QIcon(":/image/readerReservation.png"), "我的预约", this);
+    QAction *logoutAction = new QAction(QIcon(":/image/logout.png"), "退出登录", this);
 
     toolbar->addAction(bookSearchAction);
     toolbar->addAction(myBorrowAction);
     toolbar->addAction(myReservationAction);
+    toolbar->addAction(logoutAction);
 
     connect(bookSearchAction, &QAction::triggered, this, &ReaderWindow::switchToBookSearch);
     connect(myBorrowAction, &QAction::triggered, this, &ReaderWindow::switchToMyBorrow);
     connect(myReservationAction, &QAction::triggered, this, &ReaderWindow::switchToMyReservation);
+    connect(logoutAction, &QAction::triggered, this, &ReaderWindow::onLogout);
 
     setupBookSearchWidget();
     setupMyBorrowWidget();
@@ -480,4 +486,19 @@ void ReaderWindow::onCheckMessages()
 
     reader->clearMsg();
     updateMsgButton();
+}
+
+// （退出登录）：退出按钮点击处理
+void ReaderWindow::onLogout()
+{
+    QMessageBox confirmBox(QMessageBox::Question, "确认退出", "确定要退出登录吗？", QMessageBox::NoButton, this);
+    QAbstractButton *yesBtn = confirmBox.addButton("是", QMessageBox::YesRole);
+    confirmBox.addButton("否", QMessageBox::NoRole);
+    confirmBox.exec();
+
+    if (confirmBox.clickedButton() == yesBtn)
+    {
+        QMessageBox::information(this, "成功", "退出登录成功！");
+        emit logout();
+    }
 }

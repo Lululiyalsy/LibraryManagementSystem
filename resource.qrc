@@ -9,6 +9,6 @@
         <file>image/report.png</file>
         <file>image/reservation.png</file>
         <file>image/user.png</file>
-        <file>image/exit.png</file>
+        <file>image/logout.png</file>
     </qresource>
 </RCC>

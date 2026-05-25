@@ -36,6 +36,10 @@ private slots:
     void switchToMyBorrow();
     void switchToMyReservation();
     void onCheckMessages();
+    void onLogout();
+
+signals:
+    void logout();
 
 private:
     User *currentUser;

@@ -33,6 +33,8 @@ AdminWindow::AdminWindow(::User *user, QWidget *parent)
     resize(800, 800);
     // （设置窗口图标）：设置窗口图标为图书图标
     setWindowIcon(QIcon(":/image/book.png"));
+    // （禁用关闭按钮）：移除窗口关闭按钮
+    setWindowFlags(windowFlags() & ~Qt::WindowCloseButtonHint);
     // （设置窗口标题）：设置窗口标题为用户身份和姓名
     if (currentUser)
     {
@@ -75,6 +77,8 @@ void AdminWindow::setupToolbar()
     QAction *reservationAct = new QAction(QIcon(":/image/reservation.png"), "预约管理", this);
     // （创建动作）：创建统计报表动作
     QAction *statisticsAct = new QAction(QIcon(":/image/report.png"), "统计报表", this);
+    // （创建动作）：创建退出登录动作
+    QAction *logoutAct = new QAction(QIcon(":/image/logout.png"), "退出登录", this);
 
     // （连接信号槽）：连接用户管理动作到槽函数
     connect(userAct, &QAction::triggered, this, &AdminWindow::onUserManagement);
@@ -86,6 +90,8 @@ void AdminWindow::setupToolbar()
     connect(reservationAct, &QAction::triggered, this, &AdminWindow::onReservationManagement);
     // （连接信号槽）：连接统计报表动作到槽函数
     connect(statisticsAct, &QAction::triggered, this, &AdminWindow::onStatistics);
+    // （连接信号槽）：连接退出登录动作到槽函数
+    connect(logoutAct, &QAction::triggered, this, &AdminWindow::onLogout);
 
     // （添加动作）：将动作添加到工具栏
     toolbar->addAction(userAct);
@@ -93,6 +99,7 @@ void AdminWindow::setupToolbar()
     toolbar->addAction(borrowAct);
     toolbar->addAction(reservationAct);
     toolbar->addAction(statisticsAct);
+    toolbar->addAction(logoutAct);
 }
 
 // （初始化中心部件）：创建堆叠部件，管理多个表格视图
@@ -1647,5 +1654,20 @@ void AdminWindow::onCancelReservation()
                 msgBox.exec();
             }
         }
+    }
+}
+
+// （退出登录）：退出按钮点击处理
+void AdminWindow::onLogout()
+{
+    QMessageBox confirmBox(QMessageBox::Question, "确认退出", "确定要退出登录吗？", QMessageBox::NoButton, this);
+    QAbstractButton *yesBtn = confirmBox.addButton("是", QMessageBox::YesRole);
+    confirmBox.addButton("否", QMessageBox::NoRole);
+    confirmBox.exec();
+    
+    if (confirmBox.clickedButton() == yesBtn)
+    {
+        QMessageBox::information(this, "成功", "退出登录成功！");
+        emit logout();
     }
 }
