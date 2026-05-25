@@ -40,9 +40,6 @@ public:
     // 正在预约人数
     void ReserveCount();
 
-    // 根据借阅次数排序
-    void sortByBorrowCount();
-
     // 析构函数
     ~Book();
 

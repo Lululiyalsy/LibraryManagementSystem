@@ -572,15 +572,24 @@ void AdminWindow::onBookAdd()
     ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
     if (admin)
     {
-        admin->addBook(isbn, title, author, category, stock);
+        int addResult = admin->addBook(isbn, title, author, category, stock);
 
         std::vector<const Book *> books = admin->findAllBook();
         displayBooks(books);
-    }
 
-    QMessageBox msgBox(QMessageBox::Information, "成功", "图书添加成功！", QMessageBox::NoButton, this);
-    msgBox.addButton("确定", QMessageBox::AcceptRole);
-    msgBox.exec();
+        if (addResult == -1)
+        {
+            QMessageBox::warning(this, "警告", "isbn对应的书已存在，请重试");
+        }
+        else if (addResult == 1)
+        {
+            QMessageBox::information(this, "成功", "图书库存已增加！");
+        }
+        else
+        {
+            QMessageBox::information(this, "成功", "图书添加成功！");
+        }
+    }
 }
 
 // （图书删除）：删除按钮点击处理

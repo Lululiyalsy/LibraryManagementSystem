@@ -24,7 +24,7 @@ QString Admin::typeToIdentity()
     return QString("管理员");
 }
 
-//（生成验证码）：生成管理员验证码（大小写字母+数字，6位）
+// （生成验证码）：生成管理员验证码（大小写字母+数字，6位）
 QString Admin::generateVerificationCode()
 {
     const QString chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -37,13 +37,13 @@ QString Admin::generateVerificationCode()
     return code;
 }
 
-//注册用户账号（包括管理员和读者）
+// 注册用户账号（包括管理员和读者）
 void Admin::registerUser(const QString &id, const QString &type, const QString &name,
                          const QString &password, const QString &phone, const QString &email)
 {
     DataManager *dm = DataManager::getInstance();
 
-    //检查ID是否已存在（精确匹配）
+    // 检查ID是否已存在（精确匹配）
     std::vector<User *> existingUsers = dm->findUsersById(id);
     bool idExists = false;
     for (auto user : existingUsers)
@@ -80,19 +80,19 @@ void Admin::registerUser(const QString &id, const QString &type, const QString &
     // qDebug() << "用户注册成功: " << name;
 }
 
-//删除用户账号（包括管理员和读者）
+// 删除用户账号（包括管理员和读者）
 bool Admin::deleteUser(const QString &id, const QString &name)
 {
     DataManager *dm = DataManager::getInstance();
 
-    //必须同时根据ID和姓名两个关键字删除
+    // 必须同时根据ID和姓名两个关键字删除
     bool success = dm->deleteUser(id, name);
 
     if (success)
     {
         // qDebug() << "用户删除成功";
 
-        //检查是否只剩0人，如果是则自动创建新管理员
+        // 检查是否只剩0人，如果是则自动创建新管理员
         if (dm->getUserCount() == 0)
         {
             QString newId = "10000";
@@ -120,14 +120,14 @@ bool Admin::deleteUser(const QString &id, const QString &name)
     return success;
 }
 
-//修改用户信息（包括管理员和读者）
+// 修改用户信息（包括管理员和读者）
 bool Admin::updateUser(const QString &oldId, const QString &oldName,
                        const QString &newId, const QString &newType, const QString &newName,
                        const QString &password, const QString &phone, const QString &email)
 {
     DataManager *dm = DataManager::getInstance();
 
-    //检查是否提供了两个关键字
+    // 检查是否提供了两个关键字
     if (oldId.isEmpty() || oldName.isEmpty())
     {
         // qDebug() << "用户修改失败，必须同时提供ID和姓名";
@@ -164,7 +164,7 @@ bool Admin::updateUser(const QString &oldId, const QString &oldName,
     return success;
 }
 
-//查看全部用户信息（包括管理员和读者）
+// 查看全部用户信息（包括管理员和读者）
 std::vector<User *> Admin::findAllUser()
 {
     DataManager *dm = DataManager::getInstance();
@@ -173,12 +173,12 @@ std::vector<User *> Admin::findAllUser()
     return users;
 }
 
-//查找用户信息（支持ID、姓名、ID+姓名模糊匹配）
+// 查找用户信息（支持ID、姓名、ID+姓名模糊匹配）
 std::vector<User *> Admin::findUser(const QString &id, const QString &name)
 {
     DataManager *dm = DataManager::getInstance();
 
-    //使用多关键字查找（均为模糊匹配，可能多个）
+    // 使用多关键字查找（均为模糊匹配，可能多个）
     std::vector<User *> users = dm->searchUsers(id, name);
 
     if (!users.empty())
@@ -193,14 +193,14 @@ std::vector<User *> Admin::findUser(const QString &id, const QString &name)
     return users;
 }
 
-//清空用户信息（包括管理员和读者）
+// 清空用户信息（包括管理员和读者）
 void Admin::clearUser()
 {
     DataManager *dm = DataManager::getInstance();
     dm->clearAllUsers();
     // qDebug() << "已清空所有用户";
 
-    //检查是否只剩0人，如果是则自动创建新管理员
+    // 检查是否只剩0人，如果是则自动创建新管理员
     if (dm->getUserCount() == 0)
     {
         QString newId = "10000";
@@ -221,63 +221,59 @@ void Admin::clearUser()
     }
 }
 
-// 添加书本信息
-void Admin::addBook(const QString& isbn, const QString& title, const QString& author, 
-                    const QString& category, int stock)
+// 添加书本信息，返回值：0=成功新增，1=库存已增加，-1=ISBN冲突
+int Admin::addBook(const QString &isbn, const QString &title, const QString &author,
+                   const QString &category, int stock)
 {
-    DataManager* dm = DataManager::getInstance();
-
-    if (dm->findBookByISBN(isbn) != nullptr)
-    {
-        return;
-    }
+    DataManager *dm = DataManager::getInstance();
 
     QDateTime now = QDateTime::currentDateTime();
+    Book book(isbn, title, author, category, stock, now, 0, 0, 0);
 
-    Book book(isbn, title, author, category, stock, now, 0, 0);
-    dm->addBook(book);
+    return dm->addBook(book);
 }
 
 // 删除书本信息
-bool Admin::deleteBook(const QString& isbn)
+bool Admin::deleteBook(const QString &isbn)
 {
-    DataManager* dm = DataManager::getInstance();
+    DataManager *dm = DataManager::getInstance();
     return dm->deleteBook(isbn);
 }
 
 // 修改书本信息
-bool Admin::updateBook(const QString& isbn, const QString& title, const QString& author, 
-                       const QString& category, int stock)
+bool Admin::updateBook(const QString &isbn, const QString &title, const QString &author,
+                       const QString &category, int stock)
 {
-    DataManager* dm = DataManager::getInstance();
+    DataManager *dm = DataManager::getInstance();
 
-    Book* existingBook = dm->findBookByISBN(isbn);
+    Book *existingBook = dm->findBookByISBN(isbn);
     if (existingBook == nullptr)
     {
         return false;
     }
 
     Book newBook(isbn, title, author, category, stock,
-            existingBook->getInStockTime(), existingBook->getBorrowCount(),
-            existingBook->getCurrentBorrowed(), existingBook->getReservationCount());
+                 existingBook->getInStockTime(), existingBook->getBorrowCount(),
+                 existingBook->getCurrentBorrowed(), existingBook->getReservationCount());
 
     return dm->updateBook(isbn, newBook);
 }
 
 // 查找书本信息（支持多条件模糊搜索）
-std::vector<const Book*> Admin::findBook(const QString& isbn, const QString& title, 
-                                         const QString& author, const QString& category)
+std::vector<const Book *> Admin::findBook(const QString &isbn, const QString &title,
+                                          const QString &author, const QString &category)
 {
-    DataManager* dm = DataManager::getInstance();
+    DataManager *dm = DataManager::getInstance();
     return dm->searchBooks(isbn, title, author, category);
 }
 
 // 查找所有图书
-std::vector<const Book*> Admin::findAllBook()
+std::vector<const Book *> Admin::findAllBook()
 {
-    DataManager* dm = DataManager::getInstance();
-    std::vector<const Book*> results;
-    for (const auto& book : dm->getBooks()) {
+    DataManager *dm = DataManager::getInstance();
+    std::vector<const Book *> results;
+    for (const auto &book : dm->getBooks())
+    {
         results.push_back(&book);
     }
     return results;
@@ -286,36 +282,40 @@ std::vector<const Book*> Admin::findAllBook()
 // 清空书本信息
 void Admin::clearBook()
 {
-    DataManager* dm = DataManager::getInstance();
+    DataManager *dm = DataManager::getInstance();
     dm->getBooks().clear();
     dm->writeBook();
 }
 
 // 按借阅次数排序
-std::vector<const Book*> Admin::sortBookByBorrowCount()
+std::vector<const Book *> Admin::sortBookByBorrowCount()
 {
-    DataManager* dm = DataManager::getInstance();
-    std::vector<const Book*> sortedBooks;
-    for (const auto& book : dm->getBooks()) {
+    DataManager *dm = DataManager::getInstance();
+    std::vector<const Book *> sortedBooks;
+    for (const auto &book : dm->getBooks())
+    {
         sortedBooks.push_back(&book);
     }
-    std::sort(sortedBooks.begin(), sortedBooks.end(), 
-              [](const Book* a, const Book* b) { 
-                  return a->getBorrowCount() > b->getBorrowCount(); 
+    std::sort(sortedBooks.begin(), sortedBooks.end(),
+              [](const Book *a, const Book *b)
+              {
+                  return a->getBorrowCount() > b->getBorrowCount();
               });
     return sortedBooks;
 }
 
 // 按入库时间排序（最新入库优先）
-std::vector<const Book*> Admin::sortBookByInStockTime()
+std::vector<const Book *> Admin::sortBookByInStockTime()
 {
-    DataManager* dm = DataManager::getInstance();
-    std::vector<const Book*> sortedBooks;
-    for (const auto& book : dm->getBooks()) {
+    DataManager *dm = DataManager::getInstance();
+    std::vector<const Book *> sortedBooks;
+    for (const auto &book : dm->getBooks())
+    {
         sortedBooks.push_back(&book);
     }
     std::sort(sortedBooks.begin(), sortedBooks.end(),
-              [](const Book* a, const Book* b) {
+              [](const Book *a, const Book *b)
+              {
                   return a->getInStockTime() < b->getInStockTime();
               });
     return sortedBooks;
@@ -324,14 +324,14 @@ std::vector<const Book*> Admin::sortBookByInStockTime()
 // 生成统计报表(主要是借书情况)
 void Admin::generateReport()
 {
-    DataManager* dm = DataManager::getInstance();
-    
+    DataManager *dm = DataManager::getInstance();
+
     // 获取所有借阅记录
     std::vector<BorrowRecord> allRecords = dm->getBorrowRecords();
     std::vector<BorrowRecord> overdueRecords = viewOverdueRecords();
     std::vector<Book> allBooks = dm->getBooks();
-    std::vector<User*> allUsers = dm->getUsers();
-    
+    std::vector<User *> allUsers = dm->getUsers();
+
     // 统计数据
     int totalBorrowCount = allRecords.size();
     int returnedCount = 0;
@@ -340,54 +340,62 @@ void Admin::generateReport()
     int totalUsers = allUsers.size();
     int readerCount = 0;
     int adminCount = 0;
-    
+
     // 计算读者和管理员数量
-    for (auto user : allUsers) {
-        if (user->getType() == 1) adminCount++;
-        else readerCount++;
+    for (auto user : allUsers)
+    {
+        if (user->getType() == 1)
+            adminCount++;
+        else
+            readerCount++;
     }
-    
+
     // 计算已归还数量
-    for (auto& record : allRecords) {
-        if (record.isReturned()) returnedCount++;
+    for (auto &record : allRecords)
+    {
+        if (record.isReturned())
+            returnedCount++;
     }
-    
+
     // 计算借阅率和逾期率
     double returnRate = totalBorrowCount > 0 ? (double)returnedCount / totalBorrowCount * 100 : 0;
     double overdueRate = totalBorrowCount > 0 ? (double)overdueCount / totalBorrowCount * 100 : 0;
-    
+
     // 按分类统计图书
     std::map<QString, int> categoryCount;
-    for (auto& book : allBooks) {
+    for (auto &book : allBooks)
+    {
         categoryCount[book.getCategory()]++;
     }
-    
+
     // 获取热门图书（按借阅次数排序）
     std::vector<Book> hotBooks = dm->sortBooksByBorrowCount();
-    if (hotBooks.size() > 5) hotBooks.resize(5); // 只取前5名
-    
+    if (hotBooks.size() > 5)
+        hotBooks.resize(5); // 只取前5名
+
     // 生成报告内容
     QString report;
     report += "========================================\n";
     report += "          图书管理系统统计报表\n";
     report += "========================================\n\n";
     report += QString("统计时间: %1\n\n").arg(QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss"));
-    
+
     // 用户统计
     report += "【用户统计】\n";
     report += QString("  总用户数: %1\n").arg(totalUsers);
     report += QString("  管理员数: %1\n").arg(adminCount);
     report += QString("  读者数: %1\n\n").arg(readerCount);
-    
+
     // 图书统计
     report += "【图书统计】\n";
     report += QString("  图书总数: %1\n").arg(totalBooks);
     report += "  分类分布:\n";
-    for (auto& pair : categoryCount) {
+    for (auto &pair : categoryCount)
+    {
         report += QString("    - %1: %2 本\n").arg(pair.first).arg(pair.second);
     }
     report += "\n";
-    
+
     // 借阅统计
     report += "【借阅统计】\n";
     report += QString("  总借阅次数: %1\n").arg(totalBorrowCount);
@@ -395,49 +403,58 @@ void Admin::generateReport()
     report += QString("  借阅归还率: %1%\n").arg(QString::number(returnRate, 'f', 2));
     report += QString("  逾期数量: %1\n").arg(overdueCount);
     report += QString("  逾期率: %1%\n\n").arg(QString::number(overdueRate, 'f', 2));
-    
+
     // 热门图书
     report += "【热门图书 TOP5】\n";
-    for (int i = 0; i < hotBooks.size(); i++) {
-        Book& book = hotBooks[i];
-        report += QString("  %1. 《%2》 - 借阅%3次\n").arg(i+1).arg(book.getTitle()).arg(book.getBorrowCount());
+    for (int i = 0; i < hotBooks.size(); i++)
+    {
+        Book &book = hotBooks[i];
+        report += QString("  %1. 《%2》 - 借阅%3次\n").arg(i + 1).arg(book.getTitle()).arg(book.getBorrowCount());
     }
     report += "\n";
-    
+
     // 逾期图书列表
     report += "【逾期图书列表】\n";
-    if (overdueRecords.empty()) {
+    if (overdueRecords.empty())
+    {
         report += "  暂无逾期图书\n";
-    } else {
-        for (auto& record : overdueRecords) {
-            Book* book = dm->findBookByISBN(record.getISBN());
+    }
+    else
+    {
+        for (auto &record : overdueRecords)
+        {
+            Book *book = dm->findBookByISBN(record.getISBN());
             QString bookTitle = book ? book->getTitle() : "未知书名";
             report += QString("  ISBN: %1, 书名: %2, 逾期%3天\n")
-                      .arg(record.getISBN())
-                      .arg(bookTitle)
-                      .arg(record.calculateOverdueDays());
+                          .arg(record.getISBN())
+                          .arg(bookTitle)
+                          .arg(record.calculateOverdueDays());
         }
     }
-    
+
     report += "\n========================================\n";
-    
+
     // 保存报告到文件
     QString appDir = QCoreApplication::applicationDirPath();
     QString reportFileName = QString("report_%1.txt").arg(QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss"));
     QString reportPath = appDir + "/reports/" + reportFileName;
-    
+
     QDir reportDir(appDir + "/reports");
-    if (!reportDir.exists()) {
+    if (!reportDir.exists())
+    {
         reportDir.mkpath(".");
     }
-    
+
     QFile reportFile(reportPath);
-    if (reportFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+    if (reportFile.open(QIODevice::WriteOnly | QIODevice::Text))
+    {
         QTextStream out(&reportFile);
         out << report;
         reportFile.close();
         qDebug() << "[Admin] 统计报表已生成: " << reportPath;
-    } else {
+    }
+    else
+    {
         qDebug() << "[Admin] 无法生成统计报表";
     }
 }
@@ -445,55 +462,67 @@ void Admin::generateReport()
 // 处理预约信息
 void Admin::processReservation()
 {
-    DataManager* dm = DataManager::getInstance();
-    
+    DataManager *dm = DataManager::getInstance();
+
     // 获取所有待处理的预约
-    std::vector<Reservation>& reservations = dm->getReservations();
-    
-    for (auto& reservation : reservations) {
-        if (reservation.getStatus() == Reservation::PENDING) {
-            Book* book = dm->findBookByISBN(reservation.getISBN());
-            
-            if (book && book->getStock() > book->getCurrentBorrowed()) {
+    std::vector<Reservation> &reservations = dm->getReservations();
+
+    for (auto &reservation : reservations)
+    {
+        if (reservation.getStatus() == Reservation::PENDING)
+        {
+            Book *book = dm->findBookByISBN(reservation.getISBN());
+
+            if (book && book->getStock() > book->getCurrentBorrowed())
+            {
                 reservation.Notify();
-                if (book->getReservationCount() > 0) {
+                if (book->getReservationCount() > 0)
+                {
                     book->setReservationCount(book->getReservationCount() - 1);
                 }
                 dm->writeBook();
-                
-                User* user = dm->findUserById(reservation.getReaderID());
-                if (user && user->getType() == 2) {
-                    Reader* reader = dynamic_cast<Reader*>(user);
-                    if (reader) {
+
+                User *user = dm->findUserById(reservation.getReaderID());
+                if (user && user->getType() == 2)
+                {
+                    Reader *reader = dynamic_cast<Reader *>(user);
+                    if (reader)
+                    {
                         QString msg = QString("您预约的图书《%1》(ISBN:%2)已可借阅，请尽快到图书馆办理借阅手续。")
-                                      .arg(book->getTitle()).arg(reservation.getISBN());
+                                          .arg(book->getTitle())
+                                          .arg(reservation.getISBN());
                         reader->addMsg(msg);
                         dm->writeUser();
                     }
                 }
-                
-                qDebug() << "[Admin] 已通知读者" << reservation.getReaderID() 
+
+                qDebug() << "[Admin] 已通知读者" << reservation.getReaderID()
                          << "预约的图书" << reservation.getISBN() << "已可借阅";
             }
         }
     }
-    
+
     QDateTime now = QDateTime::currentDateTime();
-    for (auto& reservation : reservations) {
-        if (reservation.getStatus() == Reservation::PENDING && 
-            reservation.getReserveTime().daysTo(now) > 7) {
+    for (auto &reservation : reservations)
+    {
+        if (reservation.getStatus() == Reservation::PENDING &&
+            reservation.getReserveTime().daysTo(now) > 7)
+        {
             reservation.setStatus(Reservation::CANCELLED);
-            Book* book = dm->findBookByISBN(reservation.getISBN());
-            if (book && book->getReservationCount() > 0) {
+            Book *book = dm->findBookByISBN(reservation.getISBN());
+            if (book && book->getReservationCount() > 0)
+            {
                 book->setReservationCount(book->getReservationCount() - 1);
             }
             qDebug() << "[Admin] 预约" << reservation.getISBN() << "已过期自动取消";
         }
-        if (reservation.getStatus() == Reservation::NOTIFIED && 
-            reservation.getReserveTime().daysTo(now) > 10) {
+        if (reservation.getStatus() == Reservation::NOTIFIED &&
+            reservation.getReserveTime().daysTo(now) > 10)
+        {
             reservation.setStatus(Reservation::CANCELLED);
-            Book* book = dm->findBookByISBN(reservation.getISBN());
-            if (book && book->getReservationCount() > 0) {
+            Book *book = dm->findBookByISBN(reservation.getISBN());
+            if (book && book->getReservationCount() > 0)
+            {
                 book->setReservationCount(book->getReservationCount() - 1);
             }
             qDebug() << "[Admin] 已通知预约" << reservation.getISBN() << "超时未借出，自动取消";
@@ -503,105 +532,117 @@ void Admin::processReservation()
     dm->writeReservation();
 }
 
-bool Admin::processSingleReservation(const QString& isbn, const QString& readerId)
+bool Admin::processSingleReservation(const QString &isbn, const QString &readerId)
 {
-    DataManager* dm = DataManager::getInstance();
-    std::vector<Reservation>& reservations = dm->getReservations();
-    
-    for (auto& reservation : reservations) {
-        if (reservation.getISBN() == isbn && 
+    DataManager *dm = DataManager::getInstance();
+    std::vector<Reservation> &reservations = dm->getReservations();
+
+    for (auto &reservation : reservations)
+    {
+        if (reservation.getISBN() == isbn &&
             reservation.getReaderID() == readerId &&
-            reservation.getStatus() == Reservation::PENDING) {
-            
-            Book* book = dm->findBookByISBN(isbn);
+            reservation.getStatus() == Reservation::PENDING)
+        {
+
+            Book *book = dm->findBookByISBN(isbn);
             int available = book ? (book->getStock() - book->getCurrentBorrowed()) : 0;
-            
+
             reservation.Notify();
-            
+
             dm->writeBook();
-            
-            User* user = dm->findUserById(readerId);
-            if (user && user->getType() == 2) {
-                Reader* reader = dynamic_cast<Reader*>(user);
-                if (reader) {
+
+            User *user = dm->findUserById(readerId);
+            if (user && user->getType() == 2)
+            {
+                Reader *reader = dynamic_cast<Reader *>(user);
+                if (reader)
+                {
                     QString msg;
-                    if (available > 0) {
+                    if (available > 0)
+                    {
                         msg = QString("您预约的图书《%1》(ISBN:%2)已可借阅，请尽快到图书馆办理借阅手续。")
-                              .arg(book->getTitle()).arg(isbn);
-                    } else {
+                                  .arg(book->getTitle())
+                                  .arg(isbn);
+                    }
+                    else
+                    {
                         msg = QString("您预约的图书《%1》(ISBN:%2)已通过审批，当前暂无库存，有书归还时将优先通知您。")
-                              .arg(book ? book->getTitle() : "未知").arg(isbn);
+                                  .arg(book ? book->getTitle() : "未知")
+                                  .arg(isbn);
                     }
                     reader->addMsg(msg);
                     dm->writeUser();
                 }
             }
-            
+
             dm->writeReservation();
             qDebug() << "[Admin] 已处理读者" << readerId << "的预约，ISBN:" << isbn;
             return true;
         }
     }
-    
+
     return false;
 }
 
 // 预约管理：查看所有预约记录
 std::vector<Reservation> Admin::viewAllReservations()
 {
-    DataManager* dm = DataManager::getInstance();
+    DataManager *dm = DataManager::getInstance();
     return dm->getReservations();
 }
 
 // 预约管理：取消预约（按ISBN和读者ID）
-bool Admin::cancelReservation(const QString& isbn, const QString& readerId)
+bool Admin::cancelReservation(const QString &isbn, const QString &readerId)
 {
-    DataManager* dm = DataManager::getInstance();
+    DataManager *dm = DataManager::getInstance();
     return dm->cancelReservation(isbn, readerId);
 }
 
 // 预约管理：图书归还时处理预约
-void Admin::handleBookReturned(const QString& isbn)
+void Admin::handleBookReturned(const QString &isbn)
 {
-    DataManager* dm = DataManager::getInstance();
+    DataManager *dm = DataManager::getInstance();
     dm->notifyReservations(isbn);
 }
 
 // 借阅管理：办理借书
-//修改5.16
-bool Admin::borrowBook(const QString& isbn, const QString& readerId)
+// 修改5.16
+bool Admin::borrowBook(const QString &isbn, const QString &readerId)
 {
-    DataManager* dm = DataManager::getInstance();
-    
-    Book* book = dm->findBookByISBN(isbn);
+    DataManager *dm = DataManager::getInstance();
+
+    Book *book = dm->findBookByISBN(isbn);
     if (!book)
         return false;
-    
+
     int available = book->getStock() - book->getCurrentBorrowed();
-    
+
     // 检查读者是否有逾期未还图书
     if (dm->hasOverdueBooks(readerId))
         return false;
-    
+
     // 检查读者借书数量是否超限
     int currentBorrowCount = dm->getBorrowCountByReader(readerId);
     if (currentBorrowCount >= 10)
         return false;
-    
+
     // 检查该读者是否有该图书的有效预约（状态为 NOTIFIED）
     bool hasValidReservation = false;
     int reservationIndex = -1;
-    std::vector<Reservation>& reservations = dm->getReservations();
-    
+    std::vector<Reservation> &reservations = dm->getReservations();
+
     // 统计已通知但未完成的预约数量
     int notifiedCount = 0;
-    
-    for (size_t i = 0; i < reservations.size(); ++i) {
-        if (reservations[i].getISBN() == isbn && 
-            reservations[i].getStatus() == Reservation::NOTIFIED) {
+
+    for (size_t i = 0; i < reservations.size(); ++i)
+    {
+        if (reservations[i].getISBN() == isbn &&
+            reservations[i].getStatus() == Reservation::NOTIFIED)
+        {
             notifiedCount++;
-            
-            if (reservations[i].getReaderID() == readerId) {
+
+            if (reservations[i].getReaderID() == readerId)
+            {
                 hasValidReservation = true;
                 reservationIndex = i;
             }
@@ -610,87 +651,94 @@ bool Admin::borrowBook(const QString& isbn, const QString& readerId)
     // 情况1：有可用库存且预约人数不超过库存 → 所有人都能借
     // 情况2：有可用库存但预约人数超过库存 → 只有有预约的读者能借
     // 情况3：无可用库存 → 只有有预约的读者能借（预约队列）
-    if (available <= 0) {
+    if (available <= 0)
+    {
         // 无库存，必须有有效预约才能借
-        if (!hasValidReservation) {
+        if (!hasValidReservation)
+        {
             return false;
         }
-    } else if (notifiedCount > available) {
+    }
+    else if (notifiedCount > available)
+    {
         // 有库存但预约人数超过库存，必须有有效预约才能借
-        if (!hasValidReservation) {
+        if (!hasValidReservation)
+        {
             return false;
         }
     }
     // 其他情况：有库存且预约人数不多于库存，或无预约者，任何人都能借
-    
+
     QDateTime now = QDateTime::currentDateTime();
     QDateTime dueTime = now.addDays(30);
-    
+
     BorrowRecord record(isbn, readerId, now, dueTime);
     dm->addBorrowRecord(record);
-    
+
     // 如果有有效预约，更新预约状态为 COMPLETED
-    if (reservationIndex >= 0) {
+    if (reservationIndex >= 0)
+    {
         reservations[reservationIndex].setStatus(Reservation::COMPLETED);
-        if (book && book->getReservationCount() > 0) {
+        if (book && book->getReservationCount() > 0)
+        {
             book->setReservationCount(book->getReservationCount() - 1);
         }
         dm->writeBook();
         dm->writeReservation();
     }
-    
+
     return true;
 }
 
 // 借阅管理：办理还书
-bool Admin::returnBook(const QString& isbn, const QString& readerId)
+bool Admin::returnBook(const QString &isbn, const QString &readerId)
 {
-    DataManager* dm = DataManager::getInstance();
-    
+    DataManager *dm = DataManager::getInstance();
+
     bool success = dm->updateBorrowRecord(isbn, readerId);
-    
+
     if (success)
     {
         handleBookReturned(isbn);
     }
-    
+
     return success;
 }
 
 // 借阅管理：办理续借
-bool Admin::renewBook(const QString& isbn, const QString& readerId)
+bool Admin::renewBook(const QString &isbn, const QString &readerId)
 {
-    DataManager* dm = DataManager::getInstance();
+    DataManager *dm = DataManager::getInstance();
     return dm->renewBorrowRecord(isbn, readerId, 30);
 }
 
 // 借阅管理：查看所有借阅记录
 std::vector<BorrowRecord> Admin::viewBorrowRecords()
 {
-    DataManager* dm = DataManager::getInstance();
+    DataManager *dm = DataManager::getInstance();
     return dm->getBorrowRecords();
 }
 
 // 借阅管理：查看逾期记录
 std::vector<BorrowRecord> Admin::viewOverdueRecords()
 {
-    DataManager* dm = DataManager::getInstance();
+    DataManager *dm = DataManager::getInstance();
     std::vector<BorrowRecord> allRecords = dm->getBorrowRecords();
     std::vector<BorrowRecord> overdueRecords;
-    
+
     QDateTime now = QDateTime::currentDateTime();
-    for (auto& record : allRecords)
+    for (auto &record : allRecords)
     {
         if (!record.isReturned() && now > record.getDueTime())
         {
             overdueRecords.push_back(record);
         }
     }
-    
+
     return overdueRecords;
 }
-//修改结束
-// 析构函数
+// 修改结束
+//  析构函数
 Admin::~Admin()
 {
 }

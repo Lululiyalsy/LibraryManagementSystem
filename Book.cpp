@@ -47,11 +47,6 @@ void Book::ReserveCount()
 {
 }
 
-// 根据借阅次数排序
-void Book::sortByBorrowCount()
-{
-}
-
 // 析构函数
 Book::~Book()
 {

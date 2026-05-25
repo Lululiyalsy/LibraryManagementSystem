@@ -68,7 +68,8 @@ public:
     std::vector<const Book*> searchBooks(const QString& isbn, const QString& title,
                                      const QString& author, const QString& category);
     // （图书添加）：添加图书并保存到文件
-    bool addBook(const Book& book);
+    // 返回值：0=成功新增，1=库存已增加，-1=ISBN冲突
+    int addBook(const Book& book);
     // （图书删除）：根据ISBN删除图书并保存到文件
     bool deleteBook(const QString& isbn);
     // （图书修改）：根据ISBN修改图书信息并保存到文件
