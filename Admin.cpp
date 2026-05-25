@@ -733,8 +733,7 @@ std::vector<BorrowRecord> Admin::viewOverdueRecords()
 // 管理员消息：获取所有消息
 std::vector<QString> Admin::getAllMessages()
 {
-    DataManager *dm = DataManager::getInstance();
-    return dm->getAdminMessages();
+    return getMsg();
 }
 
 // 修改结束

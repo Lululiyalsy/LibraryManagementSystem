@@ -20,6 +20,24 @@ void User::setPassword(const QString& pa) { password = pa; }
 void User::setPhone(const QString& ph) { phone = ph; }
 void User::setEmail(const QString& e) { email = e; }
 
+// 消息相关方法实现
+std::vector<QString>& User::getMsg() {
+    return msg;
+}
+
+void User::addMsg(const QString& message) {
+    QString timestamp = QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss");
+    msg.push_back(timestamp + "||" + message);
+}
+
+void User::clearMsg() {
+    msg.clear();
+}
+
+int User::getUnreadMsgCount() {
+    return msg.size();
+}
+
 User::~User() {
 
 }

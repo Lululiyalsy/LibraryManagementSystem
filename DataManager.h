@@ -131,11 +131,7 @@ public:
     bool hasReservation(const QString &isbn, const QString &readerId);
 
     // （管理员消息）：添加管理员消息
-    void addAdminMessage(const QString &message);
-    // （管理员消息）：获取所有管理员消息
-    std::vector<QString> getAdminMessages();
-    // （管理员消息）：清空管理员消息
-    void clearAdminMessages();
+    void addAdminMessage(User *user, const QString &message);
 
     // （析构函数）：DataManager析构函数
     ~DataManager();
@@ -154,9 +150,6 @@ private:
     std::vector<BorrowRecord> borrowRecords;
     // （预约容器）：存储所有预约
     std::vector<Reservation> reservations;
-
-    // （管理员消息容器）：存储所有管理员消息
-    std::vector<QString> adminMessages;
 
     // （文件路径）：用户数据文件路径
     QString userFilePath;

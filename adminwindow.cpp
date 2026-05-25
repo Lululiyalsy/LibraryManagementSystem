@@ -1721,7 +1721,7 @@ void AdminWindow::onSendTestMessage()
 {
     DataManager *dm = DataManager::getInstance();
     QString testMsg = QString("测试消息：读者张三预约了图书《C++编程思想》");
-    dm->addAdminMessage(testMsg);
+    dm->addAdminMessage(currentUser, testMsg);
 
     QMessageBox::information(this, "成功", "测试消息已发送！");
 

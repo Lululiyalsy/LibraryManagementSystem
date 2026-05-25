@@ -1148,21 +1148,10 @@ bool DataManager::hasReservation(const QString &isbn, const QString &readerId)
 }
 
 // （管理员消息）：添加管理员消息
-void DataManager::addAdminMessage(const QString &message)
+void DataManager::addAdminMessage(User *user, const QString &message)
 {
-    QString time = QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss");
-    QString fullMessage = QString("%1|%2").arg(time).arg(message);
-    adminMessages.push_back(fullMessage);
-}
-
-// （管理员消息）：获取所有管理员消息
-std::vector<QString> DataManager::getAdminMessages()
-{
-    return adminMessages;
-}
-
-// （管理员消息）：清空管理员消息
-void DataManager::clearAdminMessages()
-{
-    adminMessages.clear();
+    if (user)
+    {
+        user->addMsg(message);
+    }
 }

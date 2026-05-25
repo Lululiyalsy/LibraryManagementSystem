@@ -23,7 +23,6 @@ public:
     int getMaxBooks();
     int getCreditScore();
     std::vector<Book>& getBooks();
-    std::vector<QString>& getMsg();
 
     void setMaxBooks(int max);
     void setCreditScore(int score);
@@ -49,18 +48,6 @@ public:
     // 查看我的借阅记录
     std::vector<BorrowRecord> viewMyBorrowRecords();
 
-    // 查看消息
-    void checkMsg();
-
-    // 添加消息
-    void addMsg(const QString& message);
-
-    // 清空消息
-    void clearMsg();
-
-    // 获取未读消息数量
-    int getUnreadMsgCount();
-
     // 查找图书（模糊搜索）
     std::vector<const Book*> findBook(const QString& isbn, const QString& title, 
                                           const QString& author, const QString& category);
@@ -74,8 +61,6 @@ public:
     int creditScore;
     // 当前借阅列表
     std::vector<Book> books;
-    // 通知消息
-    std::vector<QString> msg;
 };
 
 #endif // READER_H

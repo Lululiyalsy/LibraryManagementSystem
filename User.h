@@ -2,8 +2,10 @@
 #define USER_H
 
 #include <QString>
+#include <QDateTime>
+#include <vector>
 
-//（前向声明）：前向声明需要的类，避免循环包含
+// （前向声明）：前向声明需要的类，避免循环包含
 class DataManager;
 class Book;
 class BorrowRecord;
@@ -12,7 +14,6 @@ class Reservation;
 class User
 {
 public:
-
     // 默认构造函数
     User();
 
@@ -44,6 +45,12 @@ public:
     void setPhone(const QString &ph);
     void setEmail(const QString &e);
 
+    // 消息相关方法
+    virtual std::vector<QString> &getMsg();
+    virtual void addMsg(const QString &message);
+    virtual void clearMsg();
+    virtual int getUnreadMsgCount();
+
     // 用户唯一标识
     QString ID;
     // 用户类型
@@ -56,6 +63,8 @@ public:
     QString phone;
     // 绑定邮箱
     QString email;
+    // 消息容器
+    std::vector<QString> msg;
 };
 
 #endif // USER_H
