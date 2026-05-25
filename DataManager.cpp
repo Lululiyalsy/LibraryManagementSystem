@@ -561,18 +561,37 @@ int DataManager::addBook(const Book &book)
 }
 
 // （图书删除）：根据ISBN删除图书并保存到文件
-bool DataManager::deleteBook(const QString &isbn)
+// 返回值：0=成功删除记录，1=库存已减少，-1=ISBN不存在，-2=存在预约或借出无法删除
+int DataManager::deleteBook(const QString &isbn, int decreaseStock)
 {
     for (auto it = books.begin(); it != books.end(); ++it)
     {
         if (it->getISBN() == isbn)
         {
-            books.erase(it);
-            writeBook();
-            return true;
+            // 检查是否有预约或借出
+            if (it->getReservationCount() > 0 || it->getCurrentBorrowed() > 0)
+            {
+                return -2; // 存在预约或借出，无法删除
+            }
+            
+            int currentStock = it->getStock();
+            if (decreaseStock >= currentStock)
+            {
+                // 删除整条记录
+                books.erase(it);
+                writeBook();
+                return 0; // 成功删除记录
+            }
+            else
+            {
+                // 减少库存
+                it->setStock(currentStock - decreaseStock);
+                writeBook();
+                return 1; // 库存已减少
+            }
         }
     }
-    return false;
+    return -1; // ISBN不存在
 }
 
 // （图书修改）：根据ISBN修改图书信息并保存到文件

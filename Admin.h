@@ -50,8 +50,8 @@ public:
     int addBook(const QString &isbn, const QString &title, const QString &author,
                 const QString &category, int stock);
 
-    // 删除书本信息
-    bool deleteBook(const QString &isbn);
+    // 删除书本信息，返回值：0=成功删除记录，1=库存已减少，-1=ISBN不存在，-2=存在预约或借出无法删除
+    int deleteBook(const QString &isbn, int decreaseStock);
 
     // 修改书本信息
     bool updateBook(const QString &isbn, const QString &title, const QString &author,

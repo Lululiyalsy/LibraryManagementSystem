@@ -579,7 +579,7 @@ void AdminWindow::onBookAdd()
 
         if (addResult == -1)
         {
-            QMessageBox::warning(this, "警告", "isbn对应的书已存在，请重试");
+            QMessageBox::warning(this, "警告", QString("ISBN %1 对应的书已存在，请重试").arg(isbn));
         }
         else if (addResult == 1)
         {
@@ -595,36 +595,57 @@ void AdminWindow::onBookAdd()
 // （图书删除）：删除按钮点击处理
 void AdminWindow::onBookDelete()
 {
-    QPair<QString, bool> result = showInputDialog("删除图书", "请输入要删除的图书ISBN：", true);
-    if (result.second)
+    QPair<QString, bool> isbnResult = showInputDialog("删除图书", "请输入要删除的图书ISBN：", true);
+    if (isbnResult.second)
     {
         QMessageBox msgBox(QMessageBox::Information, "提示", "图书删除已取消！", QMessageBox::NoButton, this);
         msgBox.addButton("确定", QMessageBox::AcceptRole);
         msgBox.exec();
         return;
     }
-    QString isbn = result.first;
+    QString isbn = isbnResult.first;
 
     ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
-    if (admin)
+    if (!admin)
     {
-        bool success = admin->deleteBook(isbn);
+        return;
+    }
 
-        if (success)
-        {
-            std::vector<const Book *> books = admin->findAllBook();
-            displayBooks(books);
+    DataManager *dm = DataManager::getInstance();
+    Book *book = dm->findBookByISBN(isbn);
+    if (book == nullptr)
+    {
+        QMessageBox::warning(this, "失败", QString("不存在ISBN %1，请重试").arg(isbn));
+        return;
+    }
 
-            QMessageBox msgBox(QMessageBox::Information, "成功", "图书删除成功！", QMessageBox::NoButton, this);
-            msgBox.addButton("确定", QMessageBox::AcceptRole);
-            msgBox.exec();
-        }
-        else
-        {
-            QMessageBox msgBox(QMessageBox::Warning, "失败", "图书删除失败，未找到匹配的图书！", QMessageBox::NoButton, this);
-            msgBox.addButton("确定", QMessageBox::AcceptRole);
-            msgBox.exec();
-        }
+    QPair<QString, bool> stockResult = showInputDialog("删除图书", "请输入要减少的库存数目：", true);
+    if (stockResult.second)
+    {
+        QMessageBox msgBox(QMessageBox::Information, "提示", "图书删除已取消！", QMessageBox::NoButton, this);
+        msgBox.addButton("确定", QMessageBox::AcceptRole);
+        msgBox.exec();
+        return;
+    }
+    int decreaseStock = stockResult.first.toInt();
+
+    int deleteResult = admin->deleteBook(isbn, decreaseStock);
+
+    if (deleteResult == 0)
+    {
+        std::vector<const Book *> books = admin->findAllBook();
+        displayBooks(books);
+        QMessageBox::information(this, "成功", "图书删除成功！");
+    }
+    else if (deleteResult == 1)
+    {
+        std::vector<const Book *> books = admin->findAllBook();
+        displayBooks(books);
+        QMessageBox::information(this, "成功", "图书库存已减少！");
+    }
+    else if (deleteResult == -2)
+    {
+        QMessageBox::warning(this, "失败", "当前存在预约或借出，无法删除！");
     }
 }
 

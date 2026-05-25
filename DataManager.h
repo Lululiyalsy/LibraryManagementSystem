@@ -71,7 +71,8 @@ public:
     // 返回值：0=成功新增，1=库存已增加，-1=ISBN冲突
     int addBook(const Book& book);
     // （图书删除）：根据ISBN删除图书并保存到文件
-    bool deleteBook(const QString& isbn);
+    // 返回值：0=成功删除记录，1=库存已减少，-1=ISBN不存在，-2=存在预约或借出无法删除
+    int deleteBook(const QString& isbn, int decreaseStock);
     // （图书修改）：根据ISBN修改图书信息并保存到文件
     bool updateBook(const QString& isbn, const Book& newBook);
     // （图书获取）：获取所有图书

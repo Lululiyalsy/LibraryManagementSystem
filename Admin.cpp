@@ -233,11 +233,11 @@ int Admin::addBook(const QString &isbn, const QString &title, const QString &aut
     return dm->addBook(book);
 }
 
-// 删除书本信息
-bool Admin::deleteBook(const QString &isbn)
+// 删除书本信息，返回值：0=成功删除记录，1=库存已减少，-1=ISBN不存在，-2=存在预约或借出无法删除
+int Admin::deleteBook(const QString &isbn, int decreaseStock)
 {
     DataManager *dm = DataManager::getInstance();
-    return dm->deleteBook(isbn);
+    return dm->deleteBook(isbn, decreaseStock);
 }
 
 // 修改书本信息
