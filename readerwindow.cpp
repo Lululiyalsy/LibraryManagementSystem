@@ -452,10 +452,12 @@ void ReaderWindow::setupMessageWidget()
     messageTable->setColumnCount(3);
     QStringList headers = {"消息时间", "消息内容", "消息状态"};
     messageTable->setHorizontalHeaderLabels(headers);
-    messageTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    messageTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     messageTable->setSelectionBehavior(QTableWidget::SelectRows);
     messageTable->setColumnWidth(0, 150);
-    messageTable->setColumnWidth(1, 400);
+    messageTable->setColumnWidth(1, 600); // 增加消息内容列宽度
+    messageTable->setColumnWidth(2, 80);
+    messageTable->horizontalHeader()->setStretchLastSection(false); // 禁止自动拉伸
 
     mainLayout->addWidget(messageTable);
 
