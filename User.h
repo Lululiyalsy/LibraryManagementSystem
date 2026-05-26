@@ -4,8 +4,9 @@
 #include <QString>
 #include <QDateTime>
 #include <vector>
+#include "Message.h"
 
-// （前向声明）：前向声明需要的类，避免循环包含
+//（前向声明）：前向声明需要的类，避免循环包含
 class DataManager;
 class Book;
 class BorrowRecord;
@@ -14,6 +15,7 @@ class Reservation;
 class User
 {
 public:
+
     // 默认构造函数
     User();
 
@@ -46,10 +48,10 @@ public:
     void setEmail(const QString &e);
 
     // 消息相关方法
-    virtual std::vector<QString> &getMsg();
-    virtual void addMsg(const QString &message);
-    virtual void clearMsg();
-    virtual int getUnreadMsgCount();
+    virtual std::vector<Message>& getMessages();
+    virtual void addMessage(const Message& message);
+    virtual void clearMessages();
+    virtual int getUnreadMessageCount();
 
     // 用户唯一标识
     QString ID;
@@ -64,7 +66,7 @@ public:
     // 绑定邮箱
     QString email;
     // 消息容器
-    std::vector<QString> msg;
+    std::vector<Message> messages;
 };
 
 #endif // USER_H

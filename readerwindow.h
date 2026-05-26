@@ -15,6 +15,7 @@
 #include <QDateTime>
 #include <vector>
 #include "User.h"
+#include "Message.h"
 #include "Book.h"
 #include "Reservation.h"
 #include "BorrowRecord.h"
@@ -78,7 +79,7 @@ private:
     void displayBooks(const std::vector<const Book *> &books);
     void displayMyBorrowRecords();
     void displayMyReservations();
-    void displayMessages(const std::vector<QString> &messages);
+    void displayMessages(const std::vector<Message> &messages);
     QPair<QString, bool> showInputDialog(const QString &title, const QString &label, bool isPassword = false);
 };
 

@@ -241,8 +241,8 @@ int Admin::deleteBook(const QString &isbn, int decreaseStock)
 }
 
 // 修改书本信息，返回值：0=成功修改，-1=原ISBN不存在，-2=存在预约或借出无法修改，-3=新ISBN已存在
-int Admin::updateBook(const QString &oldIsbn, const QString &newIsbn, const QString &title, 
-                      const QString &author, const QString &category, int stock, 
+int Admin::updateBook(const QString &oldIsbn, const QString &newIsbn, const QString &title,
+                      const QString &author, const QString &category, int stock,
                       const QDateTime &inStockTime)
 {
     DataManager *dm = DataManager::getInstance();
@@ -480,11 +480,12 @@ void Admin::processReservation()
                     Reader *reader = dynamic_cast<Reader *>(user);
                     if (reader)
                     {
-                        QString msg = QString("您预约的图书《%1》(ISBN:%2)已可借阅，请尽快到图书馆办理借阅手续。")
-                                          .arg(book->getTitle())
-                                          .arg(reservation.getISBN());
-                        reader->addMsg(msg);
-                        dm->writeUser();
+                        QString msgContent = QString("您预约的图书《%1》(ISBN:%2)已可借阅，请尽快到图书馆办理借阅手续。")
+                                                 .arg(book->getTitle())
+                                                 .arg(reservation.getISBN());
+                        Message msg(reader->getID(), reader->getName(), msgContent);
+                        reader->addMessage(msg);
+                        dm->writeMessage();
                     }
                 }
 
@@ -562,8 +563,9 @@ bool Admin::processSingleReservation(const QString &isbn, const QString &readerI
                                   .arg(book ? book->getTitle() : "未知")
                                   .arg(isbn);
                     }
-                    reader->addMsg(msg);
-                    dm->writeUser();
+                    Message message(reader->getID(), reader->getName(), msg);
+                    reader->addMessage(message);
+                    dm->writeMessage();
                 }
             }
 
@@ -731,9 +733,9 @@ std::vector<BorrowRecord> Admin::viewOverdueRecords()
 }
 
 // 管理员消息：获取所有消息
-std::vector<QString> Admin::getAllMessages()
+std::vector<Message> Admin::getAllMessages()
 {
-    return getMsg();
+    return getMessages();
 }
 
 // 修改结束

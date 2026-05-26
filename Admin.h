@@ -89,7 +89,7 @@ public:
     void handleBookReturned(const QString &isbn);
 
     // 管理员消息：获取所有消息
-    std::vector<QString> getAllMessages();
+    std::vector<Message> getAllMessages();
 
     // 借阅管理：办理借书
     bool borrowBook(const QString &isbn, const QString &readerId);

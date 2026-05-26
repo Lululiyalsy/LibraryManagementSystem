@@ -448,8 +448,8 @@ void ReaderWindow::setupMessageWidget()
     QVBoxLayout *mainLayout = new QVBoxLayout(messageWidget);
 
     messageTable = new QTableWidget(this);
-    messageTable->setColumnCount(2);
-    QStringList headers = {"时间", "消息内容"};
+    messageTable->setColumnCount(3);
+    QStringList headers = {"消息时间", "消息内容", "消息状态"};
     messageTable->setHorizontalHeaderLabels(headers);
     messageTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     messageTable->setSelectionBehavior(QTableWidget::SelectRows);
@@ -458,19 +458,19 @@ void ReaderWindow::setupMessageWidget()
 }
 
 // （显示消息）：显示消息到消息表格
-void ReaderWindow::displayMessages(const std::vector<QString> &messages)
+void ReaderWindow::displayMessages(const std::vector<Message> &messages)
 {
     messageTable->setRowCount(messages.size());
 
     for (size_t i = 0; i < messages.size(); ++i)
     {
-        QString msg = messages[i];
-        QStringList parts = msg.split("||");
-        QString time = parts.size() > 1 ? parts[0] : "";
-        QString content = parts.size() > 1 ? parts[1] : msg;
+        const Message &msg = messages[i];
+        std::vector<QString> fields = msg.getReaderDisplayFields();
 
-        messageTable->setItem(i, 0, new QTableWidgetItem(time));
-        messageTable->setItem(i, 1, new QTableWidgetItem(content));
+        for (int j = 0; j < fields.size() && j < 3; ++j)
+        {
+            messageTable->setItem(i, j, new QTableWidgetItem(fields[j]));
+        }
     }
 }
 
@@ -484,7 +484,7 @@ void ReaderWindow::onCheckMessages()
     }
 
     stackedWidget->setCurrentWidget(messageWidget);
-    displayMessages(reader->getMsg());
+    displayMessages(reader->getMessages());
 }
 
 // （退出登录）：退出按钮点击处理

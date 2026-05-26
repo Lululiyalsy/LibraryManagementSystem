@@ -12,6 +12,7 @@
 #include <QVBoxLayout>
 #include <QWidget>
 #include "User.h"
+#include "Message.h"
 #include "statisticswidget.h"
 
 class AdminWindow : public QMainWindow
@@ -213,7 +214,7 @@ private:
     // （消息管理）：初始化消息表格
     void setupMessageWidget();
     // （显示消息）：显示消息到消息表格
-    void displayMessages(const std::vector<QString> &messages);
+    void displayMessages(const std::vector<Message> &messages);
 
     // （消息容器）：消息管理界面的容器指针
     QWidget *messageWidget;

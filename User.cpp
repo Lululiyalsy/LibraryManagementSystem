@@ -21,21 +21,26 @@ void User::setPhone(const QString& ph) { phone = ph; }
 void User::setEmail(const QString& e) { email = e; }
 
 // 消息相关方法实现
-std::vector<QString>& User::getMsg() {
-    return msg;
+std::vector<Message>& User::getMessages() {
+    return messages;
 }
 
-void User::addMsg(const QString& message) {
-    QString timestamp = QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss");
-    msg.push_back(timestamp + "||" + message);
+void User::addMessage(const Message& message) {
+    messages.push_back(message);
 }
 
-void User::clearMsg() {
-    msg.clear();
+void User::clearMessages() {
+    messages.clear();
 }
 
-int User::getUnreadMsgCount() {
-    return msg.size();
+int User::getUnreadMessageCount() {
+    int count = 0;
+    for (const auto& msg : messages) {
+        if (msg.getStatus() == MessageStatus::UNREAD) {
+            count++;
+        }
+    }
+    return count;
 }
 
 User::~User() {

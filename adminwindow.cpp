@@ -1677,29 +1677,34 @@ void AdminWindow::setupMessageWidget()
     mainLayout->addWidget(testBtn);
 
     messageTable = new QTableWidget(this);
-    messageTable->setColumnCount(2);
-    messageTable->setHorizontalHeaderLabels(QStringList() << "时间" << "消息内容");
+    messageTable->setColumnCount(5);
+    messageTable->setHorizontalHeaderLabels(QStringList() << "读者ID" << "读者名" << "消息时间" << "消息内容" << "消息状态");
     messageTable->horizontalHeader()->setStretchLastSection(true);
     messageTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     messageTable->setSelectionBehavior(QAbstractItemView::SelectRows);
-    messageTable->setColumnWidth(0, 150);
+    messageTable->setColumnWidth(0, 80);
+    messageTable->setColumnWidth(1, 80);
+    messageTable->setColumnWidth(2, 130);
+    messageTable->setColumnWidth(3, 400);
+    messageTable->setColumnWidth(4, 80);
 
     mainLayout->addWidget(messageTable);
     messageWidget->setLayout(mainLayout);
 }
 
 // （显示消息）：显示消息到消息表格
-void AdminWindow::displayMessages(const std::vector<QString> &messages)
+void AdminWindow::displayMessages(const std::vector<Message> &messages)
 {
     messageTable->setRowCount(messages.size());
     for (size_t i = 0; i < messages.size(); ++i)
     {
-        QString msg = messages[i];
-        QString time = msg.section("|", 0, 0);
-        QString content = msg.section("|", 1, 1);
+        const Message &msg = messages[i];
+        std::vector<QString> fields = msg.getAdminDisplayFields();
 
-        messageTable->setItem(i, 0, new QTableWidgetItem(time));
-        messageTable->setItem(i, 1, new QTableWidgetItem(content));
+        for (int j = 0; j < fields.size() && j < 4; ++j)
+        {
+            messageTable->setItem(i, j, new QTableWidgetItem(fields[j]));
+        }
     }
 }
 
@@ -1720,8 +1725,8 @@ void AdminWindow::onMessage()
 void AdminWindow::onSendTestMessage()
 {
     DataManager *dm = DataManager::getInstance();
-    QString testMsg = QString("测试消息：读者张三预约了图书《C++编程思想》");
-    dm->addAdminMessage(currentUser, testMsg);
+    QString testMsg = QString("读者reader001预约了图书《C++编程思想》");
+    dm->addAdminMessage(currentUser, "reader001", "张三", testMsg);
 
     QMessageBox::information(this, "成功", "测试消息已发送！");
 

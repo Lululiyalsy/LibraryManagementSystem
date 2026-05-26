@@ -68,6 +68,7 @@ DataManager::DataManager()
     initBook();
     initBorrowRecord();
     initReservation();
+    initMessage();
 }
 
 // （析构函数）：DataManager析构函数，自动保存数据
@@ -273,36 +274,6 @@ void DataManager::initUser()
     }
 
     file.close();
-
-    // 处理消息messages.txt
-    QFile msgFile(messageFilePath);
-    if (msgFile.open(QIODevice::ReadOnly | QIODevice::Text))
-    {
-        QTextStream msgIn(&msgFile);
-        while (!msgIn.atEnd())
-        {
-            QString line = msgIn.readLine().trimmed();
-            if (line.isEmpty())
-                continue;
-            QStringList parts = line.split("|", Qt::KeepEmptyParts);
-            if (parts.size() < 2)
-                continue;
-            QString readerId = parts[0];
-            ::User *u = findUserById(readerId);
-            if (u && u->getType() == 2)
-            {
-                ::Reader *reader = dynamic_cast<::Reader *>(u);
-                if (reader)
-                {
-                    for (int i = 1; i < parts.size(); i++)
-                    {
-                        reader->addMsg(parts[i]);
-                    }
-                }
-            }
-        }
-        msgFile.close();
-    }
 }
 
 // （用户管理）：写入用户数据到文件
@@ -329,33 +300,6 @@ void DataManager::writeUser()
     }
 
     file.close();
-
-    QFile msgFile(messageFilePath);
-    if (msgFile.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
-    {
-        QTextStream msgOut(&msgFile);
-        for (auto user : users)
-        {
-            if (user->getType() == 2)
-            {
-                ::Reader *reader = dynamic_cast<::Reader *>(user);
-                if (reader)
-                {
-                    std::vector<QString> &msgs = reader->getMsg();
-                    if (!msgs.empty())
-                    {
-                        msgOut << reader->getID();
-                        for (const auto &m : msgs)
-                        {
-                            msgOut << "|" << m;
-                        }
-                        msgOut << "\n";
-                    }
-                }
-            }
-        }
-        msgFile.close();
-    }
 }
 
 // 修改5.16
@@ -787,15 +731,16 @@ bool DataManager::updateBorrowRecord(const QString &isbn, const QString &readerI
 
                         // 发送消息通知
                         QString bookTitle = book ? book->getTitle() : "未知书名";
-                        QString msg = QString("图书《%1》(ISBN:%2)逾期%3天归还，信用分扣减%4分，当前信用分：%5")
-                                          .arg(bookTitle)
-                                          .arg(isbn)
-                                          .arg(overdueDays)
-                                          .arg(scoreDeduction)
-                                          .arg(reader->getCreditScore());
-                        reader->addMsg(msg);
+                        QString msgContent = QString("图书《%1》(ISBN:%2)逾期%3天归还，信用分扣减%4分，当前信用分：%5")
+                                                 .arg(bookTitle)
+                                                 .arg(isbn)
+                                                 .arg(overdueDays)
+                                                 .arg(scoreDeduction)
+                                                 .arg(reader->getCreditScore());
+                        Message msg(reader->getID(), reader->getName(), msgContent);
+                        reader->addMessage(msg);
 
-                        writeUser();
+                        writeMessage();
                     }
                 }
             }
@@ -1106,10 +1051,12 @@ void DataManager::notifyReservations(const QString &isbn)
                 ::Reader *reader = dynamic_cast<::Reader *>(user);
                 if (reader)
                 {
-                    QString msg = QString("您预约的图书《%1》(ISBN:%2)现已可借，请尽快前往借阅。")
-                                      .arg(book->getTitle())
-                                      .arg(isbn);
-                    reader->addMsg(msg);
+                    QString msgContent = QString("您预约的图书《%1》(ISBN:%2)现已可借，请尽快前往借阅。")
+                                             .arg(book->getTitle())
+                                             .arg(isbn);
+                    Message msg(reader->getID(), reader->getName(), msgContent);
+                    reader->addMessage(msg);
+                    writeMessage();
                 }
             }
         }
@@ -1144,11 +1091,79 @@ bool DataManager::hasReservation(const QString &isbn, const QString &readerId)
     return false;
 }
 
-// （管理员消息）：添加管理员消息
-void DataManager::addAdminMessage(User *user, const QString &message)
+// （消息管理）：初始化读取消息数据
+void DataManager::initMessage()
 {
-    if (user)
+    QFile msgFile(messageFilePath);
+    if (msgFile.open(QIODevice::ReadOnly | QIODevice::Text))
     {
-        user->addMsg(message);
+        QTextStream msgIn(&msgFile);
+        while (!msgIn.atEnd())
+        {
+            QString line = msgIn.readLine().trimmed();
+            if (line.isEmpty())
+                continue;
+
+            Message msg = Message::fromFileString(line);
+
+            if (msg.isAdminMessage())
+            {
+                // 管理员消息：根据管理员ID和姓名找到管理员
+                for (auto user : users)
+                {
+                    if (user->getType() == 1 && // 管理员类型
+                        user->getID() == msg.getAdminId() &&
+                        user->getName() == msg.getAdminName())
+                    {
+                        user->addMessage(msg);
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                // 读者消息：根据读者ID和姓名找到读者
+                for (auto user : users)
+                {
+                    if (user->getType() == 2 && // 读者类型
+                        user->getID() == msg.getReaderId() &&
+                        user->getName() == msg.getReaderName())
+                    {
+                        user->addMessage(msg);
+                        break;
+                    }
+                }
+            }
+        }
+        msgFile.close();
+    }
+}
+
+// （消息管理）：写入消息数据到文件
+void DataManager::writeMessage()
+{
+    QFile msgFile(messageFilePath);
+    if (msgFile.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
+    {
+        QTextStream msgOut(&msgFile);
+        for (auto user : users)
+        {
+            std::vector<Message> &messages = user->getMessages();
+            for (const auto &msg : messages)
+            {
+                msgOut << msg.toFileString() << "\n";
+            }
+        }
+        msgFile.close();
+    }
+}
+
+// （管理员消息）：添加管理员消息
+void DataManager::addAdminMessage(User *user, const QString& readerId, const QString& readerName, const QString &message) {
+    if (user) {
+        // 创建管理员消息
+        Message msg(user->getID(), user->getName(), readerId, readerName, message);
+        user->addMessage(msg);
+        writeMessage();
     }
 }

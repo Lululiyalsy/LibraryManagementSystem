@@ -130,8 +130,13 @@ public:
     // （预约管理）：检查读者是否已预约某图书
     bool hasReservation(const QString &isbn, const QString &readerId);
 
+    // （消息管理）：初始化读取消息数据
+    void initMessage();
+    // （消息管理）：写入消息数据到文件
+    void writeMessage();
+
     // （管理员消息）：添加管理员消息
-    void addAdminMessage(User *user, const QString &message);
+    void addAdminMessage(User *user, const QString& readerId, const QString& readerName, const QString &message);
 
     // （析构函数）：DataManager析构函数
     ~DataManager();
