@@ -138,6 +138,9 @@ public:
     // （管理员消息）：添加管理员消息
     void addAdminMessage(User *user, const QString& readerId, const QString& readerName, const QString &message);
 
+    // （读者消息）：添加读者消息
+    void addReaderMessage(User *reader, const QString &message);
+
     // （析构函数）：DataManager析构函数
     ~DataManager();
 

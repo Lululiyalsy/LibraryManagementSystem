@@ -39,6 +39,7 @@ private slots:
     void switchToMyBorrow();
     void switchToMyReservation();
     void onCheckMessages();
+    void onSendTestMessage();
     void onLogout();
 
 signals:

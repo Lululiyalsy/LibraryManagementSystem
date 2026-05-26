@@ -1167,3 +1167,13 @@ void DataManager::addAdminMessage(User *user, const QString& readerId, const QSt
         writeMessage();
     }
 }
+
+// （读者消息）：添加读者消息
+void DataManager::addReaderMessage(User *reader, const QString &message) {
+    if (reader) {
+        // 创建读者消息
+        Message msg(reader->getID(), reader->getName(), message);
+        reader->addMessage(msg);
+        writeMessage();
+    }
+}
