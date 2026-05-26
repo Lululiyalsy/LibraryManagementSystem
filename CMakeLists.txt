@@ -50,6 +50,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         adminwindow.h adminwindow.cpp adminwindow.ui
         readerwindow.h readerwindow.cpp readerwindow.ui
         statisticswidget.h statisticswidget.cpp
+        message.h message.cpp
 
 
 
