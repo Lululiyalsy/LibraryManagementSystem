@@ -455,17 +455,10 @@ void ReaderWindow::setupMessageWidget()
     messageTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     messageTable->setSelectionBehavior(QTableWidget::SelectRows);
     messageTable->setColumnWidth(0, 150);
-    messageTable->setColumnWidth(1, 600); // 增加消息内容列宽度
+    messageTable->setColumnWidth(1, 600);
     messageTable->setColumnWidth(2, 80);
-    messageTable->horizontalHeader()->setStretchLastSection(false); // 禁止自动拉伸
 
     mainLayout->addWidget(messageTable);
-
-    // 测试消息按钮
-    QPushButton *testBtn = new QPushButton("发送测试消息", this);
-    testBtn->setFixedSize(120, 35);
-    connect(testBtn, &QPushButton::clicked, this, &ReaderWindow::onSendTestMessage);
-    mainLayout->addWidget(testBtn);
 }
 
 // （显示消息）：显示消息到消息表格
@@ -496,19 +489,6 @@ void ReaderWindow::onCheckMessages()
 
     stackedWidget->setCurrentWidget(messageWidget);
     displayMessages(reader->getMessages());
-}
-
-// （发送测试消息）：发送测试消息槽函数
-void ReaderWindow::onSendTestMessage()
-{
-    DataManager *dm = DataManager::getInstance();
-    QString testMsg = QString("这是一条测试消息，欢迎使用图书馆管理系统！");
-    dm->addReaderMessage(currentUser, testMsg);
-
-    QMessageBox::information(this, "成功", "测试消息已发送！");
-
-    // 刷新消息表格
-    onCheckMessages();
 }
 
 // （退出登录）：退出按钮点击处理

@@ -1671,11 +1671,6 @@ void AdminWindow::setupMessageWidget()
     messageWidget = new QWidget(this);
     QVBoxLayout *mainLayout = new QVBoxLayout(messageWidget);
 
-    // 添加测试按钮
-    QPushButton *testBtn = new QPushButton("发送测试消息", this);
-    connect(testBtn, &QPushButton::clicked, this, &AdminWindow::onSendTestMessage);
-    mainLayout->addWidget(testBtn);
-
     messageTable = new QTableWidget(this);
     messageTable->setColumnCount(5);
     messageTable->setHorizontalHeaderLabels(QStringList() << "读者ID" << "读者名" << "消息时间" << "消息内容" << "消息状态");
@@ -1719,19 +1714,6 @@ void AdminWindow::onMessage()
 
     stackedWidget->setCurrentWidget(messageWidget);
     displayMessages(admin->getAllMessages());
-}
-
-// （发送测试消息）：发送测试消息槽函数
-void AdminWindow::onSendTestMessage()
-{
-    DataManager *dm = DataManager::getInstance();
-    QString testMsg = QString("读者reader001预约了图书《C++编程思想》");
-    dm->addAdminMessage(currentUser, "reader001", "张三", testMsg);
-
-    QMessageBox::information(this, "成功", "测试消息已发送！");
-
-    // 刷新消息表格
-    onMessage();
 }
 
 // （退出登录）：退出按钮点击处理

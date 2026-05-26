@@ -44,8 +44,6 @@ private slots:
     void onLogout();
     // （消息管理）：消息按钮点击槽函数
     void onMessage();
-    // （发送测试消息）：发送测试消息槽函数
-    void onSendTestMessage();
 
 signals:
     // （退出登录信号）：通知主程序退出登录
