@@ -666,6 +666,12 @@ void AdminWindow::onBookDelete()
     }
     int decreaseStock = stockResult.first.toInt();
 
+    // 保存图书信息（删除前获取）
+    QString bookTitle = book->getTitle();
+    QString bookAuthor = book->getAuthor();
+    QString bookCategory = book->getCategory();
+    int bookStock = book->getStock();
+
     int deleteResult = admin->deleteBook(isbn, decreaseStock);
 
     if (deleteResult == 0)
@@ -678,11 +684,11 @@ void AdminWindow::onBookDelete()
         DataManager *dm = DataManager::getInstance();
         QString msgContent = QString("管理员%1删除了图书：%2（ISBN: %3, 作者: %4, 分类: %5, 库存: %6）- 已删除记录")
                                  .arg(currentUser->getName())
-                                 .arg(book->getTitle())
+                                 .arg(bookTitle)
                                  .arg(isbn)
-                                 .arg(book->getAuthor())
-                                 .arg(book->getCategory())
-                                 .arg(decreaseStock);
+                                 .arg(bookAuthor)
+                                 .arg(bookCategory)
+                                 .arg(bookStock);
         dm->addAdminMessage(currentUser, currentUser->getID(), currentUser->getName(), msgContent);
     }
     else if (deleteResult == 1)
