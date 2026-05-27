@@ -7,6 +7,7 @@
 #include <QWidget>
 #include <QTableWidget>
 #include <QLineEdit>
+#include <QComboBox>
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -65,7 +66,7 @@ private:
     // 消息查找输入框
     QLineEdit *messageTimeEdit;
     QLineEdit *messageContentEdit;
-    QLineEdit *messageStatusEdit;
+    QComboBox *messageStatusCombo;
 
     QLineEdit *bookISBNLineEdit;
     QLineEdit *bookTitleLineEdit;

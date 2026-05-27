@@ -1795,8 +1795,23 @@ void AdminWindow::setupMessageWidget()
     messageWidget = new QWidget(this);
     QVBoxLayout *mainLayout = new QVBoxLayout(messageWidget);
 
-    // 查找输入框布局
-    QHBoxLayout *searchLayout = new QHBoxLayout();
+    // 操作按钮和查找输入框布局（同一行）
+    QHBoxLayout *topLayout = new QHBoxLayout();
+
+    // 操作按钮
+    QPushButton *deleteMessageBtn = new QPushButton("删除消息", this);
+    QPushButton *clearAllMessagesBtn = new QPushButton("清除所有消息", this);
+    QPushButton *markAllReadBtn = new QPushButton("全部设为已读", this);
+
+    topLayout->addWidget(deleteMessageBtn);
+    topLayout->addWidget(clearAllMessagesBtn);
+    topLayout->addWidget(markAllReadBtn);
+
+    // 添加分隔
+    QFrame *separator = new QFrame(this);
+    separator->setFrameShape(QFrame::VLine);
+    separator->setFrameShadow(QFrame::Sunken);
+    topLayout->addWidget(separator);
 
     // 消息查找输入框（每列一个）
     messageReaderIdEdit = new QLineEdit(this);
@@ -1815,40 +1830,28 @@ void AdminWindow::setupMessageWidget()
     messageContentEdit->setPlaceholderText("消息内容");
     messageContentEdit->setFixedWidth(200);
 
-    messageStatusEdit = new QLineEdit(this);
-    messageStatusEdit->setPlaceholderText("消息状态");
-    messageStatusEdit->setFixedWidth(80);
+    messageStatusCombo = new QComboBox(this);
+    messageStatusCombo->addItem("");
+    messageStatusCombo->addItem("已读");
+    messageStatusCombo->addItem("未读");
+    messageStatusCombo->setFixedWidth(80);
 
     QPushButton *searchMessageBtn = new QPushButton("查找消息", this);
 
-    searchLayout->addWidget(messageReaderIdEdit);
-    searchLayout->addWidget(messageReaderNameEdit);
-    searchLayout->addWidget(messageTimeEdit);
-    searchLayout->addWidget(messageContentEdit);
-    searchLayout->addWidget(messageStatusEdit);
-    searchLayout->addWidget(searchMessageBtn);
-    searchLayout->addStretch();
-
-    mainLayout->addLayout(searchLayout);
-
-    // 操作按钮布局
-    QHBoxLayout *buttonLayout = new QHBoxLayout();
-
-    QPushButton *deleteMessageBtn = new QPushButton("删除消息", this);
-    QPushButton *clearAllMessagesBtn = new QPushButton("清除所有消息", this);
-    QPushButton *markAllReadBtn = new QPushButton("全部设为已读", this);
-
-    buttonLayout->addWidget(deleteMessageBtn);
-    buttonLayout->addWidget(clearAllMessagesBtn);
-    buttonLayout->addWidget(markAllReadBtn);
-    buttonLayout->addStretch();
+    topLayout->addWidget(messageReaderIdEdit);
+    topLayout->addWidget(messageReaderNameEdit);
+    topLayout->addWidget(messageTimeEdit);
+    topLayout->addWidget(messageContentEdit);
+    topLayout->addWidget(messageStatusCombo);
+    topLayout->addWidget(searchMessageBtn);
+    topLayout->addStretch();
 
     connect(deleteMessageBtn, &QPushButton::clicked, this, &AdminWindow::onDeleteMessage);
     connect(clearAllMessagesBtn, &QPushButton::clicked, this, &AdminWindow::onClearAllMessages);
     connect(markAllReadBtn, &QPushButton::clicked, this, &AdminWindow::onMarkAllRead);
     connect(searchMessageBtn, &QPushButton::clicked, this, &AdminWindow::onSearchMessage);
 
-    mainLayout->addLayout(buttonLayout);
+    mainLayout->addLayout(topLayout);
 
     messageTable = new QTableWidget(this);
     messageTable->setColumnCount(5);
@@ -2023,19 +2026,17 @@ void AdminWindow::onSearchMessage()
     QString readerName = messageReaderNameEdit->text().trimmed();
     QString time = messageTimeEdit->text().trimmed();
     QString content = messageContentEdit->text().trimmed();
-    QString status = messageStatusEdit->text().trimmed();
-
-    // 检查是否至少有一个条件
-    if (readerId.isEmpty() && readerName.isEmpty() && time.isEmpty() && content.isEmpty() && status.isEmpty())
-    {
-        QMessageBox msgBox(QMessageBox::Warning, "提示", "请至少输入一个查找条件！", QMessageBox::NoButton, this);
-        msgBox.addButton("确定", QMessageBox::AcceptRole);
-        msgBox.exec();
-        return;
-    }
+    QString status = messageStatusCombo->currentText().trimmed();
 
     std::vector<Message> allMessages = admin->getAllMessages();
     std::vector<Message> filteredMessages;
+
+    // 如果所有条件都为空，显示全部消息
+    if (readerId.isEmpty() && readerName.isEmpty() && time.isEmpty() && content.isEmpty() && status.isEmpty())
+    {
+        displayMessages(allMessages);
+        return;
+    }
 
     for (const auto &msg : allMessages)
     {
@@ -2074,17 +2075,5 @@ void AdminWindow::onSearchMessage()
         }
     }
 
-    if (filteredMessages.empty())
-    {
-        QMessageBox msgBox(QMessageBox::Information, "提示", "未找到匹配的消息！", QMessageBox::NoButton, this);
-        msgBox.addButton("确定", QMessageBox::AcceptRole);
-        msgBox.exec();
-    }
-    else
-    {
-        displayMessages(filteredMessages);
-        QMessageBox msgBox(QMessageBox::Information, "查找结果", QString("共找到 %1 条匹配的消息！").arg(filteredMessages.size()), QMessageBox::NoButton, this);
-        msgBox.addButton("确定", QMessageBox::AcceptRole);
-        msgBox.exec();
-    }
+    displayMessages(filteredMessages);
 }

@@ -11,6 +11,7 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QWidget>
+#include <QComboBox>
 #include "User.h"
 #include "Message.h"
 #include "statisticswidget.h"
@@ -226,11 +227,11 @@ private:
     QWidget *messageWidget;
     // （消息表格）：消息表格指针
     QTableWidget *messageTable;
-    // （消息查找输入框）
+    // 消息查找输入框
     QLineEdit *messageReaderIdEdit;
     QLineEdit *messageReaderNameEdit;
     QLineEdit *messageTimeEdit;
     QLineEdit *messageContentEdit;
-    QLineEdit *messageStatusEdit;
+    QComboBox *messageStatusCombo;
 };
 #endif // ADMINWINDOW_H
