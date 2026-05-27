@@ -1696,7 +1696,7 @@ void AdminWindow::displayMessages(const std::vector<Message> &messages)
         const Message &msg = messages[i];
         std::vector<QString> fields = msg.getAdminDisplayFields();
 
-        for (int j = 0; j < fields.size() && j < 4; ++j)
+        for (int j = 0; j < fields.size() && j < 5; ++j)
         {
             messageTable->setItem(i, j, new QTableWidgetItem(fields[j]));
         }

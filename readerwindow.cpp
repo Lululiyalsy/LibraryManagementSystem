@@ -452,6 +452,7 @@ void ReaderWindow::setupMessageWidget()
     messageTable->setColumnCount(3);
     QStringList headers = {"消息时间", "消息内容", "消息状态"};
     messageTable->setHorizontalHeaderLabels(headers);
+    messageTable->horizontalHeader()->setStretchLastSection(true);
     messageTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     messageTable->setSelectionBehavior(QTableWidget::SelectRows);
     messageTable->setColumnWidth(0, 150);
@@ -476,6 +477,11 @@ void ReaderWindow::displayMessages(const std::vector<Message> &messages)
             messageTable->setItem(i, j, new QTableWidgetItem(fields[j]));
         }
     }
+
+    // 设置列宽
+    messageTable->setColumnWidth(0, 150);
+    messageTable->setColumnWidth(1, 600);
+    messageTable->setColumnWidth(2, 80);
 }
 
 // （消息管理）：消息按钮点击处理
