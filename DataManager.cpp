@@ -216,6 +216,30 @@ void DataManager::clearAllUsers()
     writeUser();
 }
 
+// （数据清除）：清空预约记录
+void DataManager::clearAllReservations()
+{
+    reservations.clear();
+    writeReservation();
+}
+
+// （数据清除）：清空借书记录
+void DataManager::clearAllBorrowRecords()
+{
+    borrowRecords.clear();
+    writeBorrowRecord();
+}
+
+// （数据清除）：清空消息记录
+void DataManager::clearAllMessages()
+{
+    for (auto user : users)
+    {
+        user->clearMessages();
+    }
+    writeMessage();
+}
+
 // （用户获取）：获取所有用户
 std::vector<::User *> &DataManager::getUsers()
 {

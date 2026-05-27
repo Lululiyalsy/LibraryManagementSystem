@@ -41,7 +41,7 @@ public:
     std::vector<::User *> findUser(const QString &id = "", const QString &name = "");
 
     // 清空用户信息（包括管理员和读者）
-    void clearUser();
+    void clearUser(User* currentAdmin = nullptr);
 
     // 析构函数
     ~Admin();

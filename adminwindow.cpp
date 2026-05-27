@@ -1283,6 +1283,14 @@ void AdminWindow::onUserAdd()
     {
         admin->registerUser(id, type, name, password, phone, email);
 
+        // （发送消息）：发送用户添加消息给管理员
+        QString msgContent = QString("管理员%1添加了用户%2（ID：%3）")
+                                 .arg(currentUser->getName())
+                                 .arg(name)
+                                 .arg(id)
+                                 .arg(type == "1" ? "管理员" : "读者");
+        dm->addAdminMessage(currentUser, id, name, msgContent);
+
         // （刷新表格）：重新加载用户列表
         std::vector<::User *> users = admin->findAllUser();
         displayUsers(users);
@@ -1325,6 +1333,11 @@ void AdminWindow::onUserDelete()
 
         if (success)
         {
+            // （发送消息）：发送用户删除消息给管理员
+            DataManager *dm = DataManager::getInstance();
+            QString msgContent = QString("管理员%1删除了用户%2（ID：%3）").arg(currentUser->getName()).arg(name).arg(id);
+            dm->addAdminMessage(currentUser, id, name, msgContent);
+
             // （刷新表格）：重新加载用户列表
             std::vector<::User *> users = admin->findAllUser();
             displayUsers(users);
@@ -1457,6 +1470,17 @@ void AdminWindow::onUserUpdate()
 
         if (success)
         {
+            // （发送消息）：发送用户修改消息给管理员
+            DataManager *dm = DataManager::getInstance();
+            QString msgContent = QString("管理员%1修改了用户信息：原用户%2（ID：%3）→ 新用户%4（ID：%5）")
+                                     .arg(currentUser->getName())
+                                     .arg(name)
+                                     .arg(id)
+                                     .arg(newName)
+                                     .arg(newId)
+                                     .arg(newType == "1" ? "管理员" : "读者");
+            dm->addAdminMessage(currentUser, newId, newName, msgContent);
+
             // （刷新表格）：重新加载用户列表
             std::vector<::User *> users = admin->findAllUser();
             displayUsers(users);
@@ -1478,7 +1502,7 @@ void AdminWindow::onUserUpdate()
 void AdminWindow::onUserClear()
 {
     // （弹出确认框）：弹出确认框警告用户是否确认清除所有用户
-    QMessageBox warningBox(QMessageBox::Warning, "警告", "确定要清除所有用户信息吗？此操作不可恢复！", QMessageBox::NoButton, this);
+    QMessageBox warningBox(QMessageBox::Warning, "警告", "确定要清除所有用户信息吗？此操作不可恢复！此操作会清除所有用户数据！", QMessageBox::NoButton, this);
     QAbstractButton *yesBtn1 = warningBox.addButton("是", QMessageBox::YesRole);
     warningBox.addButton("否", QMessageBox::NoRole);
     warningBox.exec();
@@ -1491,14 +1515,21 @@ void AdminWindow::onUserClear()
         confirmBox.exec();
         if (confirmBox.clickedButton() == yesBtn2)
         {
-            // （调用后端）：调用Admin的清除方法
+            // （调用后端）：调用Admin的清除方法，保留当前管理员
             ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
             if (admin)
             {
-                admin->clearUser();
+                admin->clearUser(currentUser);
 
-                // （刷新表格）：清空表格显示
-                displayUsers(std::vector<::User *>());
+                // （刷新表格）：重新加载用户列表（只显示当前管理员）
+                std::vector<::User *> users = admin->findAllUser();
+                displayUsers(users);
+
+                // 刷新消息表格（消息已被清空）
+                if (messageTable)
+                {
+                    messageTable->setRowCount(0);
+                }
             }
 
             QMessageBox msgBox(QMessageBox::Information, "成功", "已清除所有用户！", QMessageBox::NoButton, this);

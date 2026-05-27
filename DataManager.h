@@ -49,6 +49,13 @@ public:
     std::vector<User *> &getUsers();
     // （用户数量）：获取用户数量
     int getUserCount() const;
+    
+    // （数据清除）：清空预约记录
+    void clearAllReservations();
+    // （数据清除）：清空借书记录
+    void clearAllBorrowRecords();
+    // （数据清除）：清空消息记录
+    void clearAllMessages();
 
     // （图书管理）：初始化读取图书数据
     void initBook();

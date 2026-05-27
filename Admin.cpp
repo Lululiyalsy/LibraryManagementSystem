@@ -193,31 +193,33 @@ std::vector<User *> Admin::findUser(const QString &id, const QString &name)
     return users;
 }
 
-// 清空用户信息（包括管理员和读者）
-void Admin::clearUser()
+// 清空用户信息（包括管理员和读者），保留当前管理员
+void Admin::clearUser(User* currentAdmin)
 {
     DataManager *dm = DataManager::getInstance();
+    
+    // 保存当前管理员信息
+    QString currentId, currentName, currentPassword, currentPhone, currentEmail;
+    if (currentAdmin) {
+        currentId = currentAdmin->getID();
+        currentName = currentAdmin->getName();
+        currentPassword = currentAdmin->getPassword();
+        currentPhone = currentAdmin->getPhone();
+        currentEmail = currentAdmin->getEmail();
+    }
+    
+    // 清空所有用户
     dm->clearAllUsers();
-    // qDebug() << "已清空所有用户";
-
-    // 检查是否只剩0人，如果是则自动创建新管理员
-    if (dm->getUserCount() == 0)
-    {
-        QString newId = "10000";
-        QString newName = "张三";
-        QString newPassword = "123";
-        QString newPhone = "11111111111";
-        QString newEmail = "zhangsan@qq.com";
-
-        QString idRef = newId;
-        QString nameRef = newName;
-        QString passwordRef = newPassword;
-        QString phoneRef = newPhone;
-        QString emailRef = newEmail;
-
-        User *newAdmin = new Admin(idRef, nameRef, passwordRef, phoneRef, emailRef);
-        dm->addUser(newAdmin);
-        // qDebug() << "自动创建新管理员：ID=" << newId << ", 姓名=" << newName;
+    
+    // 清空预约记录、借书记录、消息记录
+    dm->clearAllReservations();
+    dm->clearAllBorrowRecords();
+    dm->clearAllMessages();
+    
+    // 如果有当前管理员，重新添加
+    if (currentAdmin) {
+        User *admin = new Admin(currentId, currentName, currentPassword, currentPhone, currentEmail);
+        dm->addUser(admin);
     }
 }
 
