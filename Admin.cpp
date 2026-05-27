@@ -193,8 +193,8 @@ std::vector<User *> Admin::findUser(const QString &id, const QString &name)
     return users;
 }
 
-// 清空用户信息（包括管理员和读者），保留当前管理员
-void Admin::clearUser(User* currentAdmin)
+// 清空用户信息（包括管理员和读者），保留当前管理员，返回新的用户指针
+User* Admin::clearUser(User* currentAdmin)
 {
     DataManager *dm = DataManager::getInstance();
     
@@ -216,11 +216,13 @@ void Admin::clearUser(User* currentAdmin)
     dm->clearAllBorrowRecords();
     dm->clearAllMessages();
     
-    // 如果有当前管理员，重新添加
+    // 如果有当前管理员，重新添加并返回新指针
     if (currentAdmin) {
         User *admin = new Admin(currentId, currentName, currentPassword, currentPhone, currentEmail);
         dm->addUser(admin);
+        return admin;
     }
+    return nullptr;
 }
 
 // 添加书本信息，返回值：0=成功新增，1=库存已增加，-1=ISBN冲突

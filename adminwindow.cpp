@@ -1519,15 +1519,15 @@ void AdminWindow::onUserClear()
             ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
             if (admin)
             {
-                admin->clearUser(currentUser);
+                // 更新 currentUser 指针为新创建的用户对象
+                currentUser = admin->clearUser(currentUser);
 
                 // （刷新表格）：重新加载用户列表（只显示当前管理员）
                 std::vector<::User *> users = admin->findAllUser();
                 displayUsers(users);
-
+                
                 // 刷新消息表格（消息已被清空）
-                if (messageTable)
-                {
+                if (messageTable) {
                     messageTable->setRowCount(0);
                 }
             }

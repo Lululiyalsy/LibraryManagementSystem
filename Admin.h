@@ -41,7 +41,7 @@ public:
     std::vector<::User *> findUser(const QString &id = "", const QString &name = "");
 
     // 清空用户信息（包括管理员和读者）
-    void clearUser(User* currentAdmin = nullptr);
+    User *clearUser(User *currentAdmin = nullptr);
 
     // 析构函数
     ~Admin();
@@ -54,8 +54,8 @@ public:
     int deleteBook(const QString &isbn, int decreaseStock);
 
     // 修改书本信息，返回值：0=成功修改，-1=原ISBN不存在，-2=存在预约或借出无法修改，-3=新ISBN已存在
-    int updateBook(const QString &oldIsbn, const QString &newIsbn, const QString &title, 
-                   const QString &author, const QString &category, int stock, 
+    int updateBook(const QString &oldIsbn, const QString &newIsbn, const QString &title,
+                   const QString &author, const QString &category, int stock,
                    const QDateTime &inStockTime);
 
     // 查找书本信息（支持多条件模糊搜索）
