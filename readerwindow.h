@@ -40,6 +40,10 @@ private slots:
     void switchToMyReservation();
     void onCheckMessages();
     void onLogout();
+    void onDeleteMessage();
+    void onClearAllMessages();
+    void onMarkAllRead();
+    void onSearchMessage();
 
 signals:
     void logout();

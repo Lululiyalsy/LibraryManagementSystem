@@ -1795,6 +1795,26 @@ void AdminWindow::setupMessageWidget()
     messageWidget = new QWidget(this);
     QVBoxLayout *mainLayout = new QVBoxLayout(messageWidget);
 
+    QHBoxLayout *buttonLayout = new QHBoxLayout();
+
+    QPushButton *deleteMessageBtn = new QPushButton("删除消息", this);
+    QPushButton *clearAllMessagesBtn = new QPushButton("清除所有消息", this);
+    QPushButton *markAllReadBtn = new QPushButton("全部设为已读", this);
+    QPushButton *searchMessageBtn = new QPushButton("查找消息", this);
+
+    buttonLayout->addWidget(deleteMessageBtn);
+    buttonLayout->addWidget(clearAllMessagesBtn);
+    buttonLayout->addWidget(markAllReadBtn);
+    buttonLayout->addWidget(searchMessageBtn);
+    buttonLayout->addStretch();
+
+    connect(deleteMessageBtn, &QPushButton::clicked, this, &AdminWindow::onDeleteMessage);
+    connect(clearAllMessagesBtn, &QPushButton::clicked, this, &AdminWindow::onClearAllMessages);
+    connect(markAllReadBtn, &QPushButton::clicked, this, &AdminWindow::onMarkAllRead);
+    connect(searchMessageBtn, &QPushButton::clicked, this, &AdminWindow::onSearchMessage);
+
+    mainLayout->addLayout(buttonLayout);
+
     messageTable = new QTableWidget(this);
     messageTable->setColumnCount(5);
     messageTable->setHorizontalHeaderLabels(QStringList() << "读者ID" << "读者名" << "消息时间" << "消息内容" << "消息状态");
@@ -1852,5 +1872,160 @@ void AdminWindow::onLogout()
     {
         QMessageBox::information(this, "成功", "退出登录成功！");
         emit logout();
+    }
+}
+
+// （删除消息）：删除选中消息
+void AdminWindow::onDeleteMessage()
+{
+    ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
+    if (!admin)
+    {
+        return;
+    }
+
+    int currentRow = messageTable->currentRow();
+    if (currentRow < 0)
+    {
+        QMessageBox msgBox(QMessageBox::Warning, "提示", "请先选择要删除的消息！", QMessageBox::NoButton, this);
+        msgBox.addButton("确定", QMessageBox::AcceptRole);
+        msgBox.exec();
+        return;
+    }
+
+    QMessageBox confirmBox(QMessageBox::Question, "确认删除", "确定要删除选中的消息吗？", QMessageBox::NoButton, this);
+    QAbstractButton *yesBtn = confirmBox.addButton("是", QMessageBox::YesRole);
+    confirmBox.addButton("否", QMessageBox::NoRole);
+    confirmBox.exec();
+
+    if (confirmBox.clickedButton() == yesBtn)
+    {
+        std::vector<Message> &messages = admin->getMessages();
+        messages.erase(messages.begin() + currentRow);
+        DataManager::getInstance()->writeMessage();
+        displayMessages(messages);
+
+        QMessageBox msgBox(QMessageBox::Information, "成功", "消息删除成功！", QMessageBox::NoButton, this);
+        msgBox.addButton("确定", QMessageBox::AcceptRole);
+        msgBox.exec();
+    }
+}
+
+// （清除所有消息）：清除所有消息
+void AdminWindow::onClearAllMessages()
+{
+    ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
+    if (!admin)
+    {
+        return;
+    }
+
+    QMessageBox confirmBox(QMessageBox::Question, "确认清除", "确定要清除所有消息吗？此操作不可恢复！", QMessageBox::NoButton, this);
+    QAbstractButton *yesBtn = confirmBox.addButton("是", QMessageBox::YesRole);
+    confirmBox.addButton("否", QMessageBox::NoRole);
+    confirmBox.exec();
+
+    if (confirmBox.clickedButton() == yesBtn)
+    {
+        admin->clearMessages();
+        DataManager::getInstance()->writeMessage();
+        displayMessages(std::vector<Message>());
+
+        QMessageBox msgBox(QMessageBox::Information, "成功", "所有消息已清除！", QMessageBox::NoButton, this);
+        msgBox.addButton("确定", QMessageBox::AcceptRole);
+        msgBox.exec();
+    }
+}
+
+// （全部设为已读）：将所有未读消息设为已读
+void AdminWindow::onMarkAllRead()
+{
+    ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
+    if (!admin)
+    {
+        return;
+    }
+
+    std::vector<Message> &messages = admin->getMessages();
+    bool hasUnread = false;
+
+    for (auto &msg : messages)
+    {
+        if (msg.getStatus() == MessageStatus::UNREAD)
+        {
+            msg.setStatus(MessageStatus::READ);
+            hasUnread = true;
+        }
+    }
+
+    if (hasUnread)
+    {
+        DataManager::getInstance()->writeMessage();
+        displayMessages(messages);
+
+        QMessageBox msgBox(QMessageBox::Information, "成功", "所有消息已设为已读！", QMessageBox::NoButton, this);
+        msgBox.addButton("确定", QMessageBox::AcceptRole);
+        msgBox.exec();
+    }
+    else
+    {
+        QMessageBox msgBox(QMessageBox::Information, "提示", "没有未读消息！", QMessageBox::NoButton, this);
+        msgBox.addButton("确定", QMessageBox::AcceptRole);
+        msgBox.exec();
+    }
+}
+
+// （查找消息）：查找消息
+void AdminWindow::onSearchMessage()
+{
+    ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
+    if (!admin)
+    {
+        return;
+    }
+
+    bool ok;
+    QString keyword = QInputDialog::getText(this, "查找消息", "请输入查找关键字：", QLineEdit::Normal, "", &ok);
+
+    if (!ok || keyword.isEmpty())
+    {
+        return;
+    }
+
+    std::vector<Message> allMessages = admin->getAllMessages();
+    std::vector<Message> filteredMessages;
+
+    for (const auto &msg : allMessages)
+    {
+        std::vector<QString> fields = msg.getAdminDisplayFields();
+        bool match = false;
+
+        for (const auto &field : fields)
+        {
+            if (field.contains(keyword, Qt::CaseInsensitive))
+            {
+                match = true;
+                break;
+            }
+        }
+
+        if (match)
+        {
+            filteredMessages.push_back(msg);
+        }
+    }
+
+    if (filteredMessages.empty())
+    {
+        QMessageBox msgBox(QMessageBox::Information, "提示", "未找到匹配的消息！", QMessageBox::NoButton, this);
+        msgBox.addButton("确定", QMessageBox::AcceptRole);
+        msgBox.exec();
+    }
+    else
+    {
+        displayMessages(filteredMessages);
+        QMessageBox msgBox(QMessageBox::Information, "查找结果", QString("共找到 %1 条匹配的消息！").arg(filteredMessages.size()), QMessageBox::NoButton, this);
+        msgBox.addButton("确定", QMessageBox::AcceptRole);
+        msgBox.exec();
     }
 }

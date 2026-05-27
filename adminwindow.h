@@ -44,6 +44,14 @@ private slots:
     void onLogout();
     // （消息管理）：消息按钮点击槽函数
     void onMessage();
+    // （删除消息）：删除选中消息
+    void onDeleteMessage();
+    // （清除所有消息）：清除所有消息
+    void onClearAllMessages();
+    // （全部设为已读）：将所有未读消息设为已读
+    void onMarkAllRead();
+    // （查找消息）：查找消息
+    void onSearchMessage();
 
 signals:
     // （退出登录信号）：通知主程序退出登录
