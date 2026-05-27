@@ -599,10 +599,32 @@ void AdminWindow::onBookAdd()
         else if (addResult == 1)
         {
             QMessageBox::information(this, "成功", "图书库存已增加！");
+
+            // 发送消息：库存增加
+            DataManager *dm = DataManager::getInstance();
+            QString msgContent = QString("管理员%1增加了图书库存：%2（ISBN: %3, 作者: %4, 分类: %5, 库存: %6）")
+                                     .arg(currentUser->getName())
+                                     .arg(title)
+                                     .arg(isbn)
+                                     .arg(author)
+                                     .arg(category)
+                                     .arg(stock);
+            dm->addAdminMessage(currentUser, currentUser->getID(), currentUser->getName(), msgContent);
         }
         else
         {
             QMessageBox::information(this, "成功", "图书添加成功！");
+
+            // 发送消息：新增图书
+            DataManager *dm = DataManager::getInstance();
+            QString msgContent = QString("管理员%1添加了新图书：%2（ISBN: %3, 作者: %4, 分类: %5, 库存: %6）")
+                                     .arg(currentUser->getName())
+                                     .arg(title)
+                                     .arg(isbn)
+                                     .arg(author)
+                                     .arg(category)
+                                     .arg(stock);
+            dm->addAdminMessage(currentUser, currentUser->getID(), currentUser->getName(), msgContent);
         }
     }
 }
@@ -651,12 +673,35 @@ void AdminWindow::onBookDelete()
         std::vector<const Book *> books = admin->findAllBook();
         displayBooks(books);
         QMessageBox::information(this, "成功", "图书删除成功！");
+
+        // 发送消息：图书删除（已删除记录）
+        DataManager *dm = DataManager::getInstance();
+        QString msgContent = QString("管理员%1删除了图书：%2（ISBN: %3, 作者: %4, 分类: %5, 库存: %6）- 已删除记录")
+                                 .arg(currentUser->getName())
+                                 .arg(book->getTitle())
+                                 .arg(isbn)
+                                 .arg(book->getAuthor())
+                                 .arg(book->getCategory())
+                                 .arg(decreaseStock);
+        dm->addAdminMessage(currentUser, currentUser->getID(), currentUser->getName(), msgContent);
     }
     else if (deleteResult == 1)
     {
         std::vector<const Book *> books = admin->findAllBook();
         displayBooks(books);
         QMessageBox::information(this, "成功", "图书库存已减少！");
+
+        // 发送消息：库存减少
+        DataManager *dm = DataManager::getInstance();
+        QString msgContent = QString("管理员%1减少了图书库存：%2（ISBN: %3, 作者: %4, 分类: %5, 库存: %6）- 减少%7本")
+                                 .arg(currentUser->getName())
+                                 .arg(book->getTitle())
+                                 .arg(isbn)
+                                 .arg(book->getAuthor())
+                                 .arg(book->getCategory())
+                                 .arg(book->getStock())
+                                 .arg(decreaseStock);
+        dm->addAdminMessage(currentUser, currentUser->getID(), currentUser->getName(), msgContent);
     }
     else if (deleteResult == -2)
     {
@@ -765,6 +810,23 @@ void AdminWindow::onBookUpdate()
         std::vector<const Book *> books = admin->findAllBook();
         displayBooks(books);
         QMessageBox::information(this, "成功", "图书修改成功！");
+
+        // 发送消息：图书修改
+        DataManager *dm = DataManager::getInstance();
+        QString msgContent = QString("管理员%1修改了图书信息：%2（ISBN: %3, 作者: %4, 分类: %5, 库存: %6）→ %7（ISBN: %8, 作者: %9, 分类: %10, 库存: %11）")
+                                 .arg(currentUser->getName())
+                                 .arg(foundBook->getTitle())
+                                 .arg(oldIsbn)
+                                 .arg(foundBook->getAuthor())
+                                 .arg(foundBook->getCategory())
+                                 .arg(foundBook->getStock())
+                                 .arg(title)
+                                 .arg(newIsbn)
+                                 .arg(title)
+                                 .arg(author)
+                                 .arg(category)
+                                 .arg(stock);
+        dm->addAdminMessage(currentUser, currentUser->getID(), currentUser->getName(), msgContent);
     }
     else if (updateResult == -3)
     {
@@ -825,6 +887,11 @@ void AdminWindow::onBookSort()
         QMessageBox msgBox(QMessageBox::Information, "成功", "已按借阅次数排序！", QMessageBox::NoButton, this);
         msgBox.addButton("确定", QMessageBox::AcceptRole);
         msgBox.exec();
+
+        // 发送消息：图书排序
+        DataManager *dm = DataManager::getInstance();
+        QString msgContent = QString("管理员%1对图书按借阅次数进行了排序").arg(currentUser->getName());
+        dm->addAdminMessage(currentUser, currentUser->getID(), currentUser->getName(), msgContent);
     }
 }
 
@@ -840,6 +907,11 @@ void AdminWindow::onBookSortByTime()
         QMessageBox msgBox(QMessageBox::Information, "成功", "已按入库时间排序！", QMessageBox::NoButton, this);
         msgBox.addButton("确定", QMessageBox::AcceptRole);
         msgBox.exec();
+
+        // 发送消息：图书排序
+        DataManager *dm = DataManager::getInstance();
+        QString msgContent = QString("管理员%1对图书按入库时间进行了排序").arg(currentUser->getName());
+        dm->addAdminMessage(currentUser, currentUser->getID(), currentUser->getName(), msgContent);
     }
 }
 // 修改结束
@@ -1284,12 +1356,12 @@ void AdminWindow::onUserAdd()
         admin->registerUser(id, type, name, password, phone, email);
 
         // （发送消息）：发送用户添加消息给管理员
-        QString msgContent = QString("管理员%1添加了用户%2（ID：%3）")
+        QString msgContent = QString("管理员%1添加了用户：%2（ID: %3, 类型: %4）")
                                  .arg(currentUser->getName())
                                  .arg(name)
                                  .arg(id)
                                  .arg(type == "1" ? "管理员" : "读者");
-        dm->addAdminMessage(currentUser, id, name, msgContent);
+        dm->addAdminMessage(currentUser, currentUser->getID(), currentUser->getName(), msgContent);
 
         // （刷新表格）：重新加载用户列表
         std::vector<::User *> users = admin->findAllUser();
@@ -1329,14 +1401,22 @@ void AdminWindow::onUserDelete()
     ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
     if (admin)
     {
+        // 保存原用户类型（删除前获取）
+        DataManager *dm = DataManager::getInstance();
+        User *userToDelete = dm->findUserById(id);
+        QString userTypeName = userToDelete && userToDelete->getType() == 1 ? "管理员" : "读者";
+
         bool success = admin->deleteUser(id, name);
 
         if (success)
         {
             // （发送消息）：发送用户删除消息给管理员
-            DataManager *dm = DataManager::getInstance();
-            QString msgContent = QString("管理员%1删除了用户%2（ID：%3）").arg(currentUser->getName()).arg(name).arg(id);
-            dm->addAdminMessage(currentUser, id, name, msgContent);
+            QString msgContent = QString("管理员%1删除了用户：%2（ID: %3, 类型: %4）")
+                                     .arg(currentUser->getName())
+                                     .arg(name)
+                                     .arg(id)
+                                     .arg(userTypeName);
+            dm->addAdminMessage(currentUser, currentUser->getID(), currentUser->getName(), msgContent);
 
             // （刷新表格）：重新加载用户列表
             std::vector<::User *> users = admin->findAllUser();
@@ -1466,20 +1546,26 @@ void AdminWindow::onUserUpdate()
     admin = dynamic_cast<::Admin *>(currentUser);
     if (admin)
     {
+        // 保存原用户类型
+        DataManager *dm = DataManager::getInstance();
+        User *oldUser = dm->findUserById(id);
+        QString oldTypeName = oldUser && oldUser->getType() == 1 ? "管理员" : "读者";
+
         bool success = admin->updateUser(id, name, newId, newType, newName, newPassword, newPhone, newEmail);
 
         if (success)
         {
             // （发送消息）：发送用户修改消息给管理员
-            DataManager *dm = DataManager::getInstance();
-            QString msgContent = QString("管理员%1修改了用户信息：原用户%2（ID：%3）→ 新用户%4（ID：%5）")
+            User *updatedUser = dm->findUserById(newId);
+            QString msgContent = QString("管理员%1修改了用户信息：%2（ID: %3, 类型: %4）→ %5（ID: %6, 类型: %7）")
                                      .arg(currentUser->getName())
                                      .arg(name)
                                      .arg(id)
+                                     .arg(oldTypeName)
                                      .arg(newName)
                                      .arg(newId)
-                                     .arg(newType == "1" ? "管理员" : "读者");
-            dm->addAdminMessage(currentUser, newId, newName, msgContent);
+                                     .arg(updatedUser && updatedUser->getType() == 1 ? "管理员" : "读者");
+            dm->addAdminMessage(currentUser, currentUser->getID(), currentUser->getName(), msgContent);
 
             // （刷新表格）：重新加载用户列表
             std::vector<::User *> users = admin->findAllUser();
@@ -1525,9 +1611,10 @@ void AdminWindow::onUserClear()
                 // （刷新表格）：重新加载用户列表（只显示当前管理员）
                 std::vector<::User *> users = admin->findAllUser();
                 displayUsers(users);
-                
+
                 // 刷新消息表格（消息已被清空）
-                if (messageTable) {
+                if (messageTable)
+                {
                     messageTable->setRowCount(0);
                 }
             }
