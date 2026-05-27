@@ -9,6 +9,7 @@
 #include <QDateTime>
 #include <QInputDialog>
 
+// 构造函数：初始化读者窗口
 ReaderWindow::ReaderWindow(User *user, QWidget *parent)
     : QMainWindow(parent)
 {
@@ -16,7 +17,7 @@ ReaderWindow::ReaderWindow(User *user, QWidget *parent)
     resize(800, 800);
     setWindowIcon(QIcon(":/image/book.png"));
 
-    // 禁用关闭按钮（移除关闭按钮标志）
+    // 禁用关闭按钮
     setWindowFlags(windowFlags() & ~Qt::WindowCloseButtonHint);
 
     if (user)
@@ -28,10 +29,12 @@ ReaderWindow::ReaderWindow(User *user, QWidget *parent)
     setupCentralWidget();
 }
 
+// 析构函数
 ReaderWindow::~ReaderWindow()
 {
 }
 
+// 设置中心窗口：初始化工具栏和堆叠窗口
 void ReaderWindow::setupCentralWidget()
 {
     stackedWidget = new QStackedWidget(this);
@@ -42,76 +45,92 @@ void ReaderWindow::setupCentralWidget()
     toolbar->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
     addToolBar(Qt::LeftToolBarArea, toolbar);
 
+    // 创建工具栏动作
     QAction *bookSearchAction = new QAction(QIcon(":/image/book2.png"), "图书查询", this);
     QAction *myBorrowAction = new QAction(QIcon(":/image/readerborrow.png"), "我的借阅", this);
     QAction *myReservationAction = new QAction(QIcon(":/image/readerReservation.png"), "我的预约", this);
     QAction *messageAction = new QAction(QIcon(":/image/message.png"), "消息管理", this);
     QAction *logoutAction = new QAction(QIcon(":/image/logout.png"), "退出登录", this);
 
+    // 添加动作到工具栏
     toolbar->addAction(bookSearchAction);
     toolbar->addAction(myBorrowAction);
     toolbar->addAction(myReservationAction);
     toolbar->addAction(messageAction);
     toolbar->addAction(logoutAction);
 
+    // 连接信号槽
     connect(bookSearchAction, &QAction::triggered, this, &ReaderWindow::switchToBookSearch);
     connect(myBorrowAction, &QAction::triggered, this, &ReaderWindow::switchToMyBorrow);
     connect(myReservationAction, &QAction::triggered, this, &ReaderWindow::switchToMyReservation);
     connect(messageAction, &QAction::triggered, this, &ReaderWindow::onCheckMessages);
     connect(logoutAction, &QAction::triggered, this, &ReaderWindow::onLogout);
 
+    // 设置各个页面
     setupBookSearchWidget();
     setupMyBorrowWidget();
     setupMyReservationWidget();
     setupMessageWidget();
 
+    // 添加页面到堆叠窗口
     stackedWidget->addWidget(bookSearchWidget);
     stackedWidget->addWidget(myBorrowWidget);
     stackedWidget->addWidget(myReservationWidget);
     stackedWidget->addWidget(messageWidget);
 
+    // 默认显示图书查询页面
     stackedWidget->setCurrentIndex(0);
 }
 
+// 设置图书查询页面
 void ReaderWindow::setupBookSearchWidget()
 {
     bookSearchWidget = new QWidget(this);
     QVBoxLayout *mainLayout = new QVBoxLayout(bookSearchWidget);
 
+    // 搜索区域
     QWidget *searchWidget = new QWidget(this);
     QHBoxLayout *searchLayout = new QHBoxLayout(searchWidget);
 
+    // ISBN输入框
     searchLayout->addWidget(new QLabel("ISBN:"));
     bookISBNLineEdit = new QLineEdit(this);
     bookISBNLineEdit->setPlaceholderText("输入ISBN");
     searchLayout->addWidget(bookISBNLineEdit);
 
+    // 书名输入框
     searchLayout->addWidget(new QLabel("书名:"));
     bookTitleLineEdit = new QLineEdit(this);
     bookTitleLineEdit->setPlaceholderText("输入书名");
     searchLayout->addWidget(bookTitleLineEdit);
 
+    // 作者输入框
     searchLayout->addWidget(new QLabel("作者:"));
     bookAuthorLineEdit = new QLineEdit(this);
     bookAuthorLineEdit->setPlaceholderText("输入作者");
     searchLayout->addWidget(bookAuthorLineEdit);
 
+    // 分类输入框
     searchLayout->addWidget(new QLabel("分类:"));
     bookCategoryLineEdit = new QLineEdit(this);
     bookCategoryLineEdit->setPlaceholderText("输入分类");
     searchLayout->addWidget(bookCategoryLineEdit);
 
+    // 查询按钮
     bookSearchBtn = new QPushButton("查找", this);
     searchLayout->addWidget(bookSearchBtn);
 
+    // 预约按钮
     bookReserveBtn = new QPushButton("预约", this);
     searchLayout->addWidget(bookReserveBtn);
 
+    // 借书按钮
     borrowBtn = new QPushButton("借书", this);
     searchLayout->addWidget(borrowBtn);
 
     mainLayout->addWidget(searchWidget);
 
+    // 图书表格
     bookSearchTable = new QTableWidget(this);
     bookSearchTable->setColumnCount(10);
     QStringList headers = {"ISBN", "书名", "作者", "分类", "库存", "入库时间", "借阅次数", "当前借出", "状态", "预约人数"};
@@ -120,29 +139,36 @@ void ReaderWindow::setupBookSearchWidget()
     bookSearchTable->setSelectionBehavior(QTableWidget::SelectRows);
     mainLayout->addWidget(bookSearchTable);
 
+    // 连接信号槽
     connect(bookSearchBtn, &QPushButton::clicked, this, &ReaderWindow::onBookSearch);
     connect(bookReserveBtn, &QPushButton::clicked, this, &ReaderWindow::onBookReserve);
     connect(borrowBtn, &QPushButton::clicked, this, &ReaderWindow::onBorrowBook);
 
+    // 初始化显示所有图书
     onBookSearch();
 }
 
+// 设置我的借阅页面
 void ReaderWindow::setupMyBorrowWidget()
 {
     myBorrowWidget = new QWidget(this);
     QVBoxLayout *mainLayout = new QVBoxLayout(myBorrowWidget);
 
+    // 按钮区域
     QWidget *btnWidget = new QWidget(this);
     QHBoxLayout *btnLayout = new QHBoxLayout(btnWidget);
 
+    // 还书按钮
     returnBtn = new QPushButton("还书", this);
     btnLayout->addWidget(returnBtn);
 
+    // 续借按钮
     renewBtn = new QPushButton("续借", this);
     btnLayout->addWidget(renewBtn);
 
     mainLayout->addWidget(btnWidget);
 
+    // 借阅记录表格
     myBorrowTable = new QTableWidget(this);
     myBorrowTable->setColumnCount(7);
     QStringList headers = {"ISBN", "书名", "借阅时间", "应还时间", "归还时间", "是否已还", "状态"};
@@ -151,25 +177,31 @@ void ReaderWindow::setupMyBorrowWidget()
     myBorrowTable->setSelectionBehavior(QTableWidget::SelectRows);
     mainLayout->addWidget(myBorrowTable);
 
+    // 连接信号槽
     connect(returnBtn, &QPushButton::clicked, this, &ReaderWindow::onReturnBook);
     connect(renewBtn, &QPushButton::clicked, this, &ReaderWindow::onRenewBook);
 
+    // 初始化显示借阅记录
     displayMyBorrowRecords();
 }
 
+// 设置我的预约页面
 void ReaderWindow::setupMyReservationWidget()
 {
     myReservationWidget = new QWidget(this);
     QVBoxLayout *mainLayout = new QVBoxLayout(myReservationWidget);
 
+    // 按钮区域
     QWidget *btnWidget = new QWidget(this);
     QHBoxLayout *btnLayout = new QHBoxLayout(btnWidget);
 
+    // 取消预约按钮
     cancelReserveBtn = new QPushButton("取消预约", this);
     btnLayout->addWidget(cancelReserveBtn);
 
     mainLayout->addWidget(btnWidget);
 
+    // 预约记录表格
     myReservationTable = new QTableWidget(this);
     myReservationTable->setColumnCount(5);
     QStringList headers = {"ISBN", "书名", "预约时间", "状态", "操作"};
@@ -178,11 +210,14 @@ void ReaderWindow::setupMyReservationWidget()
     myReservationTable->setSelectionBehavior(QTableWidget::SelectRows);
     mainLayout->addWidget(myReservationTable);
 
+    // 连接信号槽
     connect(cancelReserveBtn, &QPushButton::clicked, this, &ReaderWindow::onCancelReservation);
 
+    // 初始化显示预约记录
     displayMyReservations();
 }
 
+// 图书查询：根据输入条件查询图书
 void ReaderWindow::onBookSearch()
 {
     QString isbn = bookISBNLineEdit->text();
@@ -198,6 +233,7 @@ void ReaderWindow::onBookSearch()
     }
 }
 
+// 显示图书列表
 void ReaderWindow::displayBooks(const std::vector<const Book *> &books)
 {
     bookSearchTable->setRowCount(0);
@@ -217,6 +253,8 @@ void ReaderWindow::displayBooks(const std::vector<const Book *> &books)
         bookSearchTable->setItem(row, 9, new QTableWidgetItem(QString::number(book->getReservationCount())));
     }
 }
+
+// 显示我的借阅记录
 void ReaderWindow::displayMyBorrowRecords()
 {
     myBorrowTable->setRowCount(0);
@@ -254,6 +292,7 @@ void ReaderWindow::displayMyBorrowRecords()
     }
 }
 
+// 显示我的预约记录
 void ReaderWindow::displayMyReservations()
 {
     myReservationTable->setRowCount(0);
@@ -278,6 +317,7 @@ void ReaderWindow::displayMyReservations()
     }
 }
 
+// 预约图书
 void ReaderWindow::onBookReserve()
 {
     QPair<QString, bool> result = showInputDialog("预约图书", "请输入要预约的图书ISBN：");
@@ -302,6 +342,7 @@ void ReaderWindow::onBookReserve()
     }
 }
 
+// 取消预约
 void ReaderWindow::onCancelReservation()
 {
     QPair<QString, bool> result = showInputDialog("取消预约", "请输入要取消预约的图书ISBN：");
@@ -326,6 +367,7 @@ void ReaderWindow::onCancelReservation()
     }
 }
 
+// 借书
 void ReaderWindow::onBorrowBook()
 {
     QPair<QString, bool> result = showInputDialog("借书", "请输入要借阅的图书ISBN：");
@@ -350,6 +392,7 @@ void ReaderWindow::onBorrowBook()
     }
 }
 
+// 还书
 void ReaderWindow::onReturnBook()
 {
     QPair<QString, bool> result = showInputDialog("还书", "请输入要归还的图书ISBN：");
@@ -374,6 +417,7 @@ void ReaderWindow::onReturnBook()
     }
 }
 
+// 续借
 void ReaderWindow::onRenewBook()
 {
     QPair<QString, bool> result = showInputDialog("续借", "请输入要续借的图书ISBN：");
@@ -397,23 +441,27 @@ void ReaderWindow::onRenewBook()
     }
 }
 
+// 切换到图书查询页面
 void ReaderWindow::switchToBookSearch()
 {
     stackedWidget->setCurrentWidget(bookSearchWidget);
 }
 
+// 切换到我的借阅页面
 void ReaderWindow::switchToMyBorrow()
 {
     displayMyBorrowRecords();
     stackedWidget->setCurrentWidget(myBorrowWidget);
 }
 
+// 切换到我的预约页面
 void ReaderWindow::switchToMyReservation()
 {
     displayMyReservations();
     stackedWidget->setCurrentWidget(myReservationWidget);
 }
 
+// 显示输入对话框
 QPair<QString, bool> ReaderWindow::showInputDialog(const QString &title, const QString &label, bool isPassword)
 {
     QDialog dialog(this);
@@ -442,7 +490,7 @@ QPair<QString, bool> ReaderWindow::showInputDialog(const QString &title, const Q
     return qMakePair("", true);
 }
 
-// （消息管理）：初始化消息表格
+// 设置消息管理页面
 void ReaderWindow::setupMessageWidget()
 {
     messageWidget = new QWidget(this);
@@ -460,13 +508,13 @@ void ReaderWindow::setupMessageWidget()
     topLayout->addWidget(clearAllMessagesBtn);
     topLayout->addWidget(markAllReadBtn);
 
-    // 添加分隔
+    // 添加分隔线
     QFrame *separator = new QFrame(this);
     separator->setFrameShape(QFrame::VLine);
     separator->setFrameShadow(QFrame::Sunken);
     topLayout->addWidget(separator);
 
-    // 消息查找输入框（每列一个）
+    // 消息查找输入框
     messageTimeEdit = new QLineEdit(this);
     messageTimeEdit->setPlaceholderText("消息时间");
     messageTimeEdit->setFixedWidth(150);
@@ -489,6 +537,7 @@ void ReaderWindow::setupMessageWidget()
     topLayout->addWidget(searchMessageBtn);
     topLayout->addStretch();
 
+    // 连接信号槽
     connect(deleteMessageBtn, &QPushButton::clicked, this, &ReaderWindow::onDeleteMessage);
     connect(clearAllMessagesBtn, &QPushButton::clicked, this, &ReaderWindow::onClearAllMessages);
     connect(markAllReadBtn, &QPushButton::clicked, this, &ReaderWindow::onMarkAllRead);
@@ -511,7 +560,7 @@ void ReaderWindow::setupMessageWidget()
     mainLayout->addWidget(messageTable);
 }
 
-// （显示消息）：显示消息到消息表格
+// 显示消息列表
 void ReaderWindow::displayMessages(const std::vector<Message> &messages)
 {
     messageTable->setRowCount(messages.size());
@@ -533,7 +582,7 @@ void ReaderWindow::displayMessages(const std::vector<Message> &messages)
     messageTable->setColumnWidth(2, 80);
 }
 
-// （消息管理）：消息按钮点击处理
+// 查看消息
 void ReaderWindow::onCheckMessages()
 {
     Reader *reader = dynamic_cast<Reader *>(currentUser);
@@ -546,7 +595,7 @@ void ReaderWindow::onCheckMessages()
     displayMessages(reader->getMessages());
 }
 
-// （退出登录）：退出按钮点击处理
+// 退出登录
 void ReaderWindow::onLogout()
 {
     QMessageBox confirmBox(QMessageBox::Question, "确认退出", "确定要退出登录吗？", QMessageBox::NoButton, this);
@@ -561,7 +610,7 @@ void ReaderWindow::onLogout()
     }
 }
 
-// （删除消息）：删除选中消息
+// 删除消息
 void ReaderWindow::onDeleteMessage()
 {
     int currentRow = messageTable->currentRow();
@@ -580,10 +629,9 @@ void ReaderWindow::onDeleteMessage()
 
     if (confirmBox.clickedButton() == yesBtn)
     {
-        std::vector<Message> &messages = currentUser->getMessages();
-        messages.erase(messages.begin() + currentRow);
+        currentUser->deleteMessage(currentRow);
         DataManager::getInstance()->writeMessage();
-        displayMessages(messages);
+        displayMessages(currentUser->getMessages());
 
         QMessageBox msgBox(QMessageBox::Information, "成功", "消息删除成功！", QMessageBox::NoButton, this);
         msgBox.addButton("确定", QMessageBox::AcceptRole);
@@ -591,7 +639,7 @@ void ReaderWindow::onDeleteMessage()
     }
 }
 
-// （清除所有消息）：清除所有消息
+// 清除所有消息
 void ReaderWindow::onClearAllMessages()
 {
     QMessageBox confirmBox(QMessageBox::Question, "确认清除", "确定要清除所有消息吗？此操作不可恢复！", QMessageBox::NoButton, this);
@@ -611,7 +659,7 @@ void ReaderWindow::onClearAllMessages()
     }
 }
 
-// （全部设为已读）：将所有未读消息设为已读
+// 全部设为已读
 void ReaderWindow::onMarkAllRead()
 {
     std::vector<Message> &messages = currentUser->getMessages();
@@ -643,7 +691,7 @@ void ReaderWindow::onMarkAllRead()
     }
 }
 
-// （查找消息）：查找消息
+// 查找消息
 void ReaderWindow::onSearchMessage()
 {
     QString time = messageTimeEdit->text().trimmed();

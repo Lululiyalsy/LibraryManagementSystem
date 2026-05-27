@@ -88,9 +88,6 @@ public:
     // 预约管理：图书归还时处理预约
     void handleBookReturned(const QString &isbn);
 
-    // 管理员消息：获取所有消息
-    std::vector<Message> getAllMessages();
-
     // 借阅管理：办理借书
     bool borrowBook(const QString &isbn, const QString &readerId);
     // 借阅管理：办理还书

@@ -1895,7 +1895,7 @@ void AdminWindow::onMessage()
     }
 
     stackedWidget->setCurrentWidget(messageWidget);
-    displayMessages(admin->getAllMessages());
+    displayMessages(admin->getMessages());
 }
 
 // （退出登录）：退出按钮点击处理
@@ -1938,10 +1938,9 @@ void AdminWindow::onDeleteMessage()
 
     if (confirmBox.clickedButton() == yesBtn)
     {
-        std::vector<Message> &messages = admin->getMessages();
-        messages.erase(messages.begin() + currentRow);
+        admin->deleteMessage(currentRow);
         DataManager::getInstance()->writeMessage();
-        displayMessages(messages);
+        displayMessages(admin->getMessages());
 
         QMessageBox msgBox(QMessageBox::Information, "成功", "消息删除成功！", QMessageBox::NoButton, this);
         msgBox.addButton("确定", QMessageBox::AcceptRole);
@@ -2028,7 +2027,7 @@ void AdminWindow::onSearchMessage()
     QString content = messageContentEdit->text().trimmed();
     QString status = messageStatusCombo->currentText().trimmed();
 
-    std::vector<Message> allMessages = admin->getAllMessages();
+    std::vector<Message> allMessages = admin->getMessages();
     std::vector<Message> filteredMessages;
 
     // 如果所有条件都为空，显示全部消息

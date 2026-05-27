@@ -6,7 +6,7 @@
 #include <vector>
 #include "Message.h"
 
-//（前向声明）：前向声明需要的类，避免循环包含
+// （前向声明）：前向声明需要的类，避免循环包含
 class DataManager;
 class Book;
 class BorrowRecord;
@@ -15,7 +15,6 @@ class Reservation;
 class User
 {
 public:
-
     // 默认构造函数
     User();
 
@@ -31,6 +30,18 @@ public:
     // 生成验证码（纯虚函数，由子类实现）
     virtual QString generateVerificationCode() = 0;
 
+    // 发送消息
+    void addMessage(const Message &message);
+
+    // 删除消息
+    void deleteMessage(int index);
+
+    // 清除所有消息
+    void clearMessages();
+
+    // 获取未读消息的数量
+    int getUnreadMessageCount();
+
     // getter和setter
     const QString &getID() const;
     int getType() const;
@@ -38,6 +49,7 @@ public:
     const QString &getPassword() const;
     const QString &getPhone() const;
     const QString &getEmail() const;
+    std::vector<Message> &getMessages();
 
     // Setter
     void setID(const QString &I);
@@ -46,12 +58,6 @@ public:
     void setPassword(const QString &pa);
     void setPhone(const QString &ph);
     void setEmail(const QString &e);
-
-    // 消息相关方法
-    virtual std::vector<Message>& getMessages();
-    virtual void addMessage(const Message& message);
-    virtual void clearMessages();
-    virtual int getUnreadMessageCount();
 
     // 用户唯一标识
     QString ID;

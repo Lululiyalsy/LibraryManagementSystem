@@ -736,14 +736,9 @@ std::vector<BorrowRecord> Admin::viewOverdueRecords()
     return overdueRecords;
 }
 
-// 管理员消息：获取所有消息
-std::vector<Message> Admin::getAllMessages()
-{
-    return getMessages();
-}
-
 // 修改结束
 //  析构函数
 Admin::~Admin()
 {
+
 }
