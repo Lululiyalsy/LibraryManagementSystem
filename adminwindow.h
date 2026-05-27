@@ -226,5 +226,11 @@ private:
     QWidget *messageWidget;
     // （消息表格）：消息表格指针
     QTableWidget *messageTable;
+    // （消息查找输入框）
+    QLineEdit *messageReaderIdEdit;
+    QLineEdit *messageReaderNameEdit;
+    QLineEdit *messageTimeEdit;
+    QLineEdit *messageContentEdit;
+    QLineEdit *messageStatusEdit;
 };
 #endif // ADMINWINDOW_H

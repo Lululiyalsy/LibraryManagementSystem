@@ -448,17 +448,42 @@ void ReaderWindow::setupMessageWidget()
     messageWidget = new QWidget(this);
     QVBoxLayout *mainLayout = new QVBoxLayout(messageWidget);
 
+    // 查找输入框布局
+    QHBoxLayout *searchLayout = new QHBoxLayout();
+
+    // 消息查找输入框（每列一个）
+    messageTimeEdit = new QLineEdit(this);
+    messageTimeEdit->setPlaceholderText("消息时间");
+    messageTimeEdit->setFixedWidth(150);
+
+    messageContentEdit = new QLineEdit(this);
+    messageContentEdit->setPlaceholderText("消息内容");
+    messageContentEdit->setFixedWidth(300);
+
+    messageStatusEdit = new QLineEdit(this);
+    messageStatusEdit->setPlaceholderText("消息状态");
+    messageStatusEdit->setFixedWidth(80);
+
+    QPushButton *searchMessageBtn = new QPushButton("查找消息", this);
+
+    searchLayout->addWidget(messageTimeEdit);
+    searchLayout->addWidget(messageContentEdit);
+    searchLayout->addWidget(messageStatusEdit);
+    searchLayout->addWidget(searchMessageBtn);
+    searchLayout->addStretch();
+
+    mainLayout->addLayout(searchLayout);
+
+    // 操作按钮布局
     QHBoxLayout *buttonLayout = new QHBoxLayout();
 
     QPushButton *deleteMessageBtn = new QPushButton("删除消息", this);
     QPushButton *clearAllMessagesBtn = new QPushButton("清除所有消息", this);
     QPushButton *markAllReadBtn = new QPushButton("全部设为已读", this);
-    QPushButton *searchMessageBtn = new QPushButton("查找消息", this);
 
     buttonLayout->addWidget(deleteMessageBtn);
     buttonLayout->addWidget(clearAllMessagesBtn);
     buttonLayout->addWidget(markAllReadBtn);
-    buttonLayout->addWidget(searchMessageBtn);
     buttonLayout->addStretch();
 
     connect(deleteMessageBtn, &QPushButton::clicked, this, &ReaderWindow::onDeleteMessage);
@@ -618,11 +643,16 @@ void ReaderWindow::onMarkAllRead()
 // （查找消息）：查找消息
 void ReaderWindow::onSearchMessage()
 {
-    bool ok;
-    QString keyword = QInputDialog::getText(this, "查找消息", "请输入查找关键字：", QLineEdit::Normal, "", &ok);
+    QString time = messageTimeEdit->text().trimmed();
+    QString content = messageContentEdit->text().trimmed();
+    QString status = messageStatusEdit->text().trimmed();
 
-    if (!ok || keyword.isEmpty())
+    // 检查是否至少有一个条件
+    if (time.isEmpty() && content.isEmpty() && status.isEmpty())
     {
+        QMessageBox msgBox(QMessageBox::Warning, "提示", "请至少输入一个查找条件！", QMessageBox::NoButton, this);
+        msgBox.addButton("确定", QMessageBox::AcceptRole);
+        msgBox.exec();
         return;
     }
 
@@ -632,15 +662,22 @@ void ReaderWindow::onSearchMessage()
     for (const auto &msg : allMessages)
     {
         std::vector<QString> fields = msg.getReaderDisplayFields();
-        bool match = false;
+        bool match = true;
 
-        for (const auto &field : fields)
+        // 消息时间匹配
+        if (!time.isEmpty() && !fields[0].contains(time, Qt::CaseInsensitive))
         {
-            if (field.contains(keyword, Qt::CaseInsensitive))
-            {
-                match = true;
-                break;
-            }
+            match = false;
+        }
+        // 消息内容匹配
+        if (match && !content.isEmpty() && !fields[1].contains(content, Qt::CaseInsensitive))
+        {
+            match = false;
+        }
+        // 消息状态匹配
+        if (match && !status.isEmpty() && !fields[2].contains(status, Qt::CaseInsensitive))
+        {
+            match = false;
         }
 
         if (match)

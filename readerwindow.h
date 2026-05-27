@@ -62,6 +62,10 @@ private:
     QTableWidget *myBorrowTable;
     QTableWidget *myReservationTable;
     QTableWidget *messageTable;
+    // 消息查找输入框
+    QLineEdit *messageTimeEdit;
+    QLineEdit *messageContentEdit;
+    QLineEdit *messageStatusEdit;
 
     QLineEdit *bookISBNLineEdit;
     QLineEdit *bookTitleLineEdit;
