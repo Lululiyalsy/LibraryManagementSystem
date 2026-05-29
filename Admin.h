@@ -83,8 +83,12 @@ public:
 
     // 预约管理：查看所有预约记录
     std::vector<Reservation> viewAllReservations();
-    // 预约管理：取消预约（按ISBN和读者ID）
-    bool cancelReservation(const QString &isbn, const QString &readerId);
+    // 预约管理：审核预约（按ISBN和读者ID，是否成功）
+    bool approveReservation(const QString &isbn, const QString &readerId, bool isSuccess);
+    // 预约管理：删除预约（按ISBN和读者ID）
+    bool deleteReservation(const QString &isbn, const QString &readerId);
+    // 预约管理：清空所有预约
+    int clearAllReservations();
     // 预约管理：图书归还时处理预约
     void handleBookReturned(const QString &isbn);
 

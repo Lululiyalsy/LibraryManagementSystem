@@ -591,11 +591,69 @@ std::vector<Reservation> Admin::viewAllReservations()
     return dm->getReservations();
 }
 
-// 预约管理：取消预约（按ISBN和读者ID）
-bool Admin::cancelReservation(const QString &isbn, const QString &readerId)
+// 预约管理：审核预约（按ISBN和读者ID，是否成功）
+bool Admin::approveReservation(const QString &isbn, const QString &readerId, bool isSuccess)
 {
     DataManager *dm = DataManager::getInstance();
-    return dm->cancelReservation(isbn, readerId);
+    std::vector<Reservation> &reservations = dm->getReservations();
+
+    for (auto &reservation : reservations)
+    {
+        if (reservation.getISBN() == isbn && reservation.getReaderID() == readerId)
+        {
+            if (reservation.getStatus() == Reservation::PENDING)
+            {
+                if (isSuccess)
+                {
+                    reservation.setStatus(Reservation::APPROVED);
+                }
+                else
+                {
+                    reservation.setStatus(Reservation::REJECTED);
+                }
+                dm->writeReservation();
+
+                // TODO: 发送消息通知读者
+                // QString messageContent = isSuccess
+                //     ? QString("您预约的图书(ISBN:%1)已审核成功，请及时借阅。").arg(isbn)
+                //     : QString("您预约的图书(ISBN:%1)审核失败，请查看详情。").arg(isbn);
+                // Message message(readerId, "系统", QDateTime::currentDateTime(), messageContent, false);
+                // dm->addMessage(message);
+
+                return true;
+            }
+            break;
+        }
+    }
+    return false;
+}
+
+// 预约管理：删除预约（按ISBN和读者ID）
+bool Admin::deleteReservation(const QString &isbn, const QString &readerId)
+{
+    DataManager *dm = DataManager::getInstance();
+    return dm->removeReservation(isbn, readerId);
+}
+
+// 预约管理：清空所有非待审核状态的预约
+int Admin::clearAllReservations()
+{
+    DataManager *dm = DataManager::getInstance();
+    std::vector<Reservation> reservations = dm->getReservations();
+    int deletedCount = 0;
+
+    for (const auto &reservation : reservations)
+    {
+        // 只删除非待审核状态的预约
+        if (reservation.getStatus() != Reservation::PENDING)
+        {
+            if (dm->removeReservation(reservation.getISBN(), reservation.getReaderID()))
+            {
+                deletedCount++;
+            }
+        }
+    }
+    return deletedCount;
 }
 
 // 预约管理：图书归还时处理预约

@@ -28,7 +28,7 @@
 
 // （构造函数）：创建管理员窗口实例，初始化窗口属性和部件
 AdminWindow::AdminWindow(::User *user, QWidget *parent)
-    : QMainWindow(parent), currentUser(user), toolbar(nullptr), stackedWidget(nullptr), userWidget(nullptr), bookWidget(nullptr), borrowWidget(nullptr), reservationWidget(nullptr), userTable(nullptr), bookTable(nullptr), borrowTable(nullptr), reservationTable(nullptr), statisticsTable(nullptr), statisticsWidget(nullptr), userIdLineEdit(nullptr), userNameLineEdit(nullptr), userSearchBtn(nullptr), userAddBtn(nullptr), userDeleteBtn(nullptr), userUpdateBtn(nullptr), userClearBtn(nullptr), bookISBNLineEdit(nullptr), bookTitleLineEdit(nullptr), bookAuthorLineEdit(nullptr), bookCategoryLineEdit(nullptr), bookSearchBtn(nullptr), bookAddBtn(nullptr), bookDeleteBtn(nullptr), bookUpdateBtn(nullptr), bookClearBtn(nullptr), bookSortBtn(nullptr), bookSortByTimeBtn(nullptr), borrowISBNLineEdit(nullptr), borrowReaderIdLineEdit(nullptr), borrowSearchBtn(nullptr), borrowAddBtn(nullptr), borrowReturnBtn(nullptr), borrowRenewBtn(nullptr), processReservationBtn(nullptr), cancelReservationBtn(nullptr), messageWidget(nullptr), messageTable(nullptr)
+    : QMainWindow(parent), currentUser(user), toolbar(nullptr), stackedWidget(nullptr), userWidget(nullptr), bookWidget(nullptr), borrowWidget(nullptr), reservationWidget(nullptr), userTable(nullptr), bookTable(nullptr), borrowTable(nullptr), reservationTable(nullptr), statisticsTable(nullptr), statisticsWidget(nullptr), userIdLineEdit(nullptr), userNameLineEdit(nullptr), userSearchBtn(nullptr), userAddBtn(nullptr), userDeleteBtn(nullptr), userUpdateBtn(nullptr), userClearBtn(nullptr), bookISBNLineEdit(nullptr), bookTitleLineEdit(nullptr), bookAuthorLineEdit(nullptr), bookCategoryLineEdit(nullptr), bookSearchBtn(nullptr), bookAddBtn(nullptr), bookDeleteBtn(nullptr), bookUpdateBtn(nullptr), bookClearBtn(nullptr), bookSortBtn(nullptr), bookSortByTimeBtn(nullptr), borrowISBNLineEdit(nullptr), borrowReaderIdLineEdit(nullptr), borrowSearchBtn(nullptr), borrowAddBtn(nullptr), borrowReturnBtn(nullptr), borrowRenewBtn(nullptr), processReservationBtn(nullptr), messageWidget(nullptr), messageTable(nullptr)
 {
     // （设置窗口大小）：设置初始窗口大小为800x800
     resize(800, 800);
@@ -375,25 +375,63 @@ void AdminWindow::setupReservationTable()
     QWidget *reservationOperationWidget = new QWidget(reservationWidget);
     QHBoxLayout *reservationOperationLayout = new QHBoxLayout(reservationOperationWidget);
 
-    // （创建按钮）：创建处理预约按钮
-    processReservationBtn = new QPushButton("处理预约", reservationOperationWidget);
-    processReservationBtn->setStyleSheet("QPushButton { background-color: #27ae60; color: white; border-radius: 4px; padding: 6px 12px; font-size: 13px; } QPushButton:hover { background-color: #219a52; }");
+    // （创建按钮）：创建审核预约按钮
+    processReservationBtn = new QPushButton("审核预约", reservationOperationWidget);
 
-    // （创建按钮）：创建取消预约按钮
-    cancelReservationBtn = new QPushButton("取消预约", reservationOperationWidget);
-    cancelReservationBtn->setStyleSheet("QPushButton { background-color: #e74c3c; color: white; border-radius: 4px; padding: 6px 12px; font-size: 13px; } QPushButton:hover { background-color: #c0392b; }");
+    // （创建按钮）：创建删除预约按钮
+    QPushButton *deleteReservationBtn = new QPushButton("删除预约", reservationOperationWidget);
+
+    // （创建按钮）：创建清空所有预约按钮
+    QPushButton *clearAllReservationsBtn = new QPushButton("清空所有预约", reservationOperationWidget);
+
+    // （添加分隔线）：添加垂直分隔线
+    QFrame *separator = new QFrame(reservationOperationWidget);
+    separator->setFrameShape(QFrame::VLine);
+    separator->setFrameShadow(QFrame::Sunken);
+    reservationOperationLayout->addWidget(separator);
+
+    // （创建查询输入框）：创建预约查询输入框
+    reservationISBNLineEdit = new QLineEdit(reservationOperationWidget);
+    reservationISBNLineEdit->setPlaceholderText("ISBN");
+    reservationISBNLineEdit->setFixedWidth(120);
+
+    reservationReaderIdLineEdit = new QLineEdit(reservationOperationWidget);
+    reservationReaderIdLineEdit->setPlaceholderText("读者ID");
+    reservationReaderIdLineEdit->setFixedWidth(100);
+
+    reservationTimeLineEdit = new QLineEdit(reservationOperationWidget);
+    reservationTimeLineEdit->setPlaceholderText("预约时间");
+    reservationTimeLineEdit->setFixedWidth(140);
+
+    reservationStatusCombo = new QComboBox(reservationOperationWidget);
+    reservationStatusCombo->addItem("");
+    reservationStatusCombo->addItem("待审核");
+    reservationStatusCombo->addItem("审核成功");
+    reservationStatusCombo->addItem("审核失败");
+    reservationStatusCombo->addItem("已取消");
+    reservationStatusCombo->setFixedWidth(80);
+
+    // （创建按钮）：创建查询预约按钮
+    QPushButton *searchReservationBtn = new QPushButton("查询预约", reservationOperationWidget);
 
     // （设置布局）：将控件添加到操作区布局
     reservationOperationLayout->addWidget(processReservationBtn);
-    reservationOperationLayout->addWidget(cancelReservationBtn);
+    reservationOperationLayout->addWidget(deleteReservationBtn);
+    reservationOperationLayout->addWidget(clearAllReservationsBtn);
+    reservationOperationLayout->addWidget(separator);
+    reservationOperationLayout->addWidget(reservationISBNLineEdit);
+    reservationOperationLayout->addWidget(reservationReaderIdLineEdit);
+    reservationOperationLayout->addWidget(reservationTimeLineEdit);
+    reservationOperationLayout->addWidget(reservationStatusCombo);
+    reservationOperationLayout->addWidget(searchReservationBtn);
     reservationOperationLayout->addStretch();
 
     // （创建表格）：创建预约表格实例
     reservationTable = new QTableWidget(reservationWidget);
-    // （设置列数）：设置预约表格列数为5
-    reservationTable->setColumnCount(5);
+    // （设置列数）：设置预约表格列数为4（删除书名列）
+    reservationTable->setColumnCount(4);
     // （设置表头）：设置预约表格表头
-    reservationTable->setHorizontalHeaderLabels({"ISBN", "读者ID", "预约时间", "状态", "书名"});
+    reservationTable->setHorizontalHeaderLabels({"ISBN", "读者ID", "预约时间", "状态"});
     // （设置列调整模式）：列自动拉伸填充
     reservationTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     // （设置行调整模式）：行高根据内容自动调整
@@ -411,7 +449,9 @@ void AdminWindow::setupReservationTable()
 
     // （连接按钮信号槽）：连接预约管理按钮信号槽
     connect(processReservationBtn, &QPushButton::clicked, this, &AdminWindow::onProcessReservation);
-    connect(cancelReservationBtn, &QPushButton::clicked, this, &AdminWindow::onCancelReservation);
+    connect(deleteReservationBtn, &QPushButton::clicked, this, &AdminWindow::onDeleteReservation);
+    connect(clearAllReservationsBtn, &QPushButton::clicked, this, &AdminWindow::onClearAllReservations);
+    connect(searchReservationBtn, &QPushButton::clicked, this, &AdminWindow::onSearchReservation);
 }
 
 // （初始化统计表格）：创建统计报表表格，设置列和属性
@@ -1164,10 +1204,6 @@ void AdminWindow::loadReservationData()
         reservationTable->setItem(row, 1, new QTableWidgetItem(reservation.getReaderID()));
         reservationTable->setItem(row, 2, new QTableWidgetItem(reservation.getReserveTime().toString("yyyy-MM-dd HH:mm:ss")));
         reservationTable->setItem(row, 3, new QTableWidgetItem(reservation.getStatusString()));
-
-        Book *book = dm->findBookByISBN(reservation.getISBN());
-        QString bookTitle = book ? book->getTitle() : "未知";
-        reservationTable->setItem(row, 4, new QTableWidgetItem(bookTitle));
     }
 }
 
@@ -1675,7 +1711,7 @@ void AdminWindow::onStatistics()
     stackedWidget->setCurrentIndex(4);
 }
 
-// （处理预约）：处理预约按钮点击处理
+// （审核预约）：审核预约按钮点击处理
 void AdminWindow::onProcessReservation()
 {
     // （获取选中行）：获取当前选中的预约行
@@ -1692,47 +1728,54 @@ void AdminWindow::onProcessReservation()
     QString readerId = reservationTable->item(row, 1)->text();
     QString status = reservationTable->item(row, 3)->text();
 
-    if (status != "待处理")
+    if (status != "待审核")
     {
-        QMessageBox msgBox(QMessageBox::Warning, "提示", "只能处理状态为【待处理】的预约！", QMessageBox::NoButton, this);
+        QMessageBox msgBox(QMessageBox::Warning, "提示", "只能审核状态为【待审核】的预约！", QMessageBox::NoButton, this);
         msgBox.addButton("确定", QMessageBox::AcceptRole);
         msgBox.exec();
         return;
     }
 
-    // （确认处理）：弹出确认框
-    QMessageBox confirmBox(QMessageBox::Question, "确认", QString("确定要处理读者 %1 预约的图书(ISBN:%2)吗？").arg(readerId).arg(isbn), QMessageBox::NoButton, this);
-    QAbstractButton *yesBtn = confirmBox.addButton("是", QMessageBox::YesRole);
-    confirmBox.addButton("否", QMessageBox::NoRole);
-    confirmBox.exec();
+    // （选择审核结果）：弹出选择框
+    QMessageBox selectBox(QMessageBox::Question, "审核预约", QString("请选择对读者 %1 预约图书(ISBN:%2)的审核结果：").arg(readerId).arg(isbn), QMessageBox::NoButton, this);
+    QAbstractButton *successBtn = selectBox.addButton("审核成功", QMessageBox::AcceptRole);
+    QAbstractButton *failBtn = selectBox.addButton("审核失败", QMessageBox::AcceptRole);
+    QAbstractButton *cancelBtn = selectBox.addButton("取消", QMessageBox::RejectRole);
+    selectBox.exec();
 
-    if (confirmBox.clickedButton() == yesBtn)
+    // 点击取消按钮或右上角×号都直接返回，不做任何操作
+    if (selectBox.clickedButton() == cancelBtn || selectBox.clickedButton() == nullptr)
     {
-        ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
-        if (admin)
+        return;
+    }
+
+    bool isSuccess = (selectBox.clickedButton() == successBtn);
+
+    ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
+    if (admin)
+    {
+        bool result = admin->approveReservation(isbn, readerId, isSuccess);
+
+        loadReservationData();
+
+        if (result)
         {
-            bool success = admin->processSingleReservation(isbn, readerId);
-
-            loadReservationData();
-
-            if (success)
-            {
-                QMessageBox msgBox(QMessageBox::Information, "成功", "预约处理完成！已通知相关读者。", QMessageBox::NoButton, this);
-                msgBox.addButton("确定", QMessageBox::AcceptRole);
-                msgBox.exec();
-            }
-            else
-            {
-                QMessageBox msgBox(QMessageBox::Warning, "失败", "预约处理失败！可能该预约已不是待处理状态。", QMessageBox::NoButton, this);
-                msgBox.addButton("确定", QMessageBox::AcceptRole);
-                msgBox.exec();
-            }
+            QString msg = isSuccess ? "审核成功！已通知相关读者。" : "审核失败！已通知相关读者。";
+            QMessageBox msgBox(QMessageBox::Information, "成功", msg, QMessageBox::NoButton, this);
+            msgBox.addButton("确定", QMessageBox::AcceptRole);
+            msgBox.exec();
+        }
+        else
+        {
+            QMessageBox msgBox(QMessageBox::Warning, "失败", "审核失败！可能该预约已不是待审核状态。", QMessageBox::NoButton, this);
+            msgBox.addButton("确定", QMessageBox::AcceptRole);
+            msgBox.exec();
         }
     }
 }
 
-// （取消预约）：取消预约按钮点击处理
-void AdminWindow::onCancelReservation()
+// （删除预约）：删除预约按钮点击处理
+void AdminWindow::onDeleteReservation()
 {
     // （获取选中行）：获取当前选中的预约行
     int row = reservationTable->currentRow();
@@ -1748,44 +1791,145 @@ void AdminWindow::onCancelReservation()
     QString readerId = reservationTable->item(row, 1)->text();
     QString status = reservationTable->item(row, 3)->text();
 
-    if (status == "已取消" || status == "已完成")
+    // （检查状态）：待审核的预约不能删除
+    if (status == "待审核")
     {
-        QMessageBox msgBox(QMessageBox::Warning, "提示", "该预约已" + status + "，无法操作！", QMessageBox::NoButton, this);
+        QMessageBox msgBox(QMessageBox::Warning, "提示", "待审核的预约记录不能删除，请使用审核预约功能！", QMessageBox::NoButton, this);
         msgBox.addButton("确定", QMessageBox::AcceptRole);
         msgBox.exec();
         return;
     }
 
-    // （确认取消）：弹出确认框
-    QMessageBox confirmBox(QMessageBox::Question, "确认", QString("确定要取消读者 %1 预约的图书(ISBN:%2)吗？").arg(readerId).arg(isbn), QMessageBox::NoButton, this);
+    // （确认删除）：弹出确认框
+    QMessageBox confirmBox(QMessageBox::Question, "确认", QString("确定要删除读者 %1 预约的图书(ISBN:%2)吗？").arg(readerId).arg(isbn), QMessageBox::NoButton, this);
     QAbstractButton *yesBtn = confirmBox.addButton("是", QMessageBox::YesRole);
     confirmBox.addButton("否", QMessageBox::NoRole);
     confirmBox.exec();
 
     if (confirmBox.clickedButton() == yesBtn)
     {
-        // （调用后端）：调用Admin的取消预约方法
         ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
         if (admin)
         {
-            bool success = admin->cancelReservation(isbn, readerId);
+            bool success = admin->deleteReservation(isbn, readerId);
+
+            loadReservationData();
 
             if (success)
             {
-                // （刷新表格）：重新加载预约数据
-                loadReservationData();
-
-                QMessageBox msgBox(QMessageBox::Information, "成功", "预约已取消！", QMessageBox::NoButton, this);
+                QMessageBox msgBox(QMessageBox::Information, "成功", "删除预约成功！", QMessageBox::NoButton, this);
                 msgBox.addButton("确定", QMessageBox::AcceptRole);
                 msgBox.exec();
             }
             else
             {
-                QMessageBox msgBox(QMessageBox::Warning, "失败", "取消预约失败！", QMessageBox::NoButton, this);
+                QMessageBox msgBox(QMessageBox::Warning, "失败", "删除预约失败！", QMessageBox::NoButton, this);
                 msgBox.addButton("确定", QMessageBox::AcceptRole);
                 msgBox.exec();
             }
         }
+    }
+}
+
+// （清空所有预约）：清空所有预约按钮点击处理
+void AdminWindow::onClearAllReservations()
+{
+    ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
+    if (!admin)
+        return;
+
+    DataManager *dm = DataManager::getInstance();
+    std::vector<Reservation> allReservations = dm->getReservations();
+    bool hasNonPending = false;
+    for (const auto &r : allReservations)
+    {
+        if (r.getStatus() != Reservation::PENDING)
+        {
+            hasNonPending = true;
+            break;
+        }
+    }
+
+    if (!hasNonPending)
+    {
+        QMessageBox msgBox(QMessageBox::Information, "提示", "没有可清除的预约记录（待审核的预约不会被清除）！", QMessageBox::NoButton, this);
+        msgBox.addButton("确定", QMessageBox::AcceptRole);
+        msgBox.exec();
+        return;
+    }
+
+    // （确认清空）：弹出确认框
+    QMessageBox confirmBox(QMessageBox::Question, "确认", "确定要清空所有已审核/已取消的预约记录吗？（待审核的预约将保留）", QMessageBox::NoButton, this);
+    QAbstractButton *yesBtn = confirmBox.addButton("是", QMessageBox::YesRole);
+    confirmBox.addButton("否", QMessageBox::NoRole);
+    confirmBox.exec();
+
+    if (confirmBox.clickedButton() == yesBtn)
+    {
+        int deletedCount = admin->clearAllReservations();
+
+        loadReservationData();
+
+        QMessageBox msgBox(QMessageBox::Information, "成功", QString("成功清空 %1 条预约记录！").arg(deletedCount), QMessageBox::NoButton, this);
+        msgBox.addButton("确定", QMessageBox::AcceptRole);
+        msgBox.exec();
+    }
+}
+
+// （查询预约）：查询预约按钮点击处理
+void AdminWindow::onSearchReservation()
+{
+    DataManager *dm = DataManager::getInstance();
+    QString isbnFilter = reservationISBNLineEdit->text().trimmed();
+    QString readerIdFilter = reservationReaderIdLineEdit->text().trimmed();
+    QString timeFilter = reservationTimeLineEdit->text().trimmed();
+    QString statusFilter = reservationStatusCombo->currentText();
+
+    std::vector<Reservation> allReservations = dm->getReservations();
+    std::vector<Reservation> filteredReservations;
+
+    for (const auto &reservation : allReservations)
+    {
+        bool match = true;
+
+        if (!isbnFilter.isEmpty())
+        {
+            if (!reservation.getISBN().contains(isbnFilter))
+                match = false;
+        }
+
+        if (!readerIdFilter.isEmpty())
+        {
+            if (!reservation.getReaderID().contains(readerIdFilter))
+                match = false;
+        }
+
+        if (!timeFilter.isEmpty())
+        {
+            if (!reservation.getReserveTime().toString("yyyy-MM-dd HH:mm:ss").contains(timeFilter))
+                match = false;
+        }
+
+        if (!statusFilter.isEmpty())
+        {
+            if (reservation.getStatusString() != statusFilter)
+                match = false;
+        }
+
+        if (match)
+            filteredReservations.push_back(reservation);
+    }
+
+    reservationTable->setRowCount(0);
+    for (const auto &reservation : filteredReservations)
+    {
+        int row = reservationTable->rowCount();
+        reservationTable->insertRow(row);
+
+        reservationTable->setItem(row, 0, new QTableWidgetItem(reservation.getISBN()));
+        reservationTable->setItem(row, 1, new QTableWidgetItem(reservation.getReaderID()));
+        reservationTable->setItem(row, 2, new QTableWidgetItem(reservation.getReserveTime().toString("yyyy-MM-dd HH:mm:ss")));
+        reservationTable->setItem(row, 3, new QTableWidgetItem(reservation.getStatusString()));
     }
 }
 

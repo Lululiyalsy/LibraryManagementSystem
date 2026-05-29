@@ -231,9 +231,9 @@ void ReaderWindow::setupMyReservationWidget()
 
     QPushButton *searchReservationBtn = new QPushButton("查找预约", this);
 
-    topLayout->addWidget(reservationTimeEdit);
     topLayout->addWidget(reservationISBNEdit);
     topLayout->addWidget(reservationTitleEdit);
+    topLayout->addWidget(reservationTimeEdit);
     topLayout->addWidget(reservationStatusCombo);
     topLayout->addWidget(searchReservationBtn);
     topLayout->addStretch();

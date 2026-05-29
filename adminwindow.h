@@ -37,10 +37,14 @@ private slots:
     void onReservationManagement();
     // （统计报表）：统计报表按钮点击槽函数
     void onStatistics();
-    // （处理预约）：处理预约按钮点击槽函数
+    // （审核预约）：审核预约按钮点击槽函数
     void onProcessReservation();
-    // （取消预约）：取消预约按钮点击槽函数
-    void onCancelReservation();
+    // （删除预约）：删除预约按钮点击槽函数
+    void onDeleteReservation();
+    // （清空所有预约）：清空所有预约按钮点击槽函数
+    void onClearAllReservations();
+    // （查询预约）：查询预约按钮点击槽函数
+    void onSearchReservation();
     // （退出登录）：退出按钮点击槽函数
     void onLogout();
     // （消息管理）：消息按钮点击槽函数
@@ -213,10 +217,16 @@ private:
     QPushButton *borrowRenewBtn;
     // 修改结束
 
-    // （处理预约按钮）：处理预约按钮指针
+    // （审核预约按钮）：审核预约按钮指针
     QPushButton *processReservationBtn;
-    // （取消预约按钮）：取消预约按钮指针
-    QPushButton *cancelReservationBtn;
+    // （预约ISBN查找输入框）：预约ISBN查找输入框指针
+    QLineEdit *reservationISBNLineEdit;
+    // （预约读者ID查找输入框）：预约读者ID查找输入框指针
+    QLineEdit *reservationReaderIdLineEdit;
+    // （预约时间查找输入框）：预约时间查找输入框指针
+    QLineEdit *reservationTimeLineEdit;
+    // （预约状态下拉框）：预约状态下拉框指针
+    QComboBox *reservationStatusCombo;
 
     // （消息管理）：初始化消息表格
     void setupMessageWidget();
