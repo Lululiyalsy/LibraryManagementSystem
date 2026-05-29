@@ -85,6 +85,48 @@ std::vector<Reservation> Reader::viewMyReservations()
     return dm->getReservationsByReader(ID);
 }
 
+// 删除预约（已审核/已取消状态，非待审核）
+bool Reader::deleteReservation(const QString &isbn)
+{
+    DataManager *dm = DataManager::getInstance();
+    
+    std::vector<Reservation> reservations = dm->getReservationsByReader(ID);
+    for (const auto &reservation : reservations)
+    {
+        if (reservation.getISBN() == isbn)
+        {
+            // 只允许删除非待审核状态的预约
+            if (reservation.getStatus() != Reservation::PENDING)
+            {
+                return dm->removeReservation(isbn, ID);
+            }
+            break;
+        }
+    }
+    return false;
+}
+
+// 清空所有非待审核状态的预约
+int Reader::clearAllReservationsExceptPending()
+{
+    DataManager *dm = DataManager::getInstance();
+    
+    std::vector<Reservation> reservations = dm->getReservationsByReader(ID);
+    int deletedCount = 0;
+    
+    for (const auto &reservation : reservations)
+    {
+        if (reservation.getStatus() != Reservation::PENDING)
+        {
+            if (dm->removeReservation(reservation.getISBN(), ID))
+            {
+                deletedCount++;
+            }
+        }
+    }
+    return deletedCount;
+}
+
 // 借书（按ISBN）
 // 修改5.16
 bool Reader::borrowBook(const QString &isbn)

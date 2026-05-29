@@ -124,6 +124,8 @@ public:
     bool addReservation(const Reservation &reservation);
     // （预约管理）：取消预约记录（按ISBN和读者ID）
     bool cancelReservation(const QString &isbn, const QString &readerId);
+    // （预约管理）：删除预约记录（硬删除）
+    bool removeReservation(const QString &isbn, const QString &readerId);
     // （预约管理）：获取某图书的所有预约（按预约时间排序）
     std::vector<Reservation> getReservationsByISBN(const QString &isbn);
     // （预约管理）：获取某读者的所有预约

@@ -191,27 +191,72 @@ void ReaderWindow::setupMyReservationWidget()
     myReservationWidget = new QWidget(this);
     QVBoxLayout *mainLayout = new QVBoxLayout(myReservationWidget);
 
-    // 按钮区域
-    QWidget *btnWidget = new QWidget(this);
-    QHBoxLayout *btnLayout = new QHBoxLayout(btnWidget);
+    // 顶部按钮区域
+    QHBoxLayout *topLayout = new QHBoxLayout(this);
 
-    // 取消预约按钮
-    cancelReserveBtn = new QPushButton("取消预约", this);
-    btnLayout->addWidget(cancelReserveBtn);
+    QPushButton *deleteReservationBtn = new QPushButton("删除预约", this);
+    QPushButton *clearAllReservationsBtn = new QPushButton("清除所有预约", this);
 
-    mainLayout->addWidget(btnWidget);
+    topLayout->addWidget(deleteReservationBtn);
+    topLayout->addWidget(clearAllReservationsBtn);
+
+    // 添加分隔线
+    QFrame *separator = new QFrame(this);
+    separator->setFrameShape(QFrame::VLine);
+    separator->setFrameShadow(QFrame::Sunken);
+    topLayout->addWidget(separator);
+
+    // 预约查找输入框
+    reservationTimeEdit = new QLineEdit(this);
+    reservationTimeEdit->setPlaceholderText("预约时间");
+    reservationTimeEdit->setFixedWidth(150);
+
+    reservationISBNEdit = new QLineEdit(this);
+    reservationISBNEdit->setPlaceholderText("ISBN");
+    reservationISBNEdit->setFixedWidth(150);
+
+    reservationTitleEdit = new QLineEdit(this);
+    reservationTitleEdit->setPlaceholderText("书名");
+    reservationTitleEdit->setFixedWidth(200);
+
+    reservationStatusCombo = new QComboBox(this);
+    reservationStatusCombo->addItem("");
+    reservationStatusCombo->addItem("待审核");
+    reservationStatusCombo->addItem("审核成功");
+    reservationStatusCombo->addItem("审核失败");
+    reservationStatusCombo->addItem("已取消");
+    reservationStatusCombo->setFixedWidth(80);
+
+    QPushButton *searchReservationBtn = new QPushButton("查找预约", this);
+
+    topLayout->addWidget(reservationTimeEdit);
+    topLayout->addWidget(reservationISBNEdit);
+    topLayout->addWidget(reservationTitleEdit);
+    topLayout->addWidget(reservationStatusCombo);
+    topLayout->addWidget(searchReservationBtn);
+    topLayout->addStretch();
+
+    // 连接信号槽
+    connect(deleteReservationBtn, &QPushButton::clicked, this, &ReaderWindow::onDeleteReservation);
+    connect(clearAllReservationsBtn, &QPushButton::clicked, this, &ReaderWindow::onClearAllReservations);
+    connect(searchReservationBtn, &QPushButton::clicked, this, &ReaderWindow::onSearchReservation);
+
+    mainLayout->addLayout(topLayout);
 
     // 预约记录表格
     myReservationTable = new QTableWidget(this);
     myReservationTable->setColumnCount(4);
     QStringList headers = {"ISBN", "书名", "预约时间", "状态"};
     myReservationTable->setHorizontalHeaderLabels(headers);
-    myReservationTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    myReservationTable->horizontalHeader()->setStretchLastSection(true);
+    myReservationTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     myReservationTable->setSelectionBehavior(QTableWidget::SelectRows);
-    mainLayout->addWidget(myReservationTable);
+    myReservationTable->setColumnWidth(0, 120);
+    myReservationTable->setColumnWidth(1, 250);
+    myReservationTable->setColumnWidth(2, 150);
+    myReservationTable->setColumnWidth(3, 80);
 
-    // 连接信号槽
-    connect(cancelReserveBtn, &QPushButton::clicked, this, &ReaderWindow::onCancelReservation);
+    mainLayout->addWidget(myReservationTable);
 
     // 初始化显示预约记录
     displayMyReservations();
@@ -365,6 +410,147 @@ void ReaderWindow::onCancelReservation()
             QMessageBox::warning(this, "失败", "取消预约失败！预约记录不存在或已审核。");
         }
     }
+}
+
+// 删除预约（选中行）
+void ReaderWindow::onDeleteReservation()
+{
+    int currentRow = myReservationTable->currentRow();
+    if (currentRow < 0)
+    {
+        QMessageBox::warning(this, "提示", "请先选择要删除的预约记录！");
+        return;
+    }
+
+    QString isbn = myReservationTable->item(currentRow, 0)->text();
+    QString status = myReservationTable->item(currentRow, 3)->text();
+    if (status == "待审核")
+    {
+        QMessageBox::warning(this, "提示", "待审核的预约记录不能删除，请使用取消预约功能！");
+        return;
+    }
+
+    Reader *reader = dynamic_cast<Reader *>(currentUser);
+    if (reader)
+    {
+        bool success = reader->deleteReservation(isbn);
+        if (success)
+        {
+            QMessageBox::information(this, "成功", "删除预约成功！");
+            displayMyReservations();
+            onBookSearch();
+        }
+        else
+        {
+            QMessageBox::warning(this, "失败", "删除预约失败！预约记录不存在。");
+        }
+    }
+}
+
+// 清除所有非待审核状态的预约
+void ReaderWindow::onClearAllReservations()
+{
+    Reader *reader = dynamic_cast<Reader *>(currentUser);
+    if (!reader)
+        return;
+
+    std::vector<Reservation> reservations = reader->viewMyReservations();
+    bool hasNonPending = false;
+    for (const auto &r : reservations)
+    {
+        if (r.getStatus() != Reservation::PENDING)
+        {
+            hasNonPending = true;
+            break;
+        }
+    }
+
+    if (!hasNonPending)
+    {
+        QMessageBox::information(this, "提示", "没有可清除的预约记录（待审核的预约不会被清除）！");
+        return;
+    }
+
+    QMessageBox::StandardButton reply = QMessageBox::question(this, "确认", "确定要清除所有已审核/已取消的预约记录吗？（待审核的预约将保留）",
+                                                              QMessageBox::Yes | QMessageBox::No);
+    if (reply == QMessageBox::Yes)
+    {
+        int deletedCount = reader->clearAllReservationsExceptPending();
+        QMessageBox::information(this, "成功", QString("成功清除 %1 条预约记录！").arg(deletedCount));
+        displayMyReservations();
+        onBookSearch();
+    }
+}
+
+// 查找预约
+void ReaderWindow::onSearchReservation()
+{
+    Reader *reader = dynamic_cast<Reader *>(currentUser);
+    if (!reader)
+        return;
+
+    QString timeFilter = reservationTimeEdit->text().trimmed();
+    QString isbnFilter = reservationISBNEdit->text().trimmed();
+    QString titleFilter = reservationTitleEdit->text().trimmed();
+    QString statusFilter = reservationStatusCombo->currentText();
+
+    std::vector<Reservation> allReservations = reader->viewMyReservations();
+    std::vector<Reservation> filteredReservations;
+
+    for (const auto &reservation : allReservations)
+    {
+        bool match = true;
+
+        if (!timeFilter.isEmpty())
+        {
+            if (!reservation.getReserveTime().toString("yyyy-MM-dd HH:mm:ss").contains(timeFilter))
+                match = false;
+        }
+
+        if (!isbnFilter.isEmpty())
+        {
+            if (!reservation.getISBN().contains(isbnFilter))
+                match = false;
+        }
+
+        if (!titleFilter.isEmpty())
+        {
+            DataManager *dm = DataManager::getInstance();
+            Book *book = dm->findBookByISBN(reservation.getISBN());
+            if (!book || !book->getTitle().contains(titleFilter))
+                match = false;
+        }
+
+        if (!statusFilter.isEmpty())
+        {
+            if (reservation.getStatusString() != statusFilter)
+                match = false;
+        }
+
+        if (match)
+            filteredReservations.push_back(reservation);
+    }
+
+    myReservationTable->setRowCount(0);
+    for (const auto &reservation : filteredReservations)
+    {
+        int row = myReservationTable->rowCount();
+        myReservationTable->insertRow(row);
+        myReservationTable->setItem(row, 0, new QTableWidgetItem(reservation.getISBN()));
+
+        DataManager *dm = DataManager::getInstance();
+        Book *book = dm->findBookByISBN(reservation.getISBN());
+        QString bookTitle = book ? book->getTitle() : "未知";
+        myReservationTable->setItem(row, 1, new QTableWidgetItem(bookTitle));
+
+        myReservationTable->setItem(row, 2, new QTableWidgetItem(reservation.getReserveTime().toString("yyyy-MM-dd HH:mm:ss")));
+        myReservationTable->setItem(row, 3, new QTableWidgetItem(reservation.getStatusString()));
+    }
+
+    myReservationTable->setColumnWidth(0, 120);
+    myReservationTable->setColumnWidth(1, 250);
+    myReservationTable->setColumnWidth(2, 150);
+    myReservationTable->setColumnWidth(3, 80);
 }
 
 // 借书

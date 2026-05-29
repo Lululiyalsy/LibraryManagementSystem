@@ -39,6 +39,12 @@ private slots:
     void onBookReserve();
     // 取消预约（弹出对话框输入ISBN）
     void onCancelReservation();
+    // 删除预约（选中行）
+    void onDeleteReservation();
+    // 清除所有预约
+    void onClearAllReservations();
+    // 查找预约
+    void onSearchReservation();
     // 借书
     void onBorrowBook();
     // 还书
@@ -87,17 +93,21 @@ private:
     QLineEdit *messageContentEdit; // 消息内容查找输入框
     QComboBox *messageStatusCombo; // 消息状态下拉框
 
+    QLineEdit *reservationTimeEdit;    // 预约时间查找输入框
+    QLineEdit *reservationISBNEdit;    // 预约ISBN查找输入框
+    QLineEdit *reservationTitleEdit;   // 预约书名查找输入框
+    QComboBox *reservationStatusCombo; // 预约状态下拉框
+
     QLineEdit *bookISBNLineEdit;     // 图书ISBN查询输入框
     QLineEdit *bookTitleLineEdit;    // 图书名称查询输入框
     QLineEdit *bookAuthorLineEdit;   // 图书作者查询输入框
     QLineEdit *bookCategoryLineEdit; // 图书分类查询输入框
 
-    QPushButton *bookSearchBtn;    // 图书查询按钮
-    QPushButton *bookReserveBtn;   // 预约按钮
-    QPushButton *borrowBtn;        // 借书按钮
-    QPushButton *returnBtn;        // 还书按钮
-    QPushButton *renewBtn;         // 续借按钮
-    QPushButton *cancelReserveBtn; // 取消预约按钮
+    QPushButton *bookSearchBtn;  // 图书查询按钮
+    QPushButton *bookReserveBtn; // 预约按钮
+    QPushButton *borrowBtn;      // 借书按钮
+    QPushButton *returnBtn;      // 还书按钮
+    QPushButton *renewBtn;       // 续借按钮
 
     // 设置中心窗口
     void setupCentralWidget();

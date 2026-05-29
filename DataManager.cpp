@@ -1003,6 +1003,28 @@ bool DataManager::cancelReservation(const QString &isbn, const QString &readerId
     return false;
 }
 
+// （预约管理）：删除预约记录（硬删除，从容器中移除）
+bool DataManager::removeReservation(const QString &isbn, const QString &readerId)
+{
+    for (auto it = reservations.begin(); it != reservations.end(); ++it)
+    {
+        if (it->getISBN() == isbn && it->getReaderID() == readerId)
+        {
+            Book *book = findBookByISBN(isbn);
+            if (book && book->getReservationCount() > 0)
+            {
+                book->setReservationCount(book->getReservationCount() - 1);
+                writeBook();
+            }
+
+            reservations.erase(it);
+            writeReservation();
+            return true;
+        }
+    }
+    return false;
+}
+
 // （预约管理）：获取某图书的所有预约（按预约时间排序）
 std::vector<Reservation> DataManager::getReservationsByISBN(const QString &isbn)
 {
