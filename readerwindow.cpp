@@ -194,9 +194,11 @@ void ReaderWindow::setupMyReservationWidget()
     // 顶部按钮区域
     QHBoxLayout *topLayout = new QHBoxLayout(this);
 
+    QPushButton *cancelReservationBtn = new QPushButton("取消预约", this);
     QPushButton *deleteReservationBtn = new QPushButton("删除预约", this);
     QPushButton *clearAllReservationsBtn = new QPushButton("清除所有预约", this);
 
+    topLayout->addWidget(cancelReservationBtn);
     topLayout->addWidget(deleteReservationBtn);
     topLayout->addWidget(clearAllReservationsBtn);
 
@@ -237,6 +239,7 @@ void ReaderWindow::setupMyReservationWidget()
     topLayout->addStretch();
 
     // 连接信号槽
+    connect(cancelReservationBtn, &QPushButton::clicked, this, &ReaderWindow::onCancelReservation);
     connect(deleteReservationBtn, &QPushButton::clicked, this, &ReaderWindow::onDeleteReservation);
     connect(clearAllReservationsBtn, &QPushButton::clicked, this, &ReaderWindow::onClearAllReservations);
     connect(searchReservationBtn, &QPushButton::clicked, this, &ReaderWindow::onSearchReservation);
