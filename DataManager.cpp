@@ -922,7 +922,8 @@ void DataManager::initReservation()
     for (const auto &reservation : reservations)
     {
         if (reservation.getStatus() == Reservation::PENDING ||
-            reservation.getStatus() == Reservation::NOTIFIED)
+            reservation.getStatus() == Reservation::APPROVED ||
+            reservation.getStatus() == Reservation::REJECTED)
         {
             Book *book = findBookByISBN(reservation.getISBN());
             if (book)
@@ -984,7 +985,7 @@ bool DataManager::cancelReservation(const QString &isbn, const QString &readerId
 {
     for (auto it = reservations.begin(); it != reservations.end(); ++it)
     {
-        if (it->getISBN() == isbn && it->getReaderID() == readerId && it->getStatus() != Reservation::CANCELLED && it->getStatus() != Reservation::COMPLETED)
+        if (it->getISBN() == isbn && it->getReaderID() == readerId && it->getStatus() == Reservation::PENDING)
         {
             it->setStatus(Reservation::CANCELLED);
 
@@ -1064,7 +1065,7 @@ void DataManager::notifyReservations(const QString &isbn)
             {
                 if (r.getISBN() == isbn && r.getReaderID() == reservation.getReaderID())
                 {
-                    r.setStatus(Reservation::NOTIFIED);
+                    r.setStatus(Reservation::APPROVED);
                     break;
                 }
             }
@@ -1106,8 +1107,7 @@ bool DataManager::hasReservation(const QString &isbn, const QString &readerId)
     {
         if (reservation.getISBN() == isbn &&
             reservation.getReaderID() == readerId &&
-            reservation.getStatus() != Reservation::CANCELLED &&
-            reservation.getStatus() != Reservation::COMPLETED)
+            reservation.getStatus() != Reservation::CANCELLED)
         {
             return true;
         }
@@ -1183,8 +1183,10 @@ void DataManager::writeMessage()
 }
 
 // （管理员消息）：添加管理员消息
-void DataManager::addAdminMessage(User *user, const QString& readerId, const QString& readerName, const QString &message) {
-    if (user) {
+void DataManager::addAdminMessage(User *user, const QString &readerId, const QString &readerName, const QString &message)
+{
+    if (user)
+    {
         // 创建管理员消息
         Message msg(user->getID(), user->getName(), readerId, readerName, message);
         user->addMessage(msg);
@@ -1193,8 +1195,10 @@ void DataManager::addAdminMessage(User *user, const QString& readerId, const QSt
 }
 
 // （读者消息）：添加读者消息
-void DataManager::addReaderMessage(User *reader, const QString &message) {
-    if (reader) {
+void DataManager::addReaderMessage(User *reader, const QString &message)
+{
+    if (reader)
+    {
         // 创建读者消息
         Message msg(reader->getID(), reader->getName(), message);
         reader->addMessage(msg);

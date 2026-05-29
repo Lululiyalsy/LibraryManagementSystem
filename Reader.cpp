@@ -109,7 +109,7 @@ bool Reader::borrowBook(const QString &isbn)
 
     for (const auto &r : allReservations)
     {
-        if (r.getISBN() == isbn && r.getStatus() == Reservation::NOTIFIED)
+        if (r.getISBN() == isbn && r.getStatus() == Reservation::APPROVED)
         {
             notifiedCount++;
             if (r.getReaderID() == ID)
@@ -135,9 +135,9 @@ bool Reader::borrowBook(const QString &isbn)
         for (auto &r : allReservations)
         {
             if (r.getISBN() == isbn && r.getReaderID() == ID &&
-                r.getStatus() == Reservation::NOTIFIED)
+                r.getStatus() == Reservation::APPROVED)
             {
-                r.setStatus(Reservation::COMPLETED);
+                r.setStatus(Reservation::CANCELLED);
                 if (book && book->getReservationCount() > 0)
                 {
                     book->setReservationCount(book->getReservationCount() - 1);

@@ -194,30 +194,32 @@ std::vector<User *> Admin::findUser(const QString &id, const QString &name)
 }
 
 // 清空用户信息（包括管理员和读者），保留当前管理员，返回新的用户指针
-User* Admin::clearUser(User* currentAdmin)
+User *Admin::clearUser(User *currentAdmin)
 {
     DataManager *dm = DataManager::getInstance();
-    
+
     // 保存当前管理员信息
     QString currentId, currentName, currentPassword, currentPhone, currentEmail;
-    if (currentAdmin) {
+    if (currentAdmin)
+    {
         currentId = currentAdmin->getID();
         currentName = currentAdmin->getName();
         currentPassword = currentAdmin->getPassword();
         currentPhone = currentAdmin->getPhone();
         currentEmail = currentAdmin->getEmail();
     }
-    
+
     // 清空所有用户
     dm->clearAllUsers();
-    
+
     // 清空预约记录、借书记录、消息记录
     dm->clearAllReservations();
     dm->clearAllBorrowRecords();
     dm->clearAllMessages();
-    
+
     // 如果有当前管理员，重新添加并返回新指针
-    if (currentAdmin) {
+    if (currentAdmin)
+    {
         User *admin = new Admin(currentId, currentName, currentPassword, currentPhone, currentEmail);
         dm->addUser(admin);
         return admin;
@@ -513,7 +515,7 @@ void Admin::processReservation()
             }
             qDebug() << "[Admin] 预约" << reservation.getISBN() << "已过期自动取消";
         }
-        if (reservation.getStatus() == Reservation::NOTIFIED &&
+        if (reservation.getStatus() == Reservation::APPROVED &&
             reservation.getReserveTime().daysTo(now) > 10)
         {
             reservation.setStatus(Reservation::CANCELLED);
@@ -522,7 +524,7 @@ void Admin::processReservation()
             {
                 book->setReservationCount(book->getReservationCount() - 1);
             }
-            qDebug() << "[Admin] 已通知预约" << reservation.getISBN() << "超时未借出，自动取消";
+            qDebug() << "[Admin] 审核成功预约" << reservation.getISBN() << "超时未借出，自动取消";
         }
     }
     dm->writeBook();
@@ -629,13 +631,13 @@ bool Admin::borrowBook(const QString &isbn, const QString &readerId)
     int reservationIndex = -1;
     std::vector<Reservation> &reservations = dm->getReservations();
 
-    // 统计已通知但未完成的预约数量
+    // 统计审核成功但未完成的预约数量
     int notifiedCount = 0;
 
     for (size_t i = 0; i < reservations.size(); ++i)
     {
         if (reservations[i].getISBN() == isbn &&
-            reservations[i].getStatus() == Reservation::NOTIFIED)
+            reservations[i].getStatus() == Reservation::APPROVED)
         {
             notifiedCount++;
 
@@ -673,10 +675,10 @@ bool Admin::borrowBook(const QString &isbn, const QString &readerId)
     BorrowRecord record(isbn, readerId, now, dueTime);
     dm->addBorrowRecord(record);
 
-    // 如果有有效预约，更新预约状态为 COMPLETED
+    // 如果有有效预约，更新预约状态为 CANCELLED（已完成）
     if (reservationIndex >= 0)
     {
-        reservations[reservationIndex].setStatus(Reservation::COMPLETED);
+        reservations[reservationIndex].setStatus(Reservation::CANCELLED);
         if (book && book->getReservationCount() > 0)
         {
             book->setReservationCount(book->getReservationCount() - 1);
@@ -740,5 +742,4 @@ std::vector<BorrowRecord> Admin::viewOverdueRecords()
 //  析构函数
 Admin::~Admin()
 {
-
 }
