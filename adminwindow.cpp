@@ -1886,7 +1886,7 @@ void AdminWindow::setupMessageWidget()
 
     messageTable = new QTableWidget(this);
     messageTable->setColumnCount(5);
-    messageTable->setHorizontalHeaderLabels(QStringList() << "读者ID" << "读者名" << "消息时间" << "消息内容" << "消息状态");
+    messageTable->setHorizontalHeaderLabels(QStringList() << "管理员ID" << "管理员名" << "消息时间" << "消息内容" << "消息状态");
     messageTable->horizontalHeader()->setStretchLastSection(true);
     messageTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     messageTable->setSelectionBehavior(QAbstractItemView::SelectRows);

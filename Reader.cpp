@@ -90,10 +90,11 @@ bool Reader::cancelReservation(const QString &isbn)
             bool success = dm->removeReservation(isbn, ID);
             if (success)
             {
-                // TODO: 发送消息给读者自己（不给管理员发，待消息系统完善后实现）
-                // QString messageContent = QString("您已取消预约图书(ISBN:%1)").arg(isbn);
-                // Message message(ID, "系统", messageContent);
-                // dm->addMessageToReader(ID, message);
+                // 发送消息给读者自己（不给管理员发）
+                QString messageContent = QString("您已取消预约图书(ISBN:%1)").arg(isbn);
+                Message message(ID, name, messageContent);
+                this->addMessage(message);
+                dm->writeMessage(); // 写入消息文件
             }
             return success;
         }

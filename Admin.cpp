@@ -607,10 +607,22 @@ bool Admin::approveReservation(const QString &isbn, const QString &readerId, boo
                 reservation.setStatus(Reservation::APPROVED);
                 dm->writeReservation();
 
-                // TODO: 发送消息通知读者（待消息系统完善后实现）
-                // QString messageContent = QString("您预约的图书(ISBN:%1)已审核成功，请及时借阅。").arg(isbn);
-                // Message message(readerId, "系统", messageContent);
-                // dm->addMessageToReader(readerId, message);
+                // 发送消息通知读者（读者消息格式）
+                QString readerMessageContent = QString("您预约的图书(ISBN:%1)已审核成功，请及时借阅。").arg(isbn);
+                User *reader = dm->findUserById(readerId);
+                if (reader)
+                {
+                    Message readerMessage(readerId, reader->getName(), readerMessageContent);
+                    reader->addMessage(readerMessage);
+                }
+
+                // 发送消息给自己（管理员消息格式，以管理员为主语）
+                QString adminMessageContent = QString("已通过读者 %1 对图书(ISBN:%2)的预约审核。").arg(reader ? reader->getName() : readerId).arg(isbn);
+                Message adminMessage(ID, name, readerId, reader ? reader->getName() : "", adminMessageContent);
+                this->addMessage(adminMessage);
+
+                // 写入消息文件
+                dm->writeMessage();
 
                 return true;
             }
@@ -622,10 +634,22 @@ bool Admin::approveReservation(const QString &isbn, const QString &readerId, boo
         bool success = dm->removeReservation(isbn, readerId);
         if (success)
         {
-            // TODO: 发送消息通知读者（待消息系统完善后实现）
-            // QString messageContent = QString("您预约的图书(ISBN:%1)审核失败，预约已取消。").arg(isbn);
-            // Message message(readerId, "系统", messageContent);
-            // dm->addMessageToReader(readerId, message);
+            // 发送消息通知读者（读者消息格式）
+            QString readerMessageContent = QString("您预约的图书(ISBN:%1)审核失败，预约已取消。").arg(isbn);
+            User *reader = dm->findUserById(readerId);
+            if (reader)
+            {
+                Message readerMessage(readerId, reader->getName(), readerMessageContent);
+                reader->addMessage(readerMessage);
+            }
+
+            // 发送消息给自己（管理员消息格式，以管理员为主语）
+            QString adminMessageContent = QString("已拒绝读者 %1 对图书(ISBN:%2)的预约审核。").arg(reader ? reader->getName() : readerId).arg(isbn);
+            Message adminMessage(ID, name, readerId, reader ? reader->getName() : "", adminMessageContent);
+            this->addMessage(adminMessage);
+
+            // 写入消息文件
+            dm->writeMessage();
         }
         return success;
     }

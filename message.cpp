@@ -130,12 +130,12 @@ Message Message::fromFileString(const QString &line)
     return Message();
 }
 
-// 获取管理员显示字段（读者id|读者名|消息发送时间|消息内容|消息状态）
+// 获取管理员显示字段（管理员ID|管理员名|消息发送时间|消息内容|消息状态）
 std::vector<QString> Message::getAdminDisplayFields() const
 {
     std::vector<QString> fields;
-    fields.push_back(m_readerId);
-    fields.push_back(m_readerName);
+    fields.push_back(m_adminId);
+    fields.push_back(m_adminName);
     fields.push_back(m_time);
     fields.push_back(m_content);
     fields.push_back(m_status == MessageStatus::UNREAD ? "未读" : "已读");
