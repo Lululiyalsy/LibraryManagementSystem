@@ -595,35 +595,39 @@ std::vector<Reservation> Admin::viewAllReservations()
 bool Admin::approveReservation(const QString &isbn, const QString &readerId, bool isSuccess)
 {
     DataManager *dm = DataManager::getInstance();
-    std::vector<Reservation> &reservations = dm->getReservations();
 
-    for (auto &reservation : reservations)
+    if (isSuccess)
     {
-        if (reservation.getISBN() == isbn && reservation.getReaderID() == readerId)
+        // 审核成功：设置状态为 APPROVED
+        std::vector<Reservation> &reservations = dm->getReservations();
+        for (auto &reservation : reservations)
         {
-            if (reservation.getStatus() == Reservation::PENDING)
+            if (reservation.getISBN() == isbn && reservation.getReaderID() == readerId && reservation.getStatus() == Reservation::PENDING)
             {
-                if (isSuccess)
-                {
-                    reservation.setStatus(Reservation::APPROVED);
-                }
-                else
-                {
-                    reservation.setStatus(Reservation::REJECTED);
-                }
+                reservation.setStatus(Reservation::APPROVED);
                 dm->writeReservation();
 
-                // TODO: 发送消息通知读者
-                // QString messageContent = isSuccess
-                //     ? QString("您预约的图书(ISBN:%1)已审核成功，请及时借阅。").arg(isbn)
-                //     : QString("您预约的图书(ISBN:%1)审核失败，请查看详情。").arg(isbn);
-                // Message message(readerId, "系统", QDateTime::currentDateTime(), messageContent, false);
-                // dm->addMessage(message);
+                // TODO: 发送消息通知读者（待消息系统完善后实现）
+                // QString messageContent = QString("您预约的图书(ISBN:%1)已审核成功，请及时借阅。").arg(isbn);
+                // Message message(readerId, "系统", messageContent);
+                // dm->addMessageToReader(readerId, message);
 
                 return true;
             }
-            break;
         }
+    }
+    else
+    {
+        // 审核失败：直接删除记录
+        bool success = dm->removeReservation(isbn, readerId);
+        if (success)
+        {
+            // TODO: 发送消息通知读者（待消息系统完善后实现）
+            // QString messageContent = QString("您预约的图书(ISBN:%1)审核失败，预约已取消。").arg(isbn);
+            // Message message(readerId, "系统", messageContent);
+            // dm->addMessageToReader(readerId, message);
+        }
+        return success;
     }
     return false;
 }
@@ -733,16 +737,10 @@ bool Admin::borrowBook(const QString &isbn, const QString &readerId)
     BorrowRecord record(isbn, readerId, now, dueTime);
     dm->addBorrowRecord(record);
 
-    // 如果有有效预约，更新预约状态为 CANCELLED（已完成）
+    // 如果有有效预约，直接删除预约记录
     if (reservationIndex >= 0)
     {
-        reservations[reservationIndex].setStatus(Reservation::CANCELLED);
-        if (book && book->getReservationCount() > 0)
-        {
-            book->setReservationCount(book->getReservationCount() - 1);
-        }
-        dm->writeBook();
-        dm->writeReservation();
+        dm->removeReservation(isbn, readerId);
     }
 
     return true;

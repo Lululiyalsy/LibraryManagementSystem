@@ -39,10 +39,6 @@ private slots:
     void onStatistics();
     // （审核预约）：审核预约按钮点击槽函数
     void onProcessReservation();
-    // （删除预约）：删除预约按钮点击槽函数
-    void onDeleteReservation();
-    // （清空所有预约）：清空所有预约按钮点击槽函数
-    void onClearAllReservations();
     // （查询预约）：查询预约按钮点击槽函数
     void onSearchReservation();
     // （退出登录）：退出按钮点击槽函数

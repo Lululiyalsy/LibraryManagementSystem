@@ -39,10 +39,6 @@ private slots:
     void onBookReserve();
     // 取消预约（弹出对话框输入ISBN）
     void onCancelReservation();
-    // 删除预约（选中行）
-    void onDeleteReservation();
-    // 清除所有预约
-    void onClearAllReservations();
     // 查找预约
     void onSearchReservation();
     // 借书

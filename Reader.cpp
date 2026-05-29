@@ -42,19 +42,19 @@ void Reader::setMaxBooks(int max) { maxBooks = max; }
 void Reader::setCreditScore(int score) { creditScore = score; }
 
 // 预约图书（按ISBN）
-bool Reader::reserveBook(const QString &isbn)
+Reader::ReserveResult Reader::reserveBook(const QString &isbn)
 {
     DataManager *dm = DataManager::getInstance();
 
     Book *book = dm->findBookByISBN(isbn);
     if (!book)
     {
-        return false;
+        return ReserveResult::BOOK_NOT_FOUND;
     }
 
     if (dm->hasReservation(isbn, ID))
     {
-        return false;
+        return ReserveResult::ALREADY_RESERVED;
     }
 
     int available = book->getStock() - book->getCurrentBorrowed();
@@ -63,19 +63,42 @@ bool Reader::reserveBook(const QString &isbn)
     // 有库存时，预约量不超过剩余借书量的2倍
     if (available > 0 && currentReservationCount >= available * 2)
     {
-        return false;
+        return ReserveResult::EXCEED_LIMIT;
     }
 
     QDateTime now = QDateTime::currentDateTime();
     Reservation reservation(isbn, ID, now, Reservation::PENDING);
-    return dm->addReservation(reservation);
+    if (dm->addReservation(reservation))
+    {
+        return ReserveResult::SUCCESS;
+    }
+    return ReserveResult::BOOK_NOT_FOUND;
 }
 
-// 取消预约（按ISBN）
+// 取消预约（按ISBN）- 直接删除记录
 bool Reader::cancelReservation(const QString &isbn)
 {
     DataManager *dm = DataManager::getInstance();
-    return dm->cancelReservation(isbn, ID);
+
+    // 先检查预约是否存在且是待审核状态
+    std::vector<Reservation> reservations = dm->getReservationsByReader(ID);
+    for (const auto &reservation : reservations)
+    {
+        if (reservation.getISBN() == isbn && reservation.getStatus() == Reservation::PENDING)
+        {
+            // 直接删除记录
+            bool success = dm->removeReservation(isbn, ID);
+            if (success)
+            {
+                // TODO: 发送消息给读者自己（不给管理员发，待消息系统完善后实现）
+                // QString messageContent = QString("您已取消预约图书(ISBN:%1)").arg(isbn);
+                // Message message(ID, "系统", messageContent);
+                // dm->addMessageToReader(ID, message);
+            }
+            return success;
+        }
+    }
+    return false;
 }
 
 // 查看我的预约
@@ -89,7 +112,7 @@ std::vector<Reservation> Reader::viewMyReservations()
 bool Reader::deleteReservation(const QString &isbn)
 {
     DataManager *dm = DataManager::getInstance();
-    
+
     std::vector<Reservation> reservations = dm->getReservationsByReader(ID);
     for (const auto &reservation : reservations)
     {
@@ -110,10 +133,10 @@ bool Reader::deleteReservation(const QString &isbn)
 int Reader::clearAllReservationsExceptPending()
 {
     DataManager *dm = DataManager::getInstance();
-    
+
     std::vector<Reservation> reservations = dm->getReservationsByReader(ID);
     int deletedCount = 0;
-    
+
     for (const auto &reservation : reservations)
     {
         if (reservation.getStatus() != Reservation::PENDING)

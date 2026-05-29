@@ -195,12 +195,8 @@ void ReaderWindow::setupMyReservationWidget()
     QHBoxLayout *topLayout = new QHBoxLayout(this);
 
     QPushButton *cancelReservationBtn = new QPushButton("取消预约", this);
-    QPushButton *deleteReservationBtn = new QPushButton("删除预约", this);
-    QPushButton *clearAllReservationsBtn = new QPushButton("清除所有预约", this);
 
     topLayout->addWidget(cancelReservationBtn);
-    topLayout->addWidget(deleteReservationBtn);
-    topLayout->addWidget(clearAllReservationsBtn);
 
     // 添加分隔线
     QFrame *separator = new QFrame(this);
@@ -225,8 +221,6 @@ void ReaderWindow::setupMyReservationWidget()
     reservationStatusCombo->addItem("");
     reservationStatusCombo->addItem("待审核");
     reservationStatusCombo->addItem("审核成功");
-    reservationStatusCombo->addItem("审核失败");
-    reservationStatusCombo->addItem("已取消");
     reservationStatusCombo->setFixedWidth(80);
 
     QPushButton *searchReservationBtn = new QPushButton("查找预约", this);
@@ -240,8 +234,6 @@ void ReaderWindow::setupMyReservationWidget()
 
     // 连接信号槽
     connect(cancelReservationBtn, &QPushButton::clicked, this, &ReaderWindow::onCancelReservation);
-    connect(deleteReservationBtn, &QPushButton::clicked, this, &ReaderWindow::onDeleteReservation);
-    connect(clearAllReservationsBtn, &QPushButton::clicked, this, &ReaderWindow::onClearAllReservations);
     connect(searchReservationBtn, &QPushButton::clicked, this, &ReaderWindow::onSearchReservation);
 
     mainLayout->addLayout(topLayout);
@@ -376,16 +368,24 @@ void ReaderWindow::onBookReserve()
     Reader *reader = dynamic_cast<Reader *>(currentUser);
     if (reader)
     {
-        bool success = reader->reserveBook(isbn);
-        if (success)
+        Reader::ReserveResult result = reader->reserveBook(isbn);
+        if (result == Reader::ReserveResult::SUCCESS)
         {
-            QMessageBox::information(this, "成功", "预约成功！");
+            QMessageBox::information(this, "成功", "预约成功！等待管理员审核。");
             onBookSearch();
             displayMyReservations();
         }
-        else
+        else if (result == Reader::ReserveResult::BOOK_NOT_FOUND)
         {
-            QMessageBox::warning(this, "失败", "预约失败！可能图书不存在、已可借或已预约。");
+            QMessageBox::warning(this, "失败", "预约失败！图书不存在。");
+        }
+        else if (result == Reader::ReserveResult::ALREADY_RESERVED)
+        {
+            QMessageBox::warning(this, "失败", "预约失败！您已预约过该图书。");
+        }
+        else if (result == Reader::ReserveResult::EXCEED_LIMIT)
+        {
+            QMessageBox::warning(this, "失败", "预约失败！该图书预约人数已达上限（预约量不超过库存的2倍）。");
         }
     }
 }
@@ -416,75 +416,6 @@ void ReaderWindow::onCancelReservation()
 }
 
 // 删除预约（选中行）
-void ReaderWindow::onDeleteReservation()
-{
-    int currentRow = myReservationTable->currentRow();
-    if (currentRow < 0)
-    {
-        QMessageBox::warning(this, "提示", "请先选择要删除的预约记录！");
-        return;
-    }
-
-    QString isbn = myReservationTable->item(currentRow, 0)->text();
-    QString status = myReservationTable->item(currentRow, 3)->text();
-    if (status == "待审核")
-    {
-        QMessageBox::warning(this, "提示", "待审核的预约记录不能删除，请使用取消预约功能！");
-        return;
-    }
-
-    Reader *reader = dynamic_cast<Reader *>(currentUser);
-    if (reader)
-    {
-        bool success = reader->deleteReservation(isbn);
-        if (success)
-        {
-            QMessageBox::information(this, "成功", "删除预约成功！");
-            displayMyReservations();
-            onBookSearch();
-        }
-        else
-        {
-            QMessageBox::warning(this, "失败", "删除预约失败！预约记录不存在。");
-        }
-    }
-}
-
-// 清除所有非待审核状态的预约
-void ReaderWindow::onClearAllReservations()
-{
-    Reader *reader = dynamic_cast<Reader *>(currentUser);
-    if (!reader)
-        return;
-
-    std::vector<Reservation> reservations = reader->viewMyReservations();
-    bool hasNonPending = false;
-    for (const auto &r : reservations)
-    {
-        if (r.getStatus() != Reservation::PENDING)
-        {
-            hasNonPending = true;
-            break;
-        }
-    }
-
-    if (!hasNonPending)
-    {
-        QMessageBox::information(this, "提示", "没有可清除的预约记录（待审核的预约不会被清除）！");
-        return;
-    }
-
-    QMessageBox::StandardButton reply = QMessageBox::question(this, "确认", "确定要清除所有已审核/已取消的预约记录吗？（待审核的预约将保留）",
-                                                              QMessageBox::Yes | QMessageBox::No);
-    if (reply == QMessageBox::Yes)
-    {
-        int deletedCount = reader->clearAllReservationsExceptPending();
-        QMessageBox::information(this, "成功", QString("成功清除 %1 条预约记录！").arg(deletedCount));
-        displayMyReservations();
-        onBookSearch();
-    }
-}
-
 // 查找预约
 void ReaderWindow::onSearchReservation()
 {

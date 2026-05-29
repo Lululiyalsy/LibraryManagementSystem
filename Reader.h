@@ -8,10 +8,11 @@
 #include <QString>
 #include <vector>
 
-class Reader : public User {
+class Reader : public User
+{
 public:
     // 构造函数
-    Reader(QString& I, QString& n, QString& pa, QString& ph, QString& e);
+    Reader(QString &I, QString &n, QString &pa, QString &ph, QString &e);
 
     // 实现User的纯虚函数：获取用户身份
     QString typeToIdentity() override;
@@ -22,41 +23,50 @@ public:
     // getter和setter方法
     int getMaxBooks();
     int getCreditScore();
-    std::vector<Book>& getBooks();
+    std::vector<Book> &getBooks();
 
     void setMaxBooks(int max);
     void setCreditScore(int score);
 
-    // 预约图书（按ISBN）
-    bool reserveBook(const QString& isbn);
+    // 预约结果枚举
+    enum class ReserveResult
+    {
+        SUCCESS = 0,          // 预约成功
+        BOOK_NOT_FOUND = 1,   // 图书不存在
+        ALREADY_RESERVED = 2, // 已预约过该图书
+        EXCEED_LIMIT = 3      // 预约人数已达上限
+    };
+
+    // 预约图书（按ISBN），返回预约结果
+    ReserveResult reserveBook(const QString &isbn);
 
     // 取消预约（按ISBN）
-    bool cancelReservation(const QString& isbn);
+    bool cancelReservation(const QString &isbn);
 
     // 查看我的预约
     std::vector<Reservation> viewMyReservations();
 
     // 删除预约（已审核/已取消状态，非待审核）
-    bool deleteReservation(const QString& isbn);
+    bool deleteReservation(const QString &isbn);
 
     // 清空所有非待审核状态的预约
     int clearAllReservationsExceptPending();
 
     // 借书（按ISBN）
-    bool borrowBook(const QString& isbn);
+    bool borrowBook(const QString &isbn);
 
     // 还书（按ISBN）
-    bool returnBook(const QString& isbn);
+    bool returnBook(const QString &isbn);
 
     // 续借（按ISBN）
-    bool renewBook(const QString& isbn);
+    bool renewBook(const QString &isbn);
 
     // 查看我的借阅记录
     std::vector<BorrowRecord> viewMyBorrowRecords();
 
     // 查找图书（模糊搜索）
-    std::vector<const Book*> findBook(const QString& isbn, const QString& title, 
-                                          const QString& author, const QString& category);
+    std::vector<const Book *> findBook(const QString &isbn, const QString &title,
+                                       const QString &author, const QString &category);
 
     // 析构函数
     ~Reader();

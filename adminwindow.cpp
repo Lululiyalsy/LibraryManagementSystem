@@ -378,12 +378,6 @@ void AdminWindow::setupReservationTable()
     // （创建按钮）：创建审核预约按钮
     processReservationBtn = new QPushButton("审核预约", reservationOperationWidget);
 
-    // （创建按钮）：创建删除预约按钮
-    QPushButton *deleteReservationBtn = new QPushButton("删除预约", reservationOperationWidget);
-
-    // （创建按钮）：创建清空所有预约按钮
-    QPushButton *clearAllReservationsBtn = new QPushButton("清空所有预约", reservationOperationWidget);
-
     // （添加分隔线）：添加垂直分隔线
     QFrame *separator = new QFrame(reservationOperationWidget);
     separator->setFrameShape(QFrame::VLine);
@@ -407,8 +401,6 @@ void AdminWindow::setupReservationTable()
     reservationStatusCombo->addItem("");
     reservationStatusCombo->addItem("待审核");
     reservationStatusCombo->addItem("审核成功");
-    reservationStatusCombo->addItem("审核失败");
-    reservationStatusCombo->addItem("已取消");
     reservationStatusCombo->setFixedWidth(80);
 
     // （创建按钮）：创建查询预约按钮
@@ -416,8 +408,6 @@ void AdminWindow::setupReservationTable()
 
     // （设置布局）：将控件添加到操作区布局
     reservationOperationLayout->addWidget(processReservationBtn);
-    reservationOperationLayout->addWidget(deleteReservationBtn);
-    reservationOperationLayout->addWidget(clearAllReservationsBtn);
     reservationOperationLayout->addWidget(separator);
     reservationOperationLayout->addWidget(reservationISBNLineEdit);
     reservationOperationLayout->addWidget(reservationReaderIdLineEdit);
@@ -449,8 +439,6 @@ void AdminWindow::setupReservationTable()
 
     // （连接按钮信号槽）：连接预约管理按钮信号槽
     connect(processReservationBtn, &QPushButton::clicked, this, &AdminWindow::onProcessReservation);
-    connect(deleteReservationBtn, &QPushButton::clicked, this, &AdminWindow::onDeleteReservation);
-    connect(clearAllReservationsBtn, &QPushButton::clicked, this, &AdminWindow::onClearAllReservations);
     connect(searchReservationBtn, &QPushButton::clicked, this, &AdminWindow::onSearchReservation);
 }
 
@@ -1775,107 +1763,6 @@ void AdminWindow::onProcessReservation()
 }
 
 // （删除预约）：删除预约按钮点击处理
-void AdminWindow::onDeleteReservation()
-{
-    // （获取选中行）：获取当前选中的预约行
-    int row = reservationTable->currentRow();
-    if (row < 0)
-    {
-        QMessageBox msgBox(QMessageBox::Warning, "提示", "请先选择一条预约记录！", QMessageBox::NoButton, this);
-        msgBox.addButton("确定", QMessageBox::AcceptRole);
-        msgBox.exec();
-        return;
-    }
-
-    QString isbn = reservationTable->item(row, 0)->text();
-    QString readerId = reservationTable->item(row, 1)->text();
-    QString status = reservationTable->item(row, 3)->text();
-
-    // （检查状态）：待审核的预约不能删除
-    if (status == "待审核")
-    {
-        QMessageBox msgBox(QMessageBox::Warning, "提示", "待审核的预约记录不能删除，请使用审核预约功能！", QMessageBox::NoButton, this);
-        msgBox.addButton("确定", QMessageBox::AcceptRole);
-        msgBox.exec();
-        return;
-    }
-
-    // （确认删除）：弹出确认框
-    QMessageBox confirmBox(QMessageBox::Question, "确认", QString("确定要删除读者 %1 预约的图书(ISBN:%2)吗？").arg(readerId).arg(isbn), QMessageBox::NoButton, this);
-    QAbstractButton *yesBtn = confirmBox.addButton("是", QMessageBox::YesRole);
-    confirmBox.addButton("否", QMessageBox::NoRole);
-    confirmBox.exec();
-
-    if (confirmBox.clickedButton() == yesBtn)
-    {
-        ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
-        if (admin)
-        {
-            bool success = admin->deleteReservation(isbn, readerId);
-
-            loadReservationData();
-
-            if (success)
-            {
-                QMessageBox msgBox(QMessageBox::Information, "成功", "删除预约成功！", QMessageBox::NoButton, this);
-                msgBox.addButton("确定", QMessageBox::AcceptRole);
-                msgBox.exec();
-            }
-            else
-            {
-                QMessageBox msgBox(QMessageBox::Warning, "失败", "删除预约失败！", QMessageBox::NoButton, this);
-                msgBox.addButton("确定", QMessageBox::AcceptRole);
-                msgBox.exec();
-            }
-        }
-    }
-}
-
-// （清空所有预约）：清空所有预约按钮点击处理
-void AdminWindow::onClearAllReservations()
-{
-    ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
-    if (!admin)
-        return;
-
-    DataManager *dm = DataManager::getInstance();
-    std::vector<Reservation> allReservations = dm->getReservations();
-    bool hasNonPending = false;
-    for (const auto &r : allReservations)
-    {
-        if (r.getStatus() != Reservation::PENDING)
-        {
-            hasNonPending = true;
-            break;
-        }
-    }
-
-    if (!hasNonPending)
-    {
-        QMessageBox msgBox(QMessageBox::Information, "提示", "没有可清除的预约记录（待审核的预约不会被清除）！", QMessageBox::NoButton, this);
-        msgBox.addButton("确定", QMessageBox::AcceptRole);
-        msgBox.exec();
-        return;
-    }
-
-    // （确认清空）：弹出确认框
-    QMessageBox confirmBox(QMessageBox::Question, "确认", "确定要清空所有已审核/已取消的预约记录吗？（待审核的预约将保留）", QMessageBox::NoButton, this);
-    QAbstractButton *yesBtn = confirmBox.addButton("是", QMessageBox::YesRole);
-    confirmBox.addButton("否", QMessageBox::NoRole);
-    confirmBox.exec();
-
-    if (confirmBox.clickedButton() == yesBtn)
-    {
-        int deletedCount = admin->clearAllReservations();
-
-        loadReservationData();
-
-        QMessageBox msgBox(QMessageBox::Information, "成功", QString("成功清空 %1 条预约记录！").arg(deletedCount), QMessageBox::NoButton, this);
-        msgBox.addButton("确定", QMessageBox::AcceptRole);
-        msgBox.exec();
-    }
-}
-
 // （查询预约）：查询预约按钮点击处理
 void AdminWindow::onSearchReservation()
 {
