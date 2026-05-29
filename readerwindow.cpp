@@ -203,8 +203,8 @@ void ReaderWindow::setupMyReservationWidget()
 
     // 预约记录表格
     myReservationTable = new QTableWidget(this);
-    myReservationTable->setColumnCount(5);
-    QStringList headers = {"ISBN", "书名", "预约时间", "状态", "操作"};
+    myReservationTable->setColumnCount(4);
+    QStringList headers = {"ISBN", "书名", "预约时间", "状态"};
     myReservationTable->setHorizontalHeaderLabels(headers);
     myReservationTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     myReservationTable->setSelectionBehavior(QTableWidget::SelectRows);
@@ -342,7 +342,7 @@ void ReaderWindow::onBookReserve()
     }
 }
 
-// 取消预约
+// 取消预约（弹出对话框输入ISBN）
 void ReaderWindow::onCancelReservation()
 {
     QPair<QString, bool> result = showInputDialog("取消预约", "请输入要取消预约的图书ISBN：");
@@ -362,7 +362,7 @@ void ReaderWindow::onCancelReservation()
         }
         else
         {
-            QMessageBox::warning(this, "失败", "取消预约失败！预约记录不存在。");
+            QMessageBox::warning(this, "失败", "取消预约失败！预约记录不存在或已审核。");
         }
     }
 }

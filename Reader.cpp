@@ -58,7 +58,10 @@ bool Reader::reserveBook(const QString &isbn)
     }
 
     int available = book->getStock() - book->getCurrentBorrowed();
-    if (available > 0)
+    int currentReservationCount = dm->getReservationsByISBN(isbn).size();
+
+    // 有库存时，预约量不超过剩余借书量的2倍
+    if (available > 0 && currentReservationCount >= available * 2)
     {
         return false;
     }

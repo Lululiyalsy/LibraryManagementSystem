@@ -37,7 +37,7 @@ private slots:
     void onBookSearch();
     // 预约图书
     void onBookReserve();
-    // 取消预约
+    // 取消预约（弹出对话框输入ISBN）
     void onCancelReservation();
     // 借书
     void onBorrowBook();
