@@ -36,7 +36,6 @@ QString Reader::generateVerificationCode()
 // getter和setter方法
 int Reader::getMaxBooks() { return maxBooks; }
 int Reader::getCreditScore() { return creditScore; }
-std::vector<Book> &Reader::getBooks() { return books; }
 
 void Reader::setMaxBooks(int max) { maxBooks = max; }
 void Reader::setCreditScore(int score) { creditScore = score; }
@@ -106,45 +105,54 @@ std::vector<Reservation> Reader::viewMyReservations()
     return dm->getReservationsByReader(ID);
 }
 
-// 借书（按ISBN）
-bool Reader::borrowBook(const QString &isbn)
+// 借书（按ISBN），返回借书结果
+Reader::BorrowResult Reader::borrowBook(const QString &isbn)
 {
     DataManager *dm = DataManager::getInstance();
 
     Book *book = dm->findBookByISBN(isbn);
     if (!book)
-        return false;
+        return BorrowResult::BOOK_NOT_FOUND;
 
     int available = book->getStock() - book->getCurrentBorrowed();
     if (available <= 0)
-        return false;
+        return BorrowResult::NO_STOCK;
 
-    if (dm->hasOverdueBooks(ID))
-        return false;
-
-    int currentBorrowCount = dm->getBorrowCountByReader(ID);
-    if (currentBorrowCount >= maxBooks)
-        return false;
-
-    std::vector<Reservation> &allReservations = dm->getReservations();
-    bool hasValidReservation = false;
-    int notifiedCount = 0;
-
-    for (const auto &r : allReservations)
+    std::vector<BorrowRecord> myRecords = dm->getBorrowRecordsByReader(ID);
+    for (const auto &record : myRecords)
     {
-        if (r.getISBN() == isbn && r.getStatus() == Reservation::APPROVED)
+        if (record.getISBN() == isbn && !record.isReturned())
         {
-            notifiedCount++;
-            if (r.getReaderID() == ID)
-            {
-                hasValidReservation = true;
-            }
+            return BorrowResult::ALREADY_BORROWED;
         }
     }
 
-    if (notifiedCount >= available && !hasValidReservation)
+    if (dm->hasOverdueBooks(ID))
+        return BorrowResult::HAS_OVERDUE;
+
+    int currentBorrowCount = dm->getBorrowCountByReader(ID);
+    if (currentBorrowCount >= maxBooks)
+        return BorrowResult::EXCEED_LIMIT;
+
+    std::vector<Reservation> &allReservations = dm->getReservations();
+    bool hasValidReservation = false;
+    int reservationIndex = -1;
+
+    for (int i = 0; i < allReservations.size(); ++i)
     {
-        return false;
+        const auto &r = allReservations[i];
+        if (r.getISBN() == isbn && r.getReaderID() == ID &&
+            r.getStatus() == Reservation::APPROVED)
+        {
+            hasValidReservation = true;
+            reservationIndex = i;
+            break;
+        }
+    }
+
+    if (!hasValidReservation)
+    {
+        return BorrowResult::NO_VALID_RESERVATION;
     }
 
     QDateTime now = QDateTime::currentDateTime();
@@ -153,26 +161,50 @@ bool Reader::borrowBook(const QString &isbn)
     BorrowRecord record(isbn, ID, now, dueTime);
     bool success = dm->addBorrowRecord(record);
 
-    if (success && hasValidReservation)
+    if (success)
     {
-        for (auto &r : allReservations)
+        if (reservationIndex >= 0)
         {
-            if (r.getISBN() == isbn && r.getReaderID() == ID &&
-                r.getStatus() == Reservation::APPROVED)
+            allReservations.erase(allReservations.begin() + reservationIndex);
+            if (book->getReservationCount() > 0)
             {
-                r.setStatus(Reservation::CANCELLED);
-                if (book && book->getReservationCount() > 0)
-                {
-                    book->setReservationCount(book->getReservationCount() - 1);
-                }
-                dm->writeBook();
-                dm->writeReservation();
-                break;
+                book->setReservationCount(book->getReservationCount() - 1);
+            }
+            dm->writeBook();
+            dm->writeReservation();
+        }
+
+        QString messageContent = QString("读者 %1 借阅了图书《%2》(ISBN:%3)，借阅时间：%4，应还时间：%5")
+                                     .arg(ID)
+                                     .arg(book->getTitle())
+                                     .arg(isbn)
+                                     .arg(now.toString("yyyy-MM-dd HH:mm:ss"))
+                                     .arg(dueTime.toString("yyyy-MM-dd HH:mm:ss"));
+
+        std::vector<User *> &users = dm->getUsers();
+        for (auto user : users)
+        {
+            if (user->getType() == 1)
+            {
+                Message msg(ID, getName(), messageContent);
+                user->addMessage(msg);
             }
         }
+
+        QString myMsgContent = QString("您已成功借阅图书《%1》(ISBN:%2)，借阅时间：%3，应还时间：%4")
+                                   .arg(book->getTitle())
+                                   .arg(isbn)
+                                   .arg(now.toString("yyyy-MM-dd HH:mm:ss"))
+                                   .arg(dueTime.toString("yyyy-MM-dd HH:mm:ss"));
+        Message myMsg("系统", "系统管理员", myMsgContent);
+        addMessage(myMsg);
+
+        dm->writeMessage();
+
+        return BorrowResult::SUCCESS;
     }
 
-    return success;
+    return BorrowResult::BOOK_NOT_FOUND;
 }
 
 // 还书（按ISBN）

@@ -212,6 +212,18 @@ void BorrowRecord::setDueTime(QDateTime time)
     dueTime = time;
 }
 
+// （getter和setter）：设置已支付罚款金额
+void BorrowRecord::setPaidFine(double amount)
+{
+    paidFine = amount;
+}
+
+// （getter和setter）：设置罚款状态
+void BorrowRecord::setFineStatus(FineStatus status)
+{
+    fineStatus = status;
+}
+
 // （析构函数）：借阅记录析构函数
 BorrowRecord::~BorrowRecord()
 {

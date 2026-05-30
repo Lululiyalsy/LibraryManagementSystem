@@ -576,16 +576,32 @@ void ReaderWindow::onBorrowBook()
     Reader *reader = dynamic_cast<Reader *>(currentUser);
     if (reader)
     {
-        bool success = reader->borrowBook(isbn);
-        if (success)
+        Reader::BorrowResult borrowResult = reader->borrowBook(isbn);
+        switch (borrowResult)
         {
+        case Reader::BorrowResult::SUCCESS:
             QMessageBox::information(this, "成功", "借书成功！");
             onBookSearch();
             displayMyBorrowRecords();
-        }
-        else
-        {
-            QMessageBox::warning(this, "失败", "借书失败！可能图书不存在、无库存或您有逾期未还图书。");
+            break;
+        case Reader::BorrowResult::BOOK_NOT_FOUND:
+            QMessageBox::warning(this, "失败", "借书失败！图书不存在。");
+            break;
+        case Reader::BorrowResult::NO_STOCK:
+            QMessageBox::warning(this, "失败", "借书失败！图书无库存。");
+            break;
+        case Reader::BorrowResult::HAS_OVERDUE:
+            QMessageBox::warning(this, "失败", "借书失败！您有逾期未还图书，请先归还。");
+            break;
+        case Reader::BorrowResult::EXCEED_LIMIT:
+            QMessageBox::warning(this, "失败", "借书失败！您已达到最大借阅数量（10本）。");
+            break;
+        case Reader::BorrowResult::ALREADY_BORROWED:
+            QMessageBox::warning(this, "失败", "借书失败！您已借阅该图书且尚未归还，不能重复借阅。");
+            break;
+        case Reader::BorrowResult::NO_VALID_RESERVATION:
+            QMessageBox::warning(this, "失败", "借书失败！您未预约成功该图书，请先预约并等待管理员审核。");
+            break;
         }
     }
 }

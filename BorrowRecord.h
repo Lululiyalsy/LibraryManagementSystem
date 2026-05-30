@@ -49,13 +49,16 @@ public:
     QDateTime getReturnTime() const;
     //（getter和setter）：获取是否已归还
     bool isReturned() const;
-
+    //（getter和setter）：设置应还时间
+    void setDueTime(QDateTime time);
     //（getter和setter）：设置归还时间
     void setReturnTime(QDateTime time);
     //（getter和setter）：设置是否已归还
     void setReturned(bool returned);
-    //（getter和setter）：设置应还时间
-    void setDueTime(QDateTime time);
+    //（getter和setter）：设置已支付罚款金额
+    void setPaidFine(double amount);
+    //（getter和setter）：设置罚款状态
+    void setFineStatus(FineStatus status);
 
     //（析构函数）：借阅记录析构函数
     ~BorrowRecord();

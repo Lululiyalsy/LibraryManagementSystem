@@ -23,7 +23,6 @@ public:
     // getter和setter方法
     int getMaxBooks();
     int getCreditScore();
-    std::vector<Book> &getBooks();
 
     void setMaxBooks(int max);
     void setCreditScore(int score);
@@ -31,10 +30,22 @@ public:
     // 预约结果枚举
     enum class ReserveResult
     {
-        SUCCESS = 0,          // 预约成功
-        BOOK_NOT_FOUND = 1,   // 图书不存在
-        ALREADY_RESERVED = 2, // 已预约过该图书
-        EXCEED_LIMIT = 3      // 预约人数已达上限
+        SUCCESS,          // 预约成功
+        BOOK_NOT_FOUND,   // 图书不存在
+        ALREADY_RESERVED, // 已预约过该图书
+        EXCEED_LIMIT      // 预约人数已达上限
+    };
+
+    // 借书结果枚举
+    enum class BorrowResult
+    {
+        SUCCESS,             // 借书成功
+        BOOK_NOT_FOUND,      // 图书不存在
+        NO_STOCK,            // 无库存
+        HAS_OVERDUE,         // 有逾期未还图书
+        EXCEED_LIMIT,        // 已达最大借阅数量
+        ALREADY_BORROWED,    // 已借阅该图书且未归还
+        NO_VALID_RESERVATION // 未预约成功
     };
 
     // 预约图书（按ISBN），返回预约结果
@@ -46,8 +57,8 @@ public:
     // 查看我的预约
     std::vector<Reservation> viewMyReservations();
 
-    // 借书（按ISBN）
-    bool borrowBook(const QString &isbn);
+    // 借书（按ISBN），返回借书结果
+    BorrowResult borrowBook(const QString &isbn);
 
     // 还书（按ISBN）
     bool returnBook(const QString &isbn);
@@ -69,8 +80,6 @@ public:
     int maxBooks;
     // 信用分
     int creditScore;
-    // 当前借阅列表
-    std::vector<Book> books;
 };
 
 #endif // READER_H
