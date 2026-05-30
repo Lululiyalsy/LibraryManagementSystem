@@ -507,9 +507,17 @@ int DataManager::addBook(const Book &book)
             existingBook->getCategory() == book.getCategory())
         {
             // 四个条件都相同，更新库存量和入库时间
+            int oldStock = existingBook->getStock();
             existingBook->setStock(existingBook->getStock() + book.getStock());
             existingBook->setInStockTime(QDateTime::currentDateTime());
             writeBook();
+
+            // 如果库存增加了，通知预约成功的读者
+            if (book.getStock() > 0)
+            {
+                notifyReservations(book.getISBN());
+            }
+
             return 1; // 库存已增加
         }
         else
@@ -1068,54 +1076,45 @@ std::vector<Reservation> &DataManager::getReservations()
     return reservations;
 }
 
-// （预约管理）：通知可借的预约（图书入库时）
+// （预约管理）：通知可借的预约（图书入库时）- 只通知审核成功的预约
 void DataManager::notifyReservations(const QString &isbn)
 {
     Book *book = findBookByISBN(isbn);
     if (!book)
         return;
 
-    std::vector<Reservation> pendingReservations = getReservationsByISBN(isbn);
-    if (pendingReservations.empty())
-        return;
-
-    for (auto &reservation : pendingReservations)
+    // 只获取审核成功的预约，不是待审核
+    std::vector<Reservation> approvedReservations;
+    std::vector<Reservation> allReservations = getReservations();
+    for (const auto &r : allReservations)
     {
-        if (book->getStock() - book->getCurrentBorrowed() > 0)
+        if (r.getISBN() == isbn && r.getStatus() == Reservation::APPROVED)
         {
-            for (auto &r : reservations)
-            {
-                if (r.getISBN() == isbn && r.getReaderID() == reservation.getReaderID())
-                {
-                    r.setStatus(Reservation::APPROVED);
-                    break;
-                }
-            }
-
-            ::User *user = findUserById(reservation.getReaderID());
-            if (user && user->getType() == 2)
-            {
-                ::Reader *reader = dynamic_cast<::Reader *>(user);
-                if (reader)
-                {
-                    QString msgContent = QString("您预约的图书《%1》(ISBN:%2)现已可借，请尽快前往借阅。")
-                                             .arg(book->getTitle())
-                                             .arg(isbn);
-                    Message msg(reader->getID(), reader->getName(), msgContent);
-                    reader->addMessage(msg);
-                    writeMessage();
-                }
-            }
-        }
-        else
-        {
-            break;
+            approvedReservations.push_back(r);
         }
     }
 
-    writeReservation();
-    writeBook();
-    writeUser();
+    if (approvedReservations.empty())
+        return;
+
+    for (const auto &reservation : approvedReservations)
+    {
+        ::User *user = findUserById(reservation.getReaderID());
+        if (user && user->getType() == 2)
+        {
+            ::Reader *reader = dynamic_cast<::Reader *>(user);
+            if (reader)
+            {
+                QString msgContent = QString("您预约的图书(ISBN:%1)有新的入库或归还，您可以尝试前往借阅。")
+                                         .arg(isbn);
+                Message msg(reader->getID(), reader->getName(), msgContent);
+                reader->addMessage(msg);
+                writeUser();
+            }
+        }
+    }
+
+    writeMessage();
 }
 int DataManager::getReservationCount() const
 {

@@ -457,133 +457,6 @@ void Admin::generateReport()
     }
 }
 
-// 处理预约信息
-void Admin::processReservation()
-{
-    DataManager *dm = DataManager::getInstance();
-
-    // 获取所有待处理的预约
-    std::vector<Reservation> &reservations = dm->getReservations();
-
-    for (auto &reservation : reservations)
-    {
-        if (reservation.getStatus() == Reservation::PENDING)
-        {
-            Book *book = dm->findBookByISBN(reservation.getISBN());
-
-            if (book && book->getStock() > book->getCurrentBorrowed())
-            {
-                reservation.Notify();
-                if (book->getReservationCount() > 0)
-                {
-                    book->setReservationCount(book->getReservationCount() - 1);
-                }
-                dm->writeBook();
-
-                User *user = dm->findUserById(reservation.getReaderID());
-                if (user && user->getType() == 2)
-                {
-                    Reader *reader = dynamic_cast<Reader *>(user);
-                    if (reader)
-                    {
-                        QString msgContent = QString("您预约的图书《%1》(ISBN:%2)已可借阅，请尽快到图书馆办理借阅手续。")
-                                                 .arg(book->getTitle())
-                                                 .arg(reservation.getISBN());
-                        Message msg(reader->getID(), reader->getName(), msgContent);
-                        reader->addMessage(msg);
-                        dm->writeMessage();
-                    }
-                }
-
-                qDebug() << "[Admin] 已通知读者" << reservation.getReaderID()
-                         << "预约的图书" << reservation.getISBN() << "已可借阅";
-            }
-        }
-    }
-
-    QDateTime now = QDateTime::currentDateTime();
-    for (auto &reservation : reservations)
-    {
-        if (reservation.getStatus() == Reservation::PENDING &&
-            reservation.getReserveTime().daysTo(now) > 7)
-        {
-            reservation.setStatus(Reservation::CANCELLED);
-            Book *book = dm->findBookByISBN(reservation.getISBN());
-            if (book && book->getReservationCount() > 0)
-            {
-                book->setReservationCount(book->getReservationCount() - 1);
-            }
-            qDebug() << "[Admin] 预约" << reservation.getISBN() << "已过期自动取消";
-        }
-        if (reservation.getStatus() == Reservation::APPROVED &&
-            reservation.getReserveTime().daysTo(now) > 10)
-        {
-            reservation.setStatus(Reservation::CANCELLED);
-            Book *book = dm->findBookByISBN(reservation.getISBN());
-            if (book && book->getReservationCount() > 0)
-            {
-                book->setReservationCount(book->getReservationCount() - 1);
-            }
-            qDebug() << "[Admin] 审核成功预约" << reservation.getISBN() << "超时未借出，自动取消";
-        }
-    }
-    dm->writeBook();
-    dm->writeReservation();
-}
-
-bool Admin::processSingleReservation(const QString &isbn, const QString &readerId)
-{
-    DataManager *dm = DataManager::getInstance();
-    std::vector<Reservation> &reservations = dm->getReservations();
-
-    for (auto &reservation : reservations)
-    {
-        if (reservation.getISBN() == isbn &&
-            reservation.getReaderID() == readerId &&
-            reservation.getStatus() == Reservation::PENDING)
-        {
-
-            Book *book = dm->findBookByISBN(isbn);
-            int available = book ? (book->getStock() - book->getCurrentBorrowed()) : 0;
-
-            reservation.Notify();
-
-            dm->writeBook();
-
-            User *user = dm->findUserById(readerId);
-            if (user && user->getType() == 2)
-            {
-                Reader *reader = dynamic_cast<Reader *>(user);
-                if (reader)
-                {
-                    QString msg;
-                    if (available > 0)
-                    {
-                        msg = QString("您预约的图书《%1》(ISBN:%2)已可借阅，请尽快到图书馆办理借阅手续。")
-                                  .arg(book->getTitle())
-                                  .arg(isbn);
-                    }
-                    else
-                    {
-                        msg = QString("您预约的图书《%1》(ISBN:%2)已通过审批，当前暂无库存，有书归还时将优先通知您。")
-                                  .arg(book ? book->getTitle() : "未知")
-                                  .arg(isbn);
-                    }
-                    Message message(reader->getID(), reader->getName(), msg);
-                    reader->addMessage(message);
-                    dm->writeMessage();
-                }
-            }
-
-            dm->writeReservation();
-            qDebug() << "[Admin] 已处理读者" << readerId << "的预约，ISBN:" << isbn;
-            return true;
-        }
-    }
-
-    return false;
-}
-
 // 预约管理：查看所有预约记录
 std::vector<Reservation> Admin::viewAllReservations()
 {
@@ -654,41 +527,6 @@ bool Admin::approveReservation(const QString &isbn, const QString &readerId, boo
         return success;
     }
     return false;
-}
-
-// 预约管理：删除预约（按ISBN和读者ID）
-bool Admin::deleteReservation(const QString &isbn, const QString &readerId)
-{
-    DataManager *dm = DataManager::getInstance();
-    return dm->removeReservation(isbn, readerId);
-}
-
-// 预约管理：清空所有非待审核状态的预约
-int Admin::clearAllReservations()
-{
-    DataManager *dm = DataManager::getInstance();
-    std::vector<Reservation> reservations = dm->getReservations();
-    int deletedCount = 0;
-
-    for (const auto &reservation : reservations)
-    {
-        // 只删除非待审核状态的预约
-        if (reservation.getStatus() != Reservation::PENDING)
-        {
-            if (dm->removeReservation(reservation.getISBN(), reservation.getReaderID()))
-            {
-                deletedCount++;
-            }
-        }
-    }
-    return deletedCount;
-}
-
-// 预约管理：图书归还时处理预约
-void Admin::handleBookReturned(const QString &isbn)
-{
-    DataManager *dm = DataManager::getInstance();
-    dm->notifyReservations(isbn);
 }
 
 // 借阅管理：办理借书
@@ -776,11 +614,6 @@ bool Admin::returnBook(const QString &isbn, const QString &readerId)
     DataManager *dm = DataManager::getInstance();
 
     bool success = dm->updateBorrowRecord(isbn, readerId);
-
-    if (success)
-    {
-        handleBookReturned(isbn);
-    }
 
     return success;
 }

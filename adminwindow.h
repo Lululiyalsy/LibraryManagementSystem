@@ -101,7 +101,6 @@ private:
     // （用户清除）：清除按钮点击处理
     void onUserClear();
 
-    // 修改5.16
     // （图书查找）：查找按钮点击处理
     void onBookSearch();
     // （显示图书）：将图书数据显示到表格
@@ -129,7 +128,11 @@ private:
     void onBorrowReturn();
     // （借阅续借）：续借按钮点击处理
     void onBorrowRenew();
-    // 修改结束
+
+    // （消息管理）：初始化消息表格
+    void setupMessageWidget();
+    // （显示消息）：显示消息到消息表格
+    void displayMessages(const std::vector<Message> &messages);
 
 private:
     // （当前用户）：当前登录的管理员用户对象
@@ -223,11 +226,6 @@ private:
     QLineEdit *reservationTimeLineEdit;
     // （预约状态下拉框）：预约状态下拉框指针
     QComboBox *reservationStatusCombo;
-
-    // （消息管理）：初始化消息表格
-    void setupMessageWidget();
-    // （显示消息）：显示消息到消息表格
-    void displayMessages(const std::vector<Message> &messages);
 
     // （消息容器）：消息管理界面的容器指针
     QWidget *messageWidget;

@@ -226,10 +226,6 @@ bool Reader::returnBook(const QString &isbn)
 {
     DataManager *dm = DataManager::getInstance();
     bool success = dm->updateBorrowRecord(isbn, ID);
-    if (success)
-    {
-        dm->notifyReservations(isbn);
-    }
     return success;
 }
 
