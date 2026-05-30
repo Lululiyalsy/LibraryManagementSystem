@@ -48,6 +48,14 @@ public:
         NO_VALID_RESERVATION // 未预约成功
     };
 
+    // 还书结果枚举
+    enum class ReturnResult
+    {
+        SUCCESS,         // 还书成功
+        NOT_FOUND,       // 借阅记录不存在
+        HAS_UNPAID_FINE  // 存在未支付罚款，需先支付
+    };
+
     // 预约图书（按ISBN），返回预约结果
     ReserveResult reserveBook(const QString &isbn);
 
@@ -60,8 +68,8 @@ public:
     // 借书（按ISBN），返回借书结果
     BorrowResult borrowBook(const QString &isbn);
 
-    // 还书（按ISBN）
-    bool returnBook(const QString &isbn);
+    // 还书（按ISBN），返回还书结果
+    ReturnResult returnBook(const QString &isbn);
 
     // 续借（按ISBN）
     bool renewBook(const QString &isbn);

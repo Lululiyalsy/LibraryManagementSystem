@@ -617,16 +617,20 @@ void ReaderWindow::onReturnBook()
     Reader *reader = dynamic_cast<Reader *>(currentUser);
     if (reader)
     {
-        bool success = reader->returnBook(isbn);
-        if (success)
+        Reader::ReturnResult returnResult = reader->returnBook(isbn);
+        switch (returnResult)
         {
+        case Reader::ReturnResult::SUCCESS:
             QMessageBox::information(this, "成功", "还书成功！");
             displayMyBorrowRecords();
             onBookSearch();
-        }
-        else
-        {
+            break;
+        case Reader::ReturnResult::NOT_FOUND:
             QMessageBox::warning(this, "失败", "还书失败！借阅记录不存在。");
+            break;
+        case Reader::ReturnResult::HAS_UNPAID_FINE:
+            QMessageBox::warning(this, "失败", "还书失败！该图书存在未支付罚款，请先支付罚款后再还书。");
+            break;
         }
     }
 }

@@ -174,29 +174,12 @@ Reader::BorrowResult Reader::borrowBook(const QString &isbn)
             dm->writeReservation();
         }
 
-        QString messageContent = QString("读者 %1 借阅了图书《%2》(ISBN:%3)，借阅时间：%4，应还时间：%5")
-                                     .arg(ID)
-                                     .arg(book->getTitle())
-                                     .arg(isbn)
-                                     .arg(now.toString("yyyy-MM-dd HH:mm:ss"))
-                                     .arg(dueTime.toString("yyyy-MM-dd HH:mm:ss"));
-
-        std::vector<User *> &users = dm->getUsers();
-        for (auto user : users)
-        {
-            if (user->getType() == 1)
-            {
-                Message msg(ID, getName(), messageContent);
-                user->addMessage(msg);
-            }
-        }
-
         QString myMsgContent = QString("您已成功借阅图书《%1》(ISBN:%2)，借阅时间：%3，应还时间：%4")
                                    .arg(book->getTitle())
                                    .arg(isbn)
                                    .arg(now.toString("yyyy-MM-dd HH:mm:ss"))
                                    .arg(dueTime.toString("yyyy-MM-dd HH:mm:ss"));
-        Message myMsg("系统", "系统管理员", myMsgContent);
+        Message myMsg(ID, getName(), myMsgContent);
         addMessage(myMsg);
 
         dm->writeMessage();
@@ -207,12 +190,92 @@ Reader::BorrowResult Reader::borrowBook(const QString &isbn)
     return BorrowResult::BOOK_NOT_FOUND;
 }
 
-// 还书（按ISBN）
-bool Reader::returnBook(const QString &isbn)
+// 还书（按ISBN），返回还书结果
+Reader::ReturnResult Reader::returnBook(const QString &isbn)
 {
     DataManager *dm = DataManager::getInstance();
-    bool success = dm->updateBorrowRecord(isbn, ID);
-    return success;
+
+    std::vector<BorrowRecord> &allRecords = dm->getBorrowRecords();
+    BorrowRecord *targetRecord = nullptr;
+    int recordIndex = -1;
+
+    for (int i = 0; i < allRecords.size(); ++i)
+    {
+        if (allRecords[i].getISBN() == isbn && allRecords[i].getReaderID() == ID && !allRecords[i].isReturned())
+        {
+            targetRecord = &allRecords[i];
+            recordIndex = i;
+            break;
+        }
+    }
+
+    if (!targetRecord)
+    {
+        return ReturnResult::NOT_FOUND;
+    }
+
+    double fineAmount = targetRecord->calculateFine();
+    double paidFine = targetRecord->getPaidFine();
+
+    if (fineAmount > paidFine)
+    {
+        return ReturnResult::HAS_UNPAID_FINE;
+    }
+
+    QDateTime now = QDateTime::currentDateTime();
+    Book *book = dm->findBookByISBN(isbn);
+
+    allRecords.erase(allRecords.begin() + recordIndex);
+    dm->writeBorrowRecord();
+
+    if (book)
+    {
+        book->setCurrentBorrowed(book->getCurrentBorrowed() - 1);
+        dm->writeBook();
+
+        std::vector<Reservation> &allReservations = dm->getReservations();
+        for (auto &reservation : allReservations)
+        {
+            if (reservation.getISBN() == isbn && reservation.getStatus() == Reservation::APPROVED)
+            {
+                User *reserver = dm->findUserById(reservation.getReaderID());
+                if (reserver)
+                {
+                    QString msgContent = QString("您预约的图书(ISBN:%1)有新的入库或归还，您可以尝试前往借阅。")
+                                             .arg(isbn);
+                    Message msg(reserver->getID(), reserver->getName(), msgContent);
+                    reserver->addMessage(msg);
+                }
+            }
+        }
+    }
+
+    QString myMsgContent = QString("您已成功归还图书《%1》(ISBN:%2)，归还时间：%3")
+                               .arg(book ? book->getTitle() : "未知")
+                               .arg(isbn)
+                               .arg(now.toString("yyyy-MM-dd HH:mm:ss"));
+    Message myMsg(ID, getName(), myMsgContent);
+    addMessage(myMsg);
+
+    QString adminMsgContent = QString("读者 %1 归还了图书《%2》(ISBN:%3)，归还时间：%4")
+                                  .arg(getName())
+                                  .arg(book ? book->getTitle() : "未知")
+                                  .arg(isbn)
+                                  .arg(now.toString("yyyy-MM-dd HH:mm:ss"));
+
+    std::vector<User *> &users = dm->getUsers();
+    for (auto user : users)
+    {
+        if (user->getType() == 1)
+        {
+            Message msg(user->getID(), user->getName(), ID, getName(), adminMsgContent);
+            user->addMessage(msg);
+        }
+    }
+
+    dm->writeMessage();
+
+    return ReturnResult::SUCCESS;
 }
 
 // 续借（按ISBN）

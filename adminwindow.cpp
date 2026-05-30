@@ -1903,11 +1903,11 @@ void AdminWindow::setupMessageWidget()
 
     // 消息查找输入框（每列一个）
     messageReaderIdEdit = new QLineEdit(this);
-    messageReaderIdEdit->setPlaceholderText("读者ID");
+    messageReaderIdEdit->setPlaceholderText("用户ID");
     messageReaderIdEdit->setFixedWidth(80);
 
     messageReaderNameEdit = new QLineEdit(this);
-    messageReaderNameEdit->setPlaceholderText("读者名");
+    messageReaderNameEdit->setPlaceholderText("用户名");
     messageReaderNameEdit->setFixedWidth(80);
 
     messageTimeEdit = new QLineEdit(this);
@@ -1943,7 +1943,7 @@ void AdminWindow::setupMessageWidget()
 
     messageTable = new QTableWidget(this);
     messageTable->setColumnCount(5);
-    messageTable->setHorizontalHeaderLabels(QStringList() << "管理员ID" << "管理员名" << "消息时间" << "消息内容" << "消息状态");
+    messageTable->setHorizontalHeaderLabels(QStringList() << "用户ID" << "用户名" << "消息时间" << "消息内容" << "消息状态");
     messageTable->horizontalHeader()->setStretchLastSection(true);
     messageTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     messageTable->setSelectionBehavior(QAbstractItemView::SelectRows);
