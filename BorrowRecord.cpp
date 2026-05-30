@@ -31,7 +31,7 @@ int BorrowRecord::calculateOverdueDays() const
 double BorrowRecord::calculateFine() const
 {
     int overdueDays = calculateOverdueDays();
-    const double finePerDay = 0.5; // 每天罚款0.5元
+    const double finePerDay = 1.0; // 每天罚款1元
     fineAmount = overdueDays * finePerDay;
     return fineAmount;
 }

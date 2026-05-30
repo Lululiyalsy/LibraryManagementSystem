@@ -89,46 +89,51 @@ void ReaderWindow::setupBookSearchWidget()
     QVBoxLayout *mainLayout = new QVBoxLayout(bookSearchWidget);
 
     // 搜索区域
-    QWidget *searchWidget = new QWidget(this);
-    QHBoxLayout *searchLayout = new QHBoxLayout(searchWidget);
+    QHBoxLayout *searchLayout = new QHBoxLayout();
 
-    // ISBN输入框
-    searchLayout->addWidget(new QLabel("ISBN:"));
+    // 操作按钮（预约、借书）
+    bookReserveBtn = new QPushButton("预约", this);
+    borrowBtn = new QPushButton("借书", this);
+
+    searchLayout->addWidget(bookReserveBtn);
+    searchLayout->addWidget(borrowBtn);
+
+    // 添加分隔线
+    QFrame *separator = new QFrame(this);
+    separator->setFrameShape(QFrame::VLine);
+    separator->setFrameShadow(QFrame::Sunken);
+    searchLayout->addWidget(separator);
+
+    // 输入框（无标签，使用placeholder提示）
     bookISBNLineEdit = new QLineEdit(this);
-    bookISBNLineEdit->setPlaceholderText("输入ISBN");
-    searchLayout->addWidget(bookISBNLineEdit);
+    bookISBNLineEdit->setPlaceholderText("ISBN");
+    bookISBNLineEdit->setFixedWidth(150);
 
-    // 书名输入框
-    searchLayout->addWidget(new QLabel("书名:"));
     bookTitleLineEdit = new QLineEdit(this);
-    bookTitleLineEdit->setPlaceholderText("输入书名");
-    searchLayout->addWidget(bookTitleLineEdit);
+    bookTitleLineEdit->setPlaceholderText("书名");
+    bookTitleLineEdit->setFixedWidth(150);
 
-    // 作者输入框
-    searchLayout->addWidget(new QLabel("作者:"));
     bookAuthorLineEdit = new QLineEdit(this);
-    bookAuthorLineEdit->setPlaceholderText("输入作者");
-    searchLayout->addWidget(bookAuthorLineEdit);
+    bookAuthorLineEdit->setPlaceholderText("作者");
+    bookAuthorLineEdit->setFixedWidth(120);
 
-    // 分类输入框
-    searchLayout->addWidget(new QLabel("分类:"));
     bookCategoryLineEdit = new QLineEdit(this);
-    bookCategoryLineEdit->setPlaceholderText("输入分类");
+    bookCategoryLineEdit->setPlaceholderText("分类");
+    bookCategoryLineEdit->setFixedWidth(100);
+
+    searchLayout->addWidget(bookISBNLineEdit);
+    searchLayout->addWidget(bookTitleLineEdit);
+    searchLayout->addWidget(bookAuthorLineEdit);
     searchLayout->addWidget(bookCategoryLineEdit);
 
-    // 查询按钮
+    // 查找按钮紧跟在分类输入框后面
     bookSearchBtn = new QPushButton("查找", this);
     searchLayout->addWidget(bookSearchBtn);
 
-    // 预约按钮
-    bookReserveBtn = new QPushButton("预约", this);
-    searchLayout->addWidget(bookReserveBtn);
+    // 添加伸缩空间到末尾，保持控件紧凑
+    searchLayout->addStretch();
 
-    // 借书按钮
-    borrowBtn = new QPushButton("借书", this);
-    searchLayout->addWidget(borrowBtn);
-
-    mainLayout->addWidget(searchWidget);
+    mainLayout->addLayout(searchLayout);
 
     // 图书表格
     bookSearchTable = new QTableWidget(this);
@@ -154,24 +159,74 @@ void ReaderWindow::setupMyBorrowWidget()
     myBorrowWidget = new QWidget(this);
     QVBoxLayout *mainLayout = new QVBoxLayout(myBorrowWidget);
 
-    // 按钮区域
-    QWidget *btnWidget = new QWidget(this);
-    QHBoxLayout *btnLayout = new QHBoxLayout(btnWidget);
+    // 顶部工具栏区域
+    QHBoxLayout *topLayout = new QHBoxLayout();
 
-    // 还书按钮
+    // 操作按钮
     returnBtn = new QPushButton("还书", this);
-    btnLayout->addWidget(returnBtn);
-
-    // 续借按钮
     renewBtn = new QPushButton("续借", this);
-    btnLayout->addWidget(renewBtn);
+    payFineBtn = new QPushButton("支付所有罚款", this);
 
-    mainLayout->addWidget(btnWidget);
+    topLayout->addWidget(returnBtn);
+    topLayout->addWidget(renewBtn);
+    topLayout->addWidget(payFineBtn);
+
+    // 添加分隔线
+    QFrame *separator = new QFrame(this);
+    separator->setFrameShape(QFrame::VLine);
+    separator->setFrameShadow(QFrame::Sunken);
+    topLayout->addWidget(separator);
+
+    // 查询输入框
+    borrowISBNEdit = new QLineEdit(this);
+    borrowISBNEdit->setPlaceholderText("ISBN");
+    borrowISBNEdit->setFixedWidth(120);
+
+    borrowTitleEdit = new QLineEdit(this);
+    borrowTitleEdit->setPlaceholderText("书名");
+    borrowTitleEdit->setFixedWidth(150);
+
+    borrowTimeEdit = new QLineEdit(this);
+    borrowTimeEdit->setPlaceholderText("借阅时间");
+    borrowTimeEdit->setFixedWidth(120);
+
+    borrowDueTimeEdit = new QLineEdit(this);
+    borrowDueTimeEdit->setPlaceholderText("应还时间");
+    borrowDueTimeEdit->setFixedWidth(120);
+
+    borrowReturnTimeEdit = new QLineEdit(this);
+    borrowReturnTimeEdit->setPlaceholderText("归还时间");
+    borrowReturnTimeEdit->setFixedWidth(120);
+
+    borrowStatusEdit = new QLineEdit(this);
+    borrowStatusEdit->setPlaceholderText("状态");
+    borrowStatusEdit->setFixedWidth(80);
+
+    borrowFineCombo = new QComboBox(this);
+    borrowFineCombo->addItem("");
+    borrowFineCombo->addItem("未支付");
+    borrowFineCombo->addItem("已支付");
+    borrowFineCombo->addItem("已减免");
+    borrowFineCombo->setFixedWidth(80);
+
+    QPushButton *searchBorrowBtn = new QPushButton("查找", this);
+
+    topLayout->addWidget(borrowISBNEdit);
+    topLayout->addWidget(borrowTitleEdit);
+    topLayout->addWidget(borrowTimeEdit);
+    topLayout->addWidget(borrowDueTimeEdit);
+    topLayout->addWidget(borrowReturnTimeEdit);
+    topLayout->addWidget(borrowStatusEdit);
+    topLayout->addWidget(borrowFineCombo);
+    topLayout->addWidget(searchBorrowBtn);
+    topLayout->addStretch();
+
+    mainLayout->addLayout(topLayout);
 
     // 借阅记录表格
     myBorrowTable = new QTableWidget(this);
-    myBorrowTable->setColumnCount(7);
-    QStringList headers = {"ISBN", "书名", "借阅时间", "应还时间", "归还时间", "是否已还", "状态"};
+    myBorrowTable->setColumnCount(9);
+    QStringList headers = {"ISBN", "书名", "借阅时间", "应还时间", "归还时间", "状态", "罚款金额", "已支付罚款", "罚款状态"};
     myBorrowTable->setHorizontalHeaderLabels(headers);
     myBorrowTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     myBorrowTable->setSelectionBehavior(QTableWidget::SelectRows);
@@ -180,6 +235,8 @@ void ReaderWindow::setupMyBorrowWidget()
     // 连接信号槽
     connect(returnBtn, &QPushButton::clicked, this, &ReaderWindow::onReturnBook);
     connect(renewBtn, &QPushButton::clicked, this, &ReaderWindow::onRenewBook);
+    connect(payFineBtn, &QPushButton::clicked, this, &ReaderWindow::onPayAllFines);
+    connect(searchBorrowBtn, &QPushButton::clicked, this, &ReaderWindow::onSearchBorrow);
 
     // 初始化显示借阅记录
     displayMyBorrowRecords();
@@ -316,7 +373,6 @@ void ReaderWindow::displayMyBorrowRecords()
             myBorrowTable->setItem(row, 2, new QTableWidgetItem(record.getBorrowTime().toString("yyyy-MM-dd HH:mm:ss")));
             myBorrowTable->setItem(row, 3, new QTableWidgetItem(record.getDueTime().toString("yyyy-MM-dd HH:mm:ss")));
             myBorrowTable->setItem(row, 4, new QTableWidgetItem(record.getReturnTime().toString("yyyy-MM-dd HH:mm:ss")));
-            myBorrowTable->setItem(row, 5, new QTableWidgetItem(record.isReturned() ? "是" : "否"));
 
             QString status = "借阅中";
             if (record.isReturned())
@@ -327,7 +383,30 @@ void ReaderWindow::displayMyBorrowRecords()
             {
                 status = QString("逾期(%1天)").arg(record.calculateOverdueDays());
             }
-            myBorrowTable->setItem(row, 6, new QTableWidgetItem(status));
+            myBorrowTable->setItem(row, 5, new QTableWidgetItem(status));
+
+            // 罚款信息
+            double fineAmount = record.calculateFine();
+            double paidFine = record.getPaidFine();
+            myBorrowTable->setItem(row, 6, new QTableWidgetItem(QString::number(fineAmount, 'f', 2) + "元"));
+            myBorrowTable->setItem(row, 7, new QTableWidgetItem(QString::number(paidFine, 'f', 2) + "元"));
+
+            QString fineStatus;
+            switch (record.getFineStatus())
+            {
+            case BorrowRecord::FineStatus::UNPAID:
+                fineStatus = "未支付";
+                break;
+            case BorrowRecord::FineStatus::PAID:
+                fineStatus = "已支付";
+                break;
+            case BorrowRecord::FineStatus::WAIVED:
+                fineStatus = "已减免";
+                break;
+            default:
+                fineStatus = "未知";
+            }
+            myBorrowTable->setItem(row, 8, new QTableWidgetItem(fineStatus));
         }
     }
 }
@@ -415,7 +494,6 @@ void ReaderWindow::onCancelReservation()
     }
 }
 
-// 删除预约（选中行）
 // 查找预约
 void ReaderWindow::onSearchReservation()
 {
@@ -558,6 +636,173 @@ void ReaderWindow::onRenewBook()
         {
             QMessageBox::warning(this, "失败", "续借失败！借阅记录不存在或已归还。");
         }
+    }
+}
+
+// 查找借阅记录
+void ReaderWindow::onSearchBorrow()
+{
+    QString isbn = borrowISBNEdit->text();
+    QString title = borrowTitleEdit->text();
+    QString time = borrowTimeEdit->text();
+    QString dueTime = borrowDueTimeEdit->text();
+    QString returnTime = borrowReturnTimeEdit->text();
+    QString status = borrowStatusEdit->text();
+    QString fineStatus = borrowFineCombo->currentText();
+
+    Reader *reader = dynamic_cast<Reader *>(currentUser);
+    if (!reader)
+        return;
+
+    DataManager *dm = DataManager::getInstance();
+    std::vector<BorrowRecord> allRecords = dm->getBorrowRecords();
+    std::vector<BorrowRecord> filteredRecords;
+
+    for (const auto &record : allRecords)
+    {
+        if (record.getReaderID() != reader->getID())
+            continue;
+
+        bool match = true;
+
+        if (!isbn.isEmpty() && !record.getISBN().contains(isbn))
+            match = false;
+
+        if (!title.isEmpty())
+        {
+            Book *book = dm->findBookByISBN(record.getISBN());
+            if (!book || !book->getTitle().contains(title))
+                match = false;
+        }
+
+        if (!time.isEmpty() && !record.getBorrowTime().toString("yyyy-MM-dd").contains(time))
+            match = false;
+
+        if (!dueTime.isEmpty() && !record.getDueTime().toString("yyyy-MM-dd").contains(dueTime))
+            match = false;
+
+        if (!returnTime.isEmpty() && !record.getReturnTime().toString("yyyy-MM-dd").contains(returnTime))
+            match = false;
+
+        if (!status.isEmpty())
+        {
+            QString recordStatus;
+            if (record.isReturned())
+                recordStatus = "已归还";
+            else if (record.calculateOverdueDays() > 0)
+                recordStatus = QString("逾期%1天").arg(record.calculateOverdueDays());
+            else
+                recordStatus = "借阅中";
+
+            if (!recordStatus.contains(status))
+                match = false;
+        }
+
+        if (!fineStatus.isEmpty())
+        {
+            BorrowRecord::FineStatus fs = record.getFineStatus();
+            if (fineStatus == "未支付" && fs != BorrowRecord::FineStatus::UNPAID)
+                match = false;
+            if (fineStatus == "已支付" && fs != BorrowRecord::FineStatus::PAID)
+                match = false;
+            if (fineStatus == "已减免" && fs != BorrowRecord::FineStatus::WAIVED)
+                match = false;
+        }
+
+        if (match)
+            filteredRecords.push_back(record);
+    }
+
+    myBorrowTable->setRowCount(0);
+    for (const auto &record : filteredRecords)
+    {
+        Book *book = dm->findBookByISBN(record.getISBN());
+        int row = myBorrowTable->rowCount();
+        myBorrowTable->insertRow(row);
+        myBorrowTable->setItem(row, 0, new QTableWidgetItem(record.getISBN()));
+        myBorrowTable->setItem(row, 1, new QTableWidgetItem(book ? book->getTitle() : "未知"));
+        myBorrowTable->setItem(row, 2, new QTableWidgetItem(record.getBorrowTime().toString("yyyy-MM-dd hh:mm:ss")));
+        myBorrowTable->setItem(row, 3, new QTableWidgetItem(record.getDueTime().toString("yyyy-MM-dd hh:mm:ss")));
+        myBorrowTable->setItem(row, 4, new QTableWidgetItem(record.isReturned() ? record.getReturnTime().toString("yyyy-MM-dd hh:mm:ss") : "未归还"));
+
+        QString statusText;
+        if (record.isReturned())
+            statusText = "已归还";
+        else if (record.calculateOverdueDays() > 0)
+            statusText = "逾期";
+        else
+            statusText = "正常";
+        myBorrowTable->setItem(row, 5, new QTableWidgetItem(statusText));
+
+        double fineAmount = record.calculateFine();
+        double paidFine = record.getPaidFine();
+        myBorrowTable->setItem(row, 6, new QTableWidgetItem(QString::number(fineAmount, 'f', 2) + "元"));
+        myBorrowTable->setItem(row, 7, new QTableWidgetItem(QString::number(paidFine, 'f', 2) + "元"));
+
+        QString fineStatusText;
+        switch (record.getFineStatus())
+        {
+        case BorrowRecord::FineStatus::UNPAID:
+            fineStatusText = "未支付";
+            break;
+        case BorrowRecord::FineStatus::PAID:
+            fineStatusText = "已支付";
+            break;
+        case BorrowRecord::FineStatus::WAIVED:
+            fineStatusText = "已减免";
+            break;
+        default:
+            fineStatusText = "未知";
+        }
+        myBorrowTable->setItem(row, 8, new QTableWidgetItem(fineStatusText));
+    }
+}
+
+// 支付所有罚款
+void ReaderWindow::onPayAllFines()
+{
+    Reader *reader = dynamic_cast<Reader *>(currentUser);
+    if (!reader)
+        return;
+
+    DataManager *dm = DataManager::getInstance();
+    std::vector<BorrowRecord> allRecords = dm->getBorrowRecords();
+
+    double totalFine = 0;
+    for (const auto &record : allRecords)
+    {
+        if (record.getReaderID() == reader->getID() && !record.isReturned())
+        {
+            totalFine += record.calculateFine() - record.getPaidFine();
+        }
+    }
+
+    if (totalFine <= 0)
+    {
+        QMessageBox::information(this, "提示", "您当前没有需要支付的罚款。");
+        return;
+    }
+
+    QMessageBox::StandardButton reply = QMessageBox::question(this, "确认支付",
+                                                              QString("您当前需要支付罚款总额：%1元，是否确认支付？").arg(totalFine),
+                                                              QMessageBox::Yes | QMessageBox::No);
+
+    if (reply == QMessageBox::Yes)
+    {
+        for (auto &record : allRecords)
+        {
+            if (record.getReaderID() == reader->getID() && !record.isReturned())
+            {
+                double remaining = record.calculateFine() - record.getPaidFine();
+                if (remaining > 0)
+                {
+                    record.collectFine(remaining);
+                }
+            }
+        }
+        dm->writeBorrowRecord();
+        QMessageBox::information(this, "成功", QString("成功支付罚款：%1元").arg(totalFine));
+        displayMyBorrowRecords();
     }
 }
 

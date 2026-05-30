@@ -122,12 +122,8 @@ private:
     void onBorrowSearch();
     // （显示借阅记录）：将借阅记录显示到表格
     void displayBorrowRecords(const std::vector<BorrowRecord> &records);
-    // （借阅添加）：借书按钮点击处理
-    void onBorrowAdd();
-    // （借阅归还）：还书按钮点击处理
-    void onBorrowReturn();
-    // （借阅续借）：续借按钮点击处理
-    void onBorrowRenew();
+    // （借阅续借审核）：续借审核按钮点击处理
+    void onBorrowRenewAudit();
 
     // （消息管理）：初始化消息表格
     void setupMessageWidget();
@@ -204,16 +200,24 @@ private:
 
     // （借阅ISBN查找输入框）：借阅ISBN查找输入框指针
     QLineEdit *borrowISBNLineEdit;
+    // （借阅书名查找输入框）：借阅书名查找输入框指针
+    QLineEdit *borrowTitleLineEdit;
     // （借阅读者ID查找输入框）：借阅读者ID查找输入框指针
     QLineEdit *borrowReaderIdLineEdit;
+    // （借阅时间查找输入框）：借阅时间查找输入框指针
+    QLineEdit *borrowTimeLineEdit;
+    // （借阅应还时间查找输入框）：借阅应还时间查找输入框指针
+    QLineEdit *borrowDueTimeLineEdit;
+    // （借阅归还时间查找输入框）：借阅归还时间查找输入框指针
+    QLineEdit *borrowReturnTimeLineEdit;
+    // （借阅状态查找输入框）：借阅状态查找输入框指针
+    QLineEdit *borrowStatusEdit;
+    // （借阅罚款状态查找下拉框）：借阅罚款状态查找下拉框指针
+    QComboBox *borrowFineCombo;
     // （借阅查找按钮）：借阅查找按钮指针
     QPushButton *borrowSearchBtn;
-    // （借阅添加按钮）：借阅添加按钮指针
-    QPushButton *borrowAddBtn;
-    // （借阅归还按钮）：借阅归还按钮指针
-    QPushButton *borrowReturnBtn;
-    // （借阅续借按钮）：借阅续借按钮指针
-    QPushButton *borrowRenewBtn;
+    // （借阅续借审核按钮）：借阅续借审核按钮指针
+    QPushButton *borrowRenewAuditBtn;
     // 修改结束
 
     // （审核预约按钮）：审核预约按钮指针

@@ -3,6 +3,7 @@
 #include "DataManager.h"
 #include "Admin.h"
 #include "User.h"
+#include "Reader.h"
 #include "Book.h"
 #include "BorrowRecord.h"
 #include "Reservation.h"
@@ -28,7 +29,7 @@
 
 // （构造函数）：创建管理员窗口实例，初始化窗口属性和部件
 AdminWindow::AdminWindow(::User *user, QWidget *parent)
-    : QMainWindow(parent), currentUser(user), toolbar(nullptr), stackedWidget(nullptr), userWidget(nullptr), bookWidget(nullptr), borrowWidget(nullptr), reservationWidget(nullptr), userTable(nullptr), bookTable(nullptr), borrowTable(nullptr), reservationTable(nullptr), statisticsTable(nullptr), statisticsWidget(nullptr), userIdLineEdit(nullptr), userNameLineEdit(nullptr), userSearchBtn(nullptr), userAddBtn(nullptr), userDeleteBtn(nullptr), userUpdateBtn(nullptr), userClearBtn(nullptr), bookISBNLineEdit(nullptr), bookTitleLineEdit(nullptr), bookAuthorLineEdit(nullptr), bookCategoryLineEdit(nullptr), bookSearchBtn(nullptr), bookAddBtn(nullptr), bookDeleteBtn(nullptr), bookUpdateBtn(nullptr), bookClearBtn(nullptr), bookSortBtn(nullptr), bookSortByTimeBtn(nullptr), borrowISBNLineEdit(nullptr), borrowReaderIdLineEdit(nullptr), borrowSearchBtn(nullptr), borrowAddBtn(nullptr), borrowReturnBtn(nullptr), borrowRenewBtn(nullptr), processReservationBtn(nullptr), messageWidget(nullptr), messageTable(nullptr)
+    : QMainWindow(parent), currentUser(user), toolbar(nullptr), stackedWidget(nullptr), userWidget(nullptr), bookWidget(nullptr), borrowWidget(nullptr), reservationWidget(nullptr), userTable(nullptr), bookTable(nullptr), borrowTable(nullptr), reservationTable(nullptr), statisticsTable(nullptr), statisticsWidget(nullptr), userIdLineEdit(nullptr), userNameLineEdit(nullptr), userSearchBtn(nullptr), userAddBtn(nullptr), userDeleteBtn(nullptr), userUpdateBtn(nullptr), userClearBtn(nullptr), bookISBNLineEdit(nullptr), bookTitleLineEdit(nullptr), bookAuthorLineEdit(nullptr), bookCategoryLineEdit(nullptr), bookSearchBtn(nullptr), bookAddBtn(nullptr), bookDeleteBtn(nullptr), bookUpdateBtn(nullptr), bookClearBtn(nullptr), bookSortBtn(nullptr), bookSortByTimeBtn(nullptr), borrowISBNLineEdit(nullptr), borrowReaderIdLineEdit(nullptr), borrowSearchBtn(nullptr), borrowRenewAuditBtn(nullptr), processReservationBtn(nullptr), messageWidget(nullptr), messageTable(nullptr)
 {
     // （设置窗口大小）：设置初始窗口大小为800x800
     resize(800, 800);
@@ -308,40 +309,80 @@ void AdminWindow::setupBorrowTable()
     QWidget *borrowOperationWidget = new QWidget(borrowWidget);
     QHBoxLayout *borrowOperationLayout = new QHBoxLayout(borrowOperationWidget);
 
+    // （创建按钮）：创建续借审核按钮
+    borrowRenewAuditBtn = new QPushButton("续借审核", borrowOperationWidget);
+    borrowOperationLayout->addWidget(borrowRenewAuditBtn);
+
+    // （添加分隔线）
+    QFrame *separator = new QFrame(borrowOperationWidget);
+    separator->setFrameShape(QFrame::VLine);
+    separator->setFrameShadow(QFrame::Sunken);
+    borrowOperationLayout->addWidget(separator);
+
     // （创建ISBN输入框）：创建图书ISBN查找输入框
     borrowISBNLineEdit = new QLineEdit(borrowOperationWidget);
     borrowISBNLineEdit->setPlaceholderText("ISBN");
     borrowISBNLineEdit->setFixedWidth(120);
+
+    // （创建书名输入框）：创建书名查找输入框
+    borrowTitleLineEdit = new QLineEdit(borrowOperationWidget);
+    borrowTitleLineEdit->setPlaceholderText("书名");
+    borrowTitleLineEdit->setFixedWidth(150);
 
     // （创建读者ID输入框）：创建读者ID查找输入框
     borrowReaderIdLineEdit = new QLineEdit(borrowOperationWidget);
     borrowReaderIdLineEdit->setPlaceholderText("读者ID");
     borrowReaderIdLineEdit->setFixedWidth(100);
 
+    // （创建借阅时间输入框）：创建借阅时间查找输入框
+    borrowTimeLineEdit = new QLineEdit(borrowOperationWidget);
+    borrowTimeLineEdit->setPlaceholderText("借阅时间");
+    borrowTimeLineEdit->setFixedWidth(120);
+
+    // （创建应还时间输入框）：创建应还时间查找输入框
+    borrowDueTimeLineEdit = new QLineEdit(borrowOperationWidget);
+    borrowDueTimeLineEdit->setPlaceholderText("应还时间");
+    borrowDueTimeLineEdit->setFixedWidth(120);
+
+    // （创建归还时间输入框）：创建归还时间查找输入框
+    borrowReturnTimeLineEdit = new QLineEdit(borrowOperationWidget);
+    borrowReturnTimeLineEdit->setPlaceholderText("归还时间");
+    borrowReturnTimeLineEdit->setFixedWidth(120);
+
+    // （创建状态输入框）：创建状态查找输入框
+    borrowStatusEdit = new QLineEdit(borrowOperationWidget);
+    borrowStatusEdit->setPlaceholderText("状态");
+    borrowStatusEdit->setFixedWidth(80);
+
+    // （创建罚款状态下拉框）：创建罚款状态查找下拉框
+    borrowFineCombo = new QComboBox(borrowOperationWidget);
+    borrowFineCombo->addItem("");
+    borrowFineCombo->addItem("未支付");
+    borrowFineCombo->addItem("已支付");
+    borrowFineCombo->addItem("已减免");
+    borrowFineCombo->setFixedWidth(80);
+
     // （创建按钮）：创建查找按钮
     borrowSearchBtn = new QPushButton("查找", borrowOperationWidget);
-    // （创建按钮）：创建借书按钮
-    borrowAddBtn = new QPushButton("借书", borrowOperationWidget);
-    // （创建按钮）：创建还书按钮
-    borrowReturnBtn = new QPushButton("还书", borrowOperationWidget);
-    // （创建按钮）：创建续借按钮
-    borrowRenewBtn = new QPushButton("续借", borrowOperationWidget);
 
     // （设置布局）：将控件添加到操作区布局
     borrowOperationLayout->addWidget(borrowISBNLineEdit);
+    borrowOperationLayout->addWidget(borrowTitleLineEdit);
     borrowOperationLayout->addWidget(borrowReaderIdLineEdit);
+    borrowOperationLayout->addWidget(borrowTimeLineEdit);
+    borrowOperationLayout->addWidget(borrowDueTimeLineEdit);
+    borrowOperationLayout->addWidget(borrowReturnTimeLineEdit);
+    borrowOperationLayout->addWidget(borrowStatusEdit);
+    borrowOperationLayout->addWidget(borrowFineCombo);
     borrowOperationLayout->addWidget(borrowSearchBtn);
-    borrowOperationLayout->addWidget(borrowAddBtn);
-    borrowOperationLayout->addWidget(borrowReturnBtn);
-    borrowOperationLayout->addWidget(borrowRenewBtn);
     borrowOperationLayout->addStretch();
 
     // （创建表格）：创建借阅表格实例
     borrowTable = new QTableWidget(borrowWidget);
-    // （设置列数）：设置借阅表格列数为8
-    borrowTable->setColumnCount(8);
+    // （设置列数）：设置借阅表格列数为11
+    borrowTable->setColumnCount(11);
     // （设置表头）：设置借阅表格表头
-    borrowTable->setHorizontalHeaderLabels({"ISBN", "书名", "读者ID", "读者姓名", "借阅时间", "应还时间", "归还时间", "状态"});
+    borrowTable->setHorizontalHeaderLabels({"ISBN", "书名", "读者ID", "读者姓名", "借阅时间", "应还时间", "归还时间", "状态", "罚款金额", "已支付罚款", "罚款状态"});
     // （设置列调整模式）：列自动拉伸填充
     borrowTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     // （设置行调整模式）：行高根据内容自动调整
@@ -359,9 +400,7 @@ void AdminWindow::setupBorrowTable()
 
     // （连接按钮信号槽）：连接借阅管理按钮信号槽
     connect(borrowSearchBtn, &QPushButton::clicked, this, &AdminWindow::onBorrowSearch);
-    connect(borrowAddBtn, &QPushButton::clicked, this, &AdminWindow::onBorrowAdd);
-    connect(borrowReturnBtn, &QPushButton::clicked, this, &AdminWindow::onBorrowReturn);
-    connect(borrowRenewBtn, &QPushButton::clicked, this, &AdminWindow::onBorrowRenew);
+    connect(borrowRenewAuditBtn, &QPushButton::clicked, this, &AdminWindow::onBorrowRenewAudit);
 }
 
 // （初始化预约表格）：创建预约管理表格，设置列和属性
@@ -965,32 +1004,80 @@ void AdminWindow::loadBorrowData()
 void AdminWindow::onBorrowSearch()
 {
     QString isbn = borrowISBNLineEdit->text().trimmed();
+    QString title = borrowTitleLineEdit->text().trimmed();
     QString readerId = borrowReaderIdLineEdit->text().trimmed();
+    QString time = borrowTimeLineEdit->text().trimmed();
+    QString dueTime = borrowDueTimeLineEdit->text().trimmed();
+    QString returnTime = borrowReturnTimeLineEdit->text().trimmed();
+    QString status = borrowStatusEdit->text().trimmed();
+    QString fineStatus = borrowFineCombo->currentText();
 
     ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
     if (admin)
     {
         std::vector<BorrowRecord> records = admin->viewBorrowRecords();
+        DataManager *dm = DataManager::getInstance();
 
-        if (!isbn.isEmpty() || !readerId.isEmpty())
+        std::vector<BorrowRecord> filtered;
+        for (const auto &record : records)
         {
-            std::vector<BorrowRecord> filtered;
-            for (const auto &record : records)
+            bool match = true;
+
+            if (!isbn.isEmpty() && !record.getISBN().contains(isbn))
+                match = false;
+
+            if (!title.isEmpty())
             {
-                bool match = true;
-                if (!isbn.isEmpty() && !record.getISBN().contains(isbn))
+                Book *book = dm->findBookByISBN(record.getISBN());
+                if (!book || !book->getTitle().contains(title))
                     match = false;
-                if (!readerId.isEmpty() && !record.getReaderID().contains(readerId))
-                    match = false;
-                if (match)
-                    filtered.push_back(record);
             }
-            displayBorrowRecords(filtered);
+
+            if (!readerId.isEmpty() && !record.getReaderID().contains(readerId))
+                match = false;
+
+            if (!time.isEmpty() && !record.getBorrowTime().toString("yyyy-MM-dd").contains(time))
+                match = false;
+
+            if (!dueTime.isEmpty() && !record.getDueTime().toString("yyyy-MM-dd").contains(dueTime))
+                match = false;
+
+            if (!returnTime.isEmpty())
+            {
+                QString recordReturnTime = record.isReturned() ? record.getReturnTime().toString("yyyy-MM-dd") : "";
+                if (!recordReturnTime.contains(returnTime))
+                    match = false;
+            }
+
+            if (!status.isEmpty())
+            {
+                QString recordStatus;
+                if (record.isReturned())
+                    recordStatus = "已归还";
+                else if (record.calculateOverdueDays() > 0)
+                    recordStatus = QString("逾期%1天").arg(record.calculateOverdueDays());
+                else
+                    recordStatus = "借阅中";
+
+                if (!recordStatus.contains(status))
+                    match = false;
+            }
+
+            if (!fineStatus.isEmpty())
+            {
+                BorrowRecord::FineStatus fs = record.getFineStatus();
+                if (fineStatus == "未支付" && fs != BorrowRecord::FineStatus::UNPAID)
+                    match = false;
+                if (fineStatus == "已支付" && fs != BorrowRecord::FineStatus::PAID)
+                    match = false;
+                if (fineStatus == "已减免" && fs != BorrowRecord::FineStatus::WAIVED)
+                    match = false;
+            }
+
+            if (match)
+                filtered.push_back(record);
         }
-        else
-        {
-            displayBorrowRecords(records);
-        }
+        displayBorrowRecords(filtered);
     }
 }
 
@@ -1020,7 +1107,7 @@ void AdminWindow::displayBorrowRecords(const std::vector<BorrowRecord> &records)
         borrowTable->setItem(row, 4, new QTableWidgetItem(record.getBorrowTime().toString("yyyy-MM-dd HH:mm:ss")));
         borrowTable->setItem(row, 5, new QTableWidgetItem(record.getDueTime().toString("yyyy-MM-dd HH:mm:ss")));
 
-        QString returnTime = record.isReturned() ? record.getReturnTime().toString("yyyy-MM-dd HH:mm:ss") : "";
+        QString returnTime = record.isReturned() ? record.getReturnTime().toString("yyyy-MM-dd HH:mm:ss") : "未归还";
         borrowTable->setItem(row, 6, new QTableWidgetItem(returnTime));
 
         QString status = "借阅中";
@@ -1030,143 +1117,113 @@ void AdminWindow::displayBorrowRecords(const std::vector<BorrowRecord> &records)
         }
         else if (record.calculateOverdueDays() > 0)
         {
-            status = QString("逾期(%1天)").arg(record.calculateOverdueDays());
+            status = QString("逾期%1天").arg(record.calculateOverdueDays());
         }
         borrowTable->setItem(row, 7, new QTableWidgetItem(status));
+
+        double fineAmount = record.calculateFine();
+        double paidFine = record.getPaidFine();
+        borrowTable->setItem(row, 8, new QTableWidgetItem(QString::number(fineAmount, 'f', 2) + "元"));
+        borrowTable->setItem(row, 9, new QTableWidgetItem(QString::number(paidFine, 'f', 2) + "元"));
+
+        QString fineStatus;
+        switch (record.getFineStatus())
+        {
+        case BorrowRecord::FineStatus::UNPAID:
+            fineStatus = "未支付";
+            break;
+        case BorrowRecord::FineStatus::PAID:
+            fineStatus = "已支付";
+            break;
+        case BorrowRecord::FineStatus::WAIVED:
+            fineStatus = "已减免";
+            break;
+        default:
+            fineStatus = "未知";
+        }
+        borrowTable->setItem(row, 10, new QTableWidgetItem(fineStatus));
     }
 }
 
 // （借阅添加）：借书按钮点击处理
-void AdminWindow::onBorrowAdd()
+// （续借审核）：续借审核按钮点击处理
+void AdminWindow::onBorrowRenewAudit()
 {
-    QPair<QString, bool> result = showInputDialog("借书", "请输入图书ISBN：", true);
-    if (result.second)
+    int currentRow = borrowTable->currentRow();
+    if (currentRow < 0)
     {
-        QMessageBox msgBox(QMessageBox::Information, "提示", "借书已取消！", QMessageBox::NoButton, this);
-        msgBox.addButton("确定", QMessageBox::AcceptRole);
-        msgBox.exec();
+        QMessageBox::warning(this, "提示", "请先选择一条借阅记录！");
         return;
     }
-    QString isbn = result.first;
 
-    result = showInputDialog("借书", "请输入读者ID：", true);
-    if (result.second)
+    QString isbn = borrowTable->item(currentRow, 0)->text();
+    QString readerId = borrowTable->item(currentRow, 2)->text();
+    QString status = borrowTable->item(currentRow, 8)->text();
+
+    if (status == "已归还")
     {
-        QMessageBox msgBox(QMessageBox::Information, "提示", "借书已取消！", QMessageBox::NoButton, this);
-        msgBox.addButton("确定", QMessageBox::AcceptRole);
-        msgBox.exec();
+        QMessageBox::warning(this, "提示", "该图书已归还，无需续借审核！");
         return;
     }
-    QString readerId = result.first;
 
+    QDialog dialog(this);
+    dialog.setWindowTitle("续借审核");
+    QVBoxLayout layout(&dialog);
+
+    QLabel *infoLabel = new QLabel(QString("ISBN: %1\n读者ID: %2\n当前状态: %3").arg(isbn).arg(readerId).arg(status), &dialog);
+    layout.addWidget(infoLabel);
+
+    QHBoxLayout btnLayout;
+    QPushButton *approveBtn = new QPushButton("审核成功", &dialog);
+    QPushButton *rejectBtn = new QPushButton("审核失败", &dialog);
+    QPushButton *cancelBtn = new QPushButton("取消", &dialog);
+    btnLayout.addWidget(approveBtn);
+    btnLayout.addWidget(rejectBtn);
+    btnLayout.addWidget(cancelBtn);
+    layout.addLayout(&btnLayout);
+
+    connect(approveBtn, &QPushButton::clicked, &dialog, [&]()
+            { dialog.done(1); });
+    connect(rejectBtn, &QPushButton::clicked, &dialog, [&]()
+            { dialog.done(2); });
+    connect(cancelBtn, &QPushButton::clicked, &dialog, [&]()
+            { dialog.done(0); });
+
+    int result = dialog.exec();
+
+    if (result == 0)
+        return;
+
+    DataManager *dm = DataManager::getInstance();
     ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
-    if (admin)
-    {
-        bool success = admin->borrowBook(isbn, readerId);
 
-        if (success)
-        {
-            loadBorrowData();
-
-            QMessageBox msgBox(QMessageBox::Information, "成功", "借书成功！", QMessageBox::NoButton, this);
-            msgBox.addButton("确定", QMessageBox::AcceptRole);
-            msgBox.exec();
-        }
-        else
-        {
-            QMessageBox msgBox(QMessageBox::Warning, "失败", "借书失败！可能图书不存在、无库存或读者有逾期未还。", QMessageBox::NoButton, this);
-            msgBox.addButton("确定", QMessageBox::AcceptRole);
-            msgBox.exec();
-        }
-    }
-}
-
-// （借阅归还）：还书按钮点击处理
-void AdminWindow::onBorrowReturn()
-{
-    QPair<QString, bool> result = showInputDialog("还书", "请输入图书ISBN：", true);
-    if (result.second)
-    {
-        QMessageBox msgBox(QMessageBox::Information, "提示", "还书已取消！", QMessageBox::NoButton, this);
-        msgBox.addButton("确定", QMessageBox::AcceptRole);
-        msgBox.exec();
-        return;
-    }
-    QString isbn = result.first;
-
-    result = showInputDialog("还书", "请输入读者ID：", true);
-    if (result.second)
-    {
-        QMessageBox msgBox(QMessageBox::Information, "提示", "还书已取消！", QMessageBox::NoButton, this);
-        msgBox.addButton("确定", QMessageBox::AcceptRole);
-        msgBox.exec();
-        return;
-    }
-    QString readerId = result.first;
-
-    ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
-    if (admin)
-    {
-        bool success = admin->returnBook(isbn, readerId);
-
-        if (success)
-        {
-            loadBorrowData();
-
-            QMessageBox msgBox(QMessageBox::Information, "成功", "还书成功！", QMessageBox::NoButton, this);
-            msgBox.addButton("确定", QMessageBox::AcceptRole);
-            msgBox.exec();
-        }
-        else
-        {
-            QMessageBox msgBox(QMessageBox::Warning, "失败", "还书失败！借阅记录不存在。", QMessageBox::NoButton, this);
-            msgBox.addButton("确定", QMessageBox::AcceptRole);
-            msgBox.exec();
-        }
-    }
-}
-
-// （借阅续借）：续借按钮点击处理
-void AdminWindow::onBorrowRenew()
-{
-    QPair<QString, bool> result = showInputDialog("续借", "请输入图书ISBN：", true);
-    if (result.second)
-    {
-        QMessageBox msgBox(QMessageBox::Information, "提示", "续借已取消！", QMessageBox::NoButton, this);
-        msgBox.addButton("确定", QMessageBox::AcceptRole);
-        msgBox.exec();
-        return;
-    }
-    QString isbn = result.first;
-
-    result = showInputDialog("续借", "请输入读者ID：", true);
-    if (result.second)
-    {
-        QMessageBox msgBox(QMessageBox::Information, "提示", "续借已取消！", QMessageBox::NoButton, this);
-        msgBox.addButton("确定", QMessageBox::AcceptRole);
-        msgBox.exec();
-        return;
-    }
-    QString readerId = result.first;
-
-    ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
-    if (admin)
+    if (result == 1)
     {
         bool success = admin->renewBook(isbn, readerId);
-
         if (success)
         {
             loadBorrowData();
-
-            QMessageBox msgBox(QMessageBox::Information, "成功", "续借成功！借阅期限延长30天。", QMessageBox::NoButton, this);
-            msgBox.addButton("确定", QMessageBox::AcceptRole);
-            msgBox.exec();
+            QMessageBox::information(this, "成功", "续借审核成功！已延长借阅期限30天。");
         }
         else
         {
-            QMessageBox msgBox(QMessageBox::Warning, "失败", "续借失败！借阅记录不存在或已归还。", QMessageBox::NoButton, this);
-            msgBox.addButton("确定", QMessageBox::AcceptRole);
-            msgBox.exec();
+            QMessageBox::warning(this, "失败", "续借审核失败！借阅记录不存在或已归还。");
+        }
+    }
+    else if (result == 2)
+    {
+        ::User *user = dm->findUserById(readerId);
+        if (user && user->getType() == 2)
+        {
+            ::Reader *reader = dynamic_cast<::Reader *>(user);
+            if (reader)
+            {
+                QString msgContent = QString("您申请续借图书(ISBN:%1)未通过审核。").arg(isbn);
+                Message msg(admin->getID(), admin->getName(), msgContent);
+                reader->addMessage(msg);
+                dm->writeMessage();
+                QMessageBox::information(this, "提示", "已通知读者审核失败。");
+            }
         }
     }
 }

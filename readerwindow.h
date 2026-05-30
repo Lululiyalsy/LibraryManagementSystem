@@ -47,6 +47,10 @@ private slots:
     void onReturnBook();
     // 续借
     void onRenewBook();
+    // 查找借阅记录
+    void onSearchBorrow();
+    // 支付所有罚款
+    void onPayAllFines();
     // 切换到图书查询页面
     void switchToBookSearch();
     // 切换到我的借阅页面
@@ -99,11 +103,20 @@ private:
     QLineEdit *bookAuthorLineEdit;   // 图书作者查询输入框
     QLineEdit *bookCategoryLineEdit; // 图书分类查询输入框
 
+    QLineEdit *borrowISBNEdit;       // 借阅ISBN查询输入框
+    QLineEdit *borrowTitleEdit;      // 借阅书名查询输入框
+    QLineEdit *borrowTimeEdit;       // 借阅时间查询输入框
+    QLineEdit *borrowDueTimeEdit;    // 应还时间查询输入框
+    QLineEdit *borrowReturnTimeEdit; // 归还时间查询输入框
+    QLineEdit *borrowStatusEdit;     // 借阅状态查询输入框
+    QComboBox *borrowFineCombo;      // 借阅罚款状态下拉框
+
     QPushButton *bookSearchBtn;  // 图书查询按钮
     QPushButton *bookReserveBtn; // 预约按钮
     QPushButton *borrowBtn;      // 借书按钮
     QPushButton *returnBtn;      // 还书按钮
     QPushButton *renewBtn;       // 续借按钮
+    QPushButton *payFineBtn;     // 支付所有罚款按钮
 
     // 设置中心窗口
     void setupCentralWidget();
