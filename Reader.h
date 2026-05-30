@@ -46,12 +46,6 @@ public:
     // 查看我的预约
     std::vector<Reservation> viewMyReservations();
 
-    // 删除预约（已审核/已取消状态，非待审核）
-    bool deleteReservation(const QString &isbn);
-
-    // 清空所有非待审核状态的预约
-    int clearAllReservationsExceptPending();
-
     // 借书（按ISBN）
     bool borrowBook(const QString &isbn);
 

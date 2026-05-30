@@ -988,15 +988,13 @@ bool DataManager::addReservation(const Reservation &reservation)
     return true;
 }
 
-// （预约管理）：取消预约记录（按ISBN和读者ID）
+// （预约管理）：取消预约记录（按ISBN和读者ID，直接删除记录）
 bool DataManager::cancelReservation(const QString &isbn, const QString &readerId)
 {
     for (auto it = reservations.begin(); it != reservations.end(); ++it)
     {
         if (it->getISBN() == isbn && it->getReaderID() == readerId && it->getStatus() == Reservation::PENDING)
         {
-            it->setStatus(Reservation::CANCELLED);
-
             Book *book = findBookByISBN(isbn);
             if (book && book->getReservationCount() > 0)
             {
@@ -1004,6 +1002,7 @@ bool DataManager::cancelReservation(const QString &isbn, const QString &readerId
                 writeBook();
             }
 
+            reservations.erase(it);
             writeReservation();
             return true;
         }
