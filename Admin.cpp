@@ -56,7 +56,6 @@ void Admin::registerUser(const QString &id, const QString &type, const QString &
     }
     if (idExists)
     {
-        // qDebug() << "用户ID已存在: " << id;
         return;
     }
 
@@ -77,7 +76,6 @@ void Admin::registerUser(const QString &id, const QString &type, const QString &
     }
 
     dm->addUser(user);
-    // qDebug() << "用户注册成功: " << name;
 }
 
 // 删除用户账号（包括管理员和读者）
@@ -90,8 +88,6 @@ bool Admin::deleteUser(const QString &id, const QString &name)
 
     if (success)
     {
-        // qDebug() << "用户删除成功";
-
         // 检查是否只剩0人，如果是则自动创建新管理员
         if (dm->getUserCount() == 0)
         {
@@ -109,12 +105,10 @@ bool Admin::deleteUser(const QString &id, const QString &name)
 
             User *newAdmin = new Admin(idRef, nameRef, passwordRef, phoneRef, emailRef);
             dm->addUser(newAdmin);
-            // qDebug() << "自动创建新管理员：ID=" << newId << ", 姓名=" << newName;
         }
     }
     else
     {
-        // qDebug() << "用户删除失败，未找到用户";
     }
 
     return success;
@@ -130,7 +124,6 @@ bool Admin::updateUser(const QString &oldId, const QString &oldName,
     // 检查是否提供了两个关键字
     if (oldId.isEmpty() || oldName.isEmpty())
     {
-        // qDebug() << "用户修改失败，必须同时提供ID和姓名";
         return false;
     }
 
@@ -153,12 +146,10 @@ bool Admin::updateUser(const QString &oldId, const QString &oldName,
     bool success = dm->updateUser(oldId, oldName, newUser);
     if (success)
     {
-        // qDebug() << "用户修改成功";
     }
     else
     {
         delete newUser;
-        // qDebug() << "用户修改失败";
     }
 
     return success;
@@ -169,7 +160,6 @@ std::vector<User *> Admin::findAllUser()
 {
     DataManager *dm = DataManager::getInstance();
     std::vector<User *> users = dm->getUsers();
-    // qDebug() << "查询到 " << users.size() << " 个用户";
     return users;
 }
 
@@ -180,15 +170,6 @@ std::vector<User *> Admin::findUser(const QString &id, const QString &name)
 
     // 使用多关键字查找（均为模糊匹配，可能多个）
     std::vector<User *> users = dm->searchUsers(id, name);
-
-    if (!users.empty())
-    {
-        // qDebug() << "找到 " << users.size() << " 个用户";
-    }
-    else
-    {
-        // qDebug() << "未找到用户";
-    }
 
     return users;
 }
@@ -449,11 +430,6 @@ void Admin::generateReport()
         QTextStream out(&reportFile);
         out << report;
         reportFile.close();
-        qDebug() << "[Admin] 统计报表已生成: " << reportPath;
-    }
-    else
-    {
-        qDebug() << "[Admin] 无法生成统计报表";
     }
 }
 

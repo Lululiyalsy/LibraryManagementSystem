@@ -42,9 +42,6 @@ void Reservation::Notify() {
         logFile.close();
     }
 
-    // 发送到系统日志
-    qDebug() << "[Reservation] 已发送通知 - 读者ID:" << readerID << ", ISBN:" << ISBN;
-
     // TODO: 实际项目中可以添加：
     // - 真实邮件发送（使用 QNetworkAccessManager 调用邮件API）
     // - 短信发送（调用短信服务商API）

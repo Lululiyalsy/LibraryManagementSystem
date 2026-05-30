@@ -28,7 +28,6 @@ DataManager::DataManager()
     // （初始化文件路径）：设置数据文件保存路径
     // 优先使用应用程序目录下的data子目录
     QString appDir = QCoreApplication::applicationDirPath();
-    qDebug() << "[DataManager] 应用程序目录:" << appDir;
     QString dataDir = appDir + "/data";
 
     // 检查应用程序目录下是否存在data目录，如果不存在，尝试使用项目根目录
@@ -43,17 +42,11 @@ DataManager::DataManager()
         }
     }
 
-    qDebug() << "[DataManager] 数据目录:" << dataDir;
-    qDebug() << "[DataManager] 用户文件路径:" << userFilePath;
-
     userFilePath = dataDir + "/users.txt";
     bookFilePath = dataDir + "/books.txt";
     borrowRecordFilePath = dataDir + "/borrow_records.txt";
     reservationFilePath = dataDir + "/reservations.txt";
     messageFilePath = dataDir + "/messages.txt";
-
-    qDebug() << "[DataManager] 用户文件路径:" << userFilePath;
-    qDebug() << "[DataManager] 文件是否存在:" << QFile::exists(userFilePath);
 
     // 检查并创建数据目录
     QDir dir(dataDir);
@@ -64,7 +57,6 @@ DataManager::DataManager()
 
     // （初始化数据）：读取所有数据文件
     initUser();
-    qDebug() << "[DataManager] 加载用户数量:" << users.size();
     initBook();
     initBorrowRecord();
     initReservation();
@@ -259,7 +251,6 @@ void DataManager::initUser()
     QFile file(userFilePath);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
     {
-        // qDebug() << "无法打开用户数据文件: " << userFilePath;
         return;
     }
 
@@ -273,7 +264,6 @@ void DataManager::initUser()
         QStringList fields = line.split(" ", Qt::SkipEmptyParts);
         if (fields.size() < 6)
         {
-            // qDebug() << "用户数据格式错误: " << line;
             continue;
         }
 
@@ -306,7 +296,6 @@ void DataManager::writeUser()
     QFile file(userFilePath);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
     {
-        // qDebug() << "无法打开用户数据文件: " << userFilePath;
         return;
     }
 
@@ -333,7 +322,6 @@ void DataManager::initBook()
     QFile file(bookFilePath);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
     {
-        // qDebug() << "无法打开图书数据文件: " << bookFilePath;
         return;
     }
 
@@ -347,7 +335,6 @@ void DataManager::initBook()
         QStringList fields = line.split("|", Qt::SkipEmptyParts);
         if (fields.size() < 8)
         {
-            // qDebug() << "图书数据格式错误: " << line;
             continue;
         }
 
@@ -365,7 +352,6 @@ void DataManager::initBook()
     }
 
     file.close();
-    // qDebug() << "图书数据初始化完成，共 " << books.size() << " 本图书";
 }
 
 // （图书管理）：写入图书数据到文件
@@ -374,7 +360,6 @@ void DataManager::writeBook()
     QFile file(bookFilePath);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
     {
-        // qDebug() << "无法打开图书数据文件: " << bookFilePath;
         return;
     }
 
@@ -395,7 +380,6 @@ void DataManager::writeBook()
     }
 
     file.close();
-    // qDebug() << "图书数据保存完成，共 " << books.size() << " 本图书";
 }
 
 // （图书查询）：根据ISBN查找图书（精确匹配）
@@ -644,7 +628,6 @@ void DataManager::initBorrowRecord()
     QFile file(borrowRecordFilePath);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
     {
-        // qDebug() << "无法打开借阅记录文件: " << borrowRecordFilePath;
         return;
     }
 
@@ -658,7 +641,6 @@ void DataManager::initBorrowRecord()
         QStringList fields = line.split("|", Qt::SkipEmptyParts);
         if (fields.size() < 4)
         {
-            // qDebug() << "借阅记录格式错误: " << line;
             continue;
         }
 
@@ -684,7 +666,6 @@ void DataManager::initBorrowRecord()
     }
 
     file.close();
-    // qDebug() << "借阅记录初始化完成，共 " << borrowRecords.size() << " 条记录";
 }
 
 // （借阅记录管理）：写入借阅记录数据到文件
@@ -694,7 +675,6 @@ void DataManager::writeBorrowRecord()
     QFile file(borrowRecordFilePath);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
     {
-        // qDebug() << "无法打开借阅记录文件: " << borrowRecordFilePath;
         return;
     }
 
@@ -713,7 +693,6 @@ void DataManager::writeBorrowRecord()
     }
 
     file.close();
-    // qDebug() << "借阅记录保存完成，共 " << borrowRecords.size() << " 条记录";
 }
 
 // （借阅记录管理）：添加借阅记录
@@ -894,7 +873,6 @@ void DataManager::initReservation()
     QFile file(reservationFilePath);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
     {
-        // qDebug() << "无法打开预约数据文件: " << reservationFilePath;
         return;
     }
 
@@ -908,7 +886,6 @@ void DataManager::initReservation()
         QStringList fields = line.split("|", Qt::SkipEmptyParts);
         if (fields.size() < 3)
         {
-            // qDebug() << "预约数据格式错误: " << line;
             continue;
         }
 
@@ -948,7 +925,6 @@ void DataManager::writeReservation()
     QFile file(reservationFilePath);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
     {
-        // qDebug() << "无法打开预约数据文件: " << reservationFilePath;
         return;
     }
 
@@ -964,7 +940,6 @@ void DataManager::writeReservation()
     }
 
     file.close();
-    // qDebug() << "预约数据保存完成，共 " << reservations.size() << " 条预约";
 }
 
 // （预约管理）：添加预约记录
