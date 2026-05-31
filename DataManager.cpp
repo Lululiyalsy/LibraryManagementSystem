@@ -59,6 +59,8 @@ DataManager::DataManager()
     initUser();
     initBook();
     initBorrowRecord();
+    // （信用分计算）：根据借阅记录重新计算所有读者信用分
+    recalculateCreditScores();
     initReservation();
     initMessage();
 }
@@ -302,6 +304,44 @@ void DataManager::initUser()
     }
 
     file.close();
+}
+
+// （用户管理）：重新计算所有读者信用分
+void DataManager::recalculateCreditScores()
+{
+    for (auto &record : borrowRecords)
+    {
+        QString readerId = record.getReaderID();
+        int overdueDays = record.calculateOverdueDays();
+        int deductedScore = record.getDeductedScore();
+
+        // 计算需要扣除的分数（当前逾期天数 - 已扣分数）
+        int needDeduct = overdueDays - deductedScore;
+
+        // 如果不需要扣分，跳过
+        if (needDeduct <= 0)
+            continue;
+
+        ::User *user = findUserById(readerId);
+        if (!user || user->getType() != 2)
+            continue;
+
+        ::Reader *reader = dynamic_cast<::Reader *>(user);
+        if (!reader)
+            continue;
+
+        // 只有"未还且逾期"的记录才扣分
+        if (!record.isReturned() && overdueDays > 0)
+        {
+            int currentScore = reader->getCreditScore();
+            int newScore = qMax(currentScore - needDeduct, 0);
+            reader->setCreditScore(newScore);
+            record.setDeductedScore(overdueDays); // 更新已扣分数为当前逾期天数
+        }
+    }
+
+    writeUser();
+    writeBorrowRecord(); // 写入借阅记录，保存已扣分数
 }
 
 // （用户管理）：写入用户数据到文件
@@ -693,12 +733,17 @@ void DataManager::initBorrowRecord()
 
         if (fields.size() >= 9)
         {
-            record.setPaidFine(fields[7].toDouble());
+            record.setPaidFine(fields[8].toDouble());
         }
 
         if (fields.size() >= 10)
         {
             record.setFineStatus(static_cast<BorrowRecord::FineStatus>(fields[9].toInt()));
+        }
+
+        if (fields.size() >= 11)
+        {
+            record.setDeductedScore(fields[10].toInt());
         }
 
         borrowRecords.push_back(record);
@@ -721,17 +766,17 @@ void DataManager::writeBorrowRecord()
     {
         QString returnTimeStr = record.getReturnTime().isValid() ? record.getReturnTime().toString("yyyy-MM-dd HH:mm:ss") : "";
 
-        QString line = QString("%1|%2|%3|%4|%5|%6|%7|%8|%9|%10")
-                           .arg(record.getISBN())
-                           .arg(record.getReaderID())
-                           .arg(record.getBorrowTime().toString("yyyy-MM-dd HH:mm:ss"))
-                           .arg(record.getDueTime().toString("yyyy-MM-dd HH:mm:ss"))
-                           .arg(returnTimeStr)
-                           .arg(record.isReturned() ? "true" : "false")
-                           .arg(static_cast<int>(record.getRenewStatus()))
-                           .arg(QString::number(record.calculateFine(), 'f', 2))
-                           .arg(QString::number(record.getPaidFine(), 'f', 2))
-                           .arg(static_cast<int>(record.getFineStatus()));
+        QString line = record.getISBN() + "|" +
+                       record.getReaderID() + "|" +
+                       record.getBorrowTime().toString("yyyy-MM-dd HH:mm:ss") + "|" +
+                       record.getDueTime().toString("yyyy-MM-dd HH:mm:ss") + "|" +
+                       returnTimeStr + "|" +
+                       (record.isReturned() ? "true" : "false") + "|" +
+                       QString::number(static_cast<int>(record.getRenewStatus())) + "|" +
+                       QString::number(record.calculateFine(), 'f', 2) + "|" +
+                       QString::number(record.getPaidFine(), 'f', 2) + "|" +
+                       QString::number(static_cast<int>(record.getFineStatus())) + "|" +
+                       QString::number(record.getDeductedScore());
         out << line << "\n";
     }
 

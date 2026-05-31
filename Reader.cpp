@@ -66,6 +66,19 @@ Reader::CreditCheckResult Reader::checkCreditScore() const
     return CreditCheckResult::OK;
 }
 
+// 计算信用分变化（逾期还书不扣分不加分，按时还书加2分）
+void Reader::calculateCreditScore(int overdueDays, Book *book, const QString &isbn)
+{
+    if (overdueDays > 0)
+    {
+        return;
+    }
+
+    // 按时还书，增加2分信用分
+    int newScore = creditScore + 2;
+    creditScore = qMin(newScore, 100); // 最高100分
+}
+
 // 预约图书（按ISBN）
 Reader::ReserveResult Reader::reserveBook(const QString &isbn)
 {
@@ -273,6 +286,11 @@ Reader::ReturnResult Reader::returnBook(const QString &isbn)
 
     QDateTime now = QDateTime::currentDateTime();
     Book *book = dm->findBookByISBN(isbn);
+
+    // 计算逾期天数并更新信用分
+    int overdueDays = targetRecord->calculateOverdueDays();
+    calculateCreditScore(overdueDays, book, isbn);
+    dm->writeUser();
 
     allRecords.erase(allRecords.begin() + recordIndex);
     dm->writeBorrowRecord();

@@ -71,6 +71,10 @@ public:
     RenewStatus getRenewStatus() const;
     // （getter和setter）：设置续借审核状态
     void setRenewStatus(RenewStatus status);
+    // （getter和setter）：获取已扣信用分数
+    int getDeductedScore() const;
+    // （getter和setter）：设置已扣信用分数
+    void setDeductedScore(int score);
 
     // （析构函数）：借阅记录析构函数
     ~BorrowRecord();
@@ -96,6 +100,8 @@ private:
     FineStatus fineStatus;
     // （续借审核状态）：续借审核状态
     RenewStatus renewStatus;
+    // （已扣信用分数）：该记录已扣除的信用分数
+    int deductedScore;
 };
 
 #endif // BORROWRECORD_H

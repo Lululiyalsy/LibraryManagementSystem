@@ -27,6 +27,8 @@ public:
 
     // （用户管理）：初始化读取用户数据
     void initUser();
+    // （用户管理）：重新计算所有读者信用分
+    void recalculateCreditScores();
     // （用户管理）：写入用户数据到文件
     void writeUser();
     // （用户查询）：根据ID查找用户（模糊匹配，可能多个）

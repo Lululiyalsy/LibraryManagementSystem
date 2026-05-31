@@ -82,6 +82,8 @@ public:
 
     // 检查信用分是否允许操作
     CreditCheckResult checkCreditScore() const;
+    // 计算信用分变化（逾期扣分或按时加分）
+    void calculateCreditScore(int overdueDays, Book *book, const QString &isbn);
 
     // 预约图书（按ISBN），返回预约结果
     ReserveResult reserveBook(const QString &isbn);

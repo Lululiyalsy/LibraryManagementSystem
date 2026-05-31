@@ -9,7 +9,7 @@
 BorrowRecord::BorrowRecord(QString isbn, QString readerID, QDateTime borrowTime, QDateTime dueTime)
     : ISBN(isbn), readerID(readerID), borrowTime(borrowTime), dueTime(dueTime),
       returned(false), fineAmount(0), paidFine(0), fineStatus(FineStatus::UNPAID),
-      renewStatus(RenewStatus::NONE)
+      renewStatus(RenewStatus::NONE), deductedScore(0)
 {
 }
 
@@ -185,6 +185,18 @@ BorrowRecord::RenewStatus BorrowRecord::getRenewStatus() const
 void BorrowRecord::setRenewStatus(RenewStatus status)
 {
     renewStatus = status;
+}
+
+// （getter和setter）：获取已扣信用分数
+int BorrowRecord::getDeductedScore() const
+{
+    return deductedScore;
+}
+
+// （getter和setter）：设置已扣信用分数
+void BorrowRecord::setDeductedScore(int score)
+{
+    deductedScore = score;
 }
 
 // （析构函数）：借阅记录析构函数
