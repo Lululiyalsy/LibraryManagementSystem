@@ -37,56 +37,6 @@ double BorrowRecord::calculateFine() const
     return fineAmount;
 }
 
-// （收取罚款）：记录罚款支付
-bool BorrowRecord::collectFine(double amount)
-{
-    if (amount <= 0)
-    {
-        return false;
-    }
-
-    double totalFine = calculateFine();
-
-    // 检查支付金额是否超过应缴罚款
-    if (paidFine + amount > totalFine + 0.01)
-    { // 允许0.01的浮点误差
-        return false;
-    }
-
-    paidFine += amount;
-
-    // 更新罚款状态
-    if (paidFine >= totalFine - 0.01)
-    { // 允许0.01的浮点误差
-        paidFine = totalFine;
-        fineStatus = FineStatus::PAID;
-
-        // 记录罚款支付日志
-        QString logPath = QCoreApplication::applicationDirPath() + "/fine_payments.log";
-        QFile logFile(logPath);
-        if (logFile.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text))
-        {
-            QTextStream out(&logFile);
-            out << "[" << QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss") << "] "
-                << "读者ID: " << readerID << ", "
-                << "ISBN: " << ISBN << ", "
-                << "支付金额: " << amount << "元, "
-                << "累计支付: " << paidFine << "元, "
-                << "状态: 已付清\n";
-            logFile.close();
-        }
-
-        return true;
-    }
-    else
-    {
-        // 部分支付，状态仍为未支付
-        return true;
-    }
-
-    return true;
-}
-
 // （减免罚款）：减免全部或部分罚款
 bool BorrowRecord::waiveFine(double amount)
 {

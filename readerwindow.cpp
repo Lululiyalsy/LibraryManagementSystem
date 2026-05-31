@@ -859,10 +859,10 @@ void ReaderWindow::onPayAllFines()
         return;
 
     DataManager *dm = DataManager::getInstance();
-    std::vector<BorrowRecord> allRecords = dm->getBorrowRecords();
+    std::vector<BorrowRecord> &allRecords = dm->getBorrowRecords();
 
     double totalFine = 0;
-    for (const auto &record : allRecords)
+    for (auto &record : allRecords)
     {
         if (record.getReaderID() == reader->getID() && !record.isReturned())
         {
@@ -889,7 +889,8 @@ void ReaderWindow::onPayAllFines()
                 double remaining = record.calculateFine() - record.getPaidFine();
                 if (remaining > 0)
                 {
-                    record.collectFine(remaining);
+                    record.setPaidFine(record.calculateFine());
+                    record.setFineStatus(BorrowRecord::FineStatus::PAID);
                 }
             }
         }

@@ -36,9 +36,6 @@ public:
     // （计算罚款）：根据逾期天数计算罚款金额
     double calculateFine() const;
 
-    // （收取罚款）：记录罚款支付
-    bool collectFine(double amount);
-
     // （减免罚款）：减免全部或部分罚款
     bool waiveFine(double amount = 0);
 
