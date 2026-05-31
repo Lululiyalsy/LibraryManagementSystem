@@ -53,7 +53,16 @@ Reader::ReserveResult Reader::reserveBook(const QString &isbn)
 
     if (dm->hasReservation(isbn, ID))
     {
-        return ReserveResult::ALREADY_RESERVED;
+        return ReserveResult::ALREADY_EXISTS;
+    }
+
+    std::vector<BorrowRecord> &allRecords = dm->getBorrowRecords();
+    for (const auto &record : allRecords)
+    {
+        if (record.getISBN() == isbn && record.getReaderID() == ID && !record.isReturned())
+        {
+            return ReserveResult::ALREADY_EXISTS;
+        }
     }
 
     int available = book->getStock() - book->getCurrentBorrowed();
@@ -278,11 +287,69 @@ Reader::ReturnResult Reader::returnBook(const QString &isbn)
     return ReturnResult::SUCCESS;
 }
 
-// 续借（按ISBN）
-bool Reader::renewBook(const QString &isbn)
+// 续借（按ISBN），返回续借结果
+Reader::RenewResult Reader::renewBook(const QString &isbn)
 {
     DataManager *dm = DataManager::getInstance();
-    return dm->renewBorrowRecord(isbn, ID, 30);
+
+    std::vector<BorrowRecord> &allRecords = dm->getBorrowRecords();
+    BorrowRecord *targetRecord = nullptr;
+
+    for (auto &record : allRecords)
+    {
+        if (record.getISBN() == isbn && record.getReaderID() == ID && !record.isReturned())
+        {
+            targetRecord = &record;
+            break;
+        }
+    }
+
+    if (!targetRecord)
+    {
+        return RenewResult::NOT_FOUND;
+    }
+
+    if (targetRecord->calculateOverdueDays() > 0)
+    {
+        return RenewResult::HAS_OVERDUE;
+    }
+
+    if (targetRecord->getRenewStatus() == BorrowRecord::RenewStatus::PENDING)
+    {
+        return RenewResult::ALREADY_PENDING;
+    }
+
+    targetRecord->setRenewStatus(BorrowRecord::RenewStatus::PENDING);
+    dm->writeBorrowRecord();
+
+    Book *book = dm->findBookByISBN(isbn);
+    QString bookTitle = book ? book->getTitle() : "未知";
+
+    QString myMsgContent = QString("您已提交续借申请，图书《%1》(ISBN:%2)，请等待管理员审核。")
+                               .arg(bookTitle)
+                               .arg(isbn);
+    Message myMsg(ID, getName(), myMsgContent);
+    addMessage(myMsg);
+
+    QString adminMsgContent = QString("读者 %1 (ID:%2) 申请续借图书《%3》(ISBN:%4)，请审核。")
+                                  .arg(getName())
+                                  .arg(ID)
+                                  .arg(bookTitle)
+                                  .arg(isbn);
+
+    std::vector<User *> &users = dm->getUsers();
+    for (auto user : users)
+    {
+        if (user->getType() == 1)
+        {
+            Message msg(user->getID(), user->getName(), ID, getName(), adminMsgContent);
+            user->addMessage(msg);
+        }
+    }
+
+    dm->writeMessage();
+
+    return RenewResult::SUCCESS;
 }
 
 // 查看我的借阅记录

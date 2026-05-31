@@ -594,11 +594,81 @@ bool Admin::returnBook(const QString &isbn, const QString &readerId)
     return success;
 }
 
-// 借阅管理：办理续借
-bool Admin::renewBook(const QString &isbn, const QString &readerId)
+// 借阅管理：办理续借审核
+bool Admin::renewBook(const QString &isbn, const QString &readerId, bool approved)
 {
     DataManager *dm = DataManager::getInstance();
-    return dm->renewBorrowRecord(isbn, readerId, 30);
+    std::vector<BorrowRecord> &allRecords = dm->getBorrowRecords();
+
+    for (auto &record : allRecords)
+    {
+        if (record.getISBN() == isbn && record.getReaderID() == readerId && !record.isReturned())
+        {
+            if (record.getRenewStatus() != BorrowRecord::RenewStatus::PENDING)
+            {
+                return false;
+            }
+
+            ::User *user = dm->findUserById(readerId);
+            if (!user || user->getType() != 2)
+            {
+                return false;
+            }
+
+            ::Reader *reader = dynamic_cast<::Reader *>(user);
+            if (!reader)
+            {
+                return false;
+            }
+
+            Book *book = dm->findBookByISBN(isbn);
+            QString bookTitle = book ? book->getTitle() : "未知";
+
+            if (approved)
+            {
+                record.setDueTime(record.getDueTime().addDays(30));
+                record.setRenewStatus(BorrowRecord::RenewStatus::APPROVED);
+
+                QString readerMsgContent = QString("您申请续借图书《%1》(ISBN:%2)已通过审核，借阅期限已延长30天。")
+                                               .arg(bookTitle)
+                                               .arg(isbn);
+                Message readerMsg(readerId, reader->getName(), readerId, reader->getName(), readerMsgContent);
+                reader->addMessage(readerMsg);
+
+                QString adminMsgContent = QString("您已通过读者 %1 (ID:%2) 的续借申请，图书《%3》(ISBN:%4)，借阅期限已延长30天。")
+                                              .arg(reader->getName())
+                                              .arg(readerId)
+                                              .arg(bookTitle)
+                                              .arg(isbn);
+                Message adminMsg(getID(), getName(), getID(), getName(), adminMsgContent);
+                addMessage(adminMsg);
+            }
+            else
+            {
+                record.setRenewStatus(BorrowRecord::RenewStatus::REJECTED);
+
+                QString readerMsgContent = QString("您申请续借图书《%1》(ISBN:%2)未通过审核。")
+                                               .arg(bookTitle)
+                                               .arg(isbn);
+                Message readerMsg(getID(), getName(), readerId, reader->getName(), readerMsgContent);
+                reader->addMessage(readerMsg);
+
+                QString adminMsgContent = QString("您已拒绝读者 %1 (ID:%2) 的续借申请，图书《%3》(ISBN:%4)。")
+                                              .arg(reader->getName())
+                                              .arg(readerId)
+                                              .arg(bookTitle)
+                                              .arg(isbn);
+                Message adminMsg(getID(), getName(), getID(), getName(), adminMsgContent);
+                addMessage(adminMsg);
+            }
+
+            dm->writeBorrowRecord();
+            dm->writeMessage();
+            return true;
+        }
+    }
+
+    return false;
 }
 
 // 借阅管理：查看所有借阅记录

@@ -86,8 +86,8 @@ public:
     bool borrowBook(const QString &isbn, const QString &readerId);
     // 借阅管理：办理还书
     bool returnBook(const QString &isbn, const QString &readerId);
-    // 借阅管理：办理续借
-    bool renewBook(const QString &isbn, const QString &readerId);
+    // 借阅管理：办理续借审核（approved为true表示批准，false表示拒绝）
+    bool renewBook(const QString &isbn, const QString &readerId, bool approved);
     // 借阅管理：查看所有借阅记录
     std::vector<BorrowRecord> viewBorrowRecords();
     // 借阅管理：查看逾期记录

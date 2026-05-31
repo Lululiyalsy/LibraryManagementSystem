@@ -8,7 +8,8 @@
 // （构造函数）：借阅记录构造函数
 BorrowRecord::BorrowRecord(QString isbn, QString readerID, QDateTime borrowTime, QDateTime dueTime)
     : ISBN(isbn), readerID(readerID), borrowTime(borrowTime), dueTime(dueTime),
-      returned(false), fineAmount(0), paidFine(0), fineStatus(FineStatus::UNPAID)
+      returned(false), fineAmount(0), paidFine(0), fineStatus(FineStatus::UNPAID),
+      renewStatus(RenewStatus::NONE)
 {
 }
 
@@ -222,6 +223,18 @@ void BorrowRecord::setPaidFine(double amount)
 void BorrowRecord::setFineStatus(FineStatus status)
 {
     fineStatus = status;
+}
+
+// （getter和setter）：获取续借审核状态
+BorrowRecord::RenewStatus BorrowRecord::getRenewStatus() const
+{
+    return renewStatus;
+}
+
+// （getter和setter）：设置续借审核状态
+void BorrowRecord::setRenewStatus(RenewStatus status)
+{
+    renewStatus = status;
 }
 
 // （析构函数）：借阅记录析构函数

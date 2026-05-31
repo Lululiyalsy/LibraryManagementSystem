@@ -1199,7 +1199,7 @@ void AdminWindow::onBorrowRenewAudit()
 
     if (result == 1)
     {
-        bool success = admin->renewBook(isbn, readerId);
+        bool success = admin->renewBook(isbn, readerId, true);
         if (success)
         {
             loadBorrowData();
@@ -1207,23 +1207,20 @@ void AdminWindow::onBorrowRenewAudit()
         }
         else
         {
-            QMessageBox::warning(this, "失败", "续借审核失败！借阅记录不存在或已归还。");
+            QMessageBox::warning(this, "失败", "续借审核失败！该记录没有待审核的续借申请。");
         }
     }
     else if (result == 2)
     {
-        ::User *user = dm->findUserById(readerId);
-        if (user && user->getType() == 2)
+        bool success = admin->renewBook(isbn, readerId, false);
+        if (success)
         {
-            ::Reader *reader = dynamic_cast<::Reader *>(user);
-            if (reader)
-            {
-                QString msgContent = QString("您申请续借图书(ISBN:%1)未通过审核。").arg(isbn);
-                Message msg(admin->getID(), admin->getName(), msgContent);
-                reader->addMessage(msg);
-                dm->writeMessage();
-                QMessageBox::information(this, "提示", "已通知读者审核失败。");
-            }
+            loadBorrowData();
+            QMessageBox::information(this, "提示", "已拒绝续借申请并通知读者。");
+        }
+        else
+        {
+            QMessageBox::warning(this, "失败", "续借审核失败！该记录没有待审核的续借申请。");
         }
     }
 }

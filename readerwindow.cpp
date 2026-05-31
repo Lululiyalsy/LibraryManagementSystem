@@ -458,9 +458,9 @@ void ReaderWindow::onBookReserve()
         {
             QMessageBox::warning(this, "失败", "预约失败！图书不存在。");
         }
-        else if (result == Reader::ReserveResult::ALREADY_RESERVED)
+        else if (result == Reader::ReserveResult::ALREADY_EXISTS)
         {
-            QMessageBox::warning(this, "失败", "预约失败！您已预约过该图书。");
+            QMessageBox::warning(this, "失败", "预约失败！您已预约或已借阅该图书。");
         }
         else if (result == Reader::ReserveResult::EXCEED_LIMIT)
         {
@@ -646,15 +646,22 @@ void ReaderWindow::onRenewBook()
     Reader *reader = dynamic_cast<Reader *>(currentUser);
     if (reader)
     {
-        bool success = reader->renewBook(isbn);
-        if (success)
+        Reader::RenewResult renewResult = reader->renewBook(isbn);
+        switch (renewResult)
         {
-            QMessageBox::information(this, "成功", "续借成功！借阅期限延长30天。");
+        case Reader::RenewResult::SUCCESS:
+            QMessageBox::information(this, "成功", "续借申请已提交，请等待管理员审核！");
             displayMyBorrowRecords();
-        }
-        else
-        {
-            QMessageBox::warning(this, "失败", "续借失败！借阅记录不存在或已归还。");
+            break;
+        case Reader::RenewResult::NOT_FOUND:
+            QMessageBox::warning(this, "失败", "续借失败！借阅记录不存在。");
+            break;
+        case Reader::RenewResult::ALREADY_PENDING:
+            QMessageBox::warning(this, "失败", "续借失败！已有待审核的续借申请。");
+            break;
+        case Reader::RenewResult::HAS_OVERDUE:
+            QMessageBox::warning(this, "失败", "续借失败！该图书已逾期，不能续借。");
+            break;
         }
     }
 }

@@ -32,7 +32,7 @@ public:
     {
         SUCCESS,          // 预约成功
         BOOK_NOT_FOUND,   // 图书不存在
-        ALREADY_RESERVED, // 已预约过该图书
+        ALREADY_EXISTS,   // 已预约或已借阅该图书
         EXCEED_LIMIT      // 预约人数已达上限
     };
 
@@ -56,6 +56,15 @@ public:
         HAS_UNPAID_FINE  // 存在未支付罚款，需先支付
     };
 
+    // 续借结果枚举
+    enum class RenewResult
+    {
+        SUCCESS,          // 续借申请提交成功
+        NOT_FOUND,        // 借阅记录不存在
+        ALREADY_PENDING,  // 已有待审核的续借申请
+        HAS_OVERDUE       // 图书已逾期
+    };
+
     // 预约图书（按ISBN），返回预约结果
     ReserveResult reserveBook(const QString &isbn);
 
@@ -71,8 +80,8 @@ public:
     // 还书（按ISBN），返回还书结果
     ReturnResult returnBook(const QString &isbn);
 
-    // 续借（按ISBN）
-    bool renewBook(const QString &isbn);
+    // 续借（按ISBN），返回续借结果
+    RenewResult renewBook(const QString &isbn);
 
     // 查看我的借阅记录
     std::vector<BorrowRecord> viewMyBorrowRecords();
