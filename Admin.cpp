@@ -505,95 +505,6 @@ bool Admin::approveReservation(const QString &isbn, const QString &readerId, boo
     return false;
 }
 
-// 借阅管理：办理借书
-// 修改5.16
-bool Admin::borrowBook(const QString &isbn, const QString &readerId)
-{
-    DataManager *dm = DataManager::getInstance();
-
-    Book *book = dm->findBookByISBN(isbn);
-    if (!book)
-        return false;
-
-    int available = book->getStock() - book->getCurrentBorrowed();
-
-    // 检查读者是否有逾期未还图书
-    if (dm->hasOverdueBooks(readerId))
-        return false;
-
-    // 检查读者借书数量是否超限
-    int currentBorrowCount = dm->getBorrowCountByReader(readerId);
-    if (currentBorrowCount >= 10)
-        return false;
-
-    // 检查该读者是否有该图书的有效预约（状态为 NOTIFIED）
-    bool hasValidReservation = false;
-    int reservationIndex = -1;
-    std::vector<Reservation> &reservations = dm->getReservations();
-
-    // 统计审核成功但未完成的预约数量
-    int notifiedCount = 0;
-
-    for (size_t i = 0; i < reservations.size(); ++i)
-    {
-        if (reservations[i].getISBN() == isbn &&
-            reservations[i].getStatus() == Reservation::APPROVED)
-        {
-            notifiedCount++;
-
-            if (reservations[i].getReaderID() == readerId)
-            {
-                hasValidReservation = true;
-                reservationIndex = i;
-            }
-        }
-    }
-    // 情况1：有可用库存且预约人数不超过库存 → 所有人都能借
-    // 情况2：有可用库存但预约人数超过库存 → 只有有预约的读者能借
-    // 情况3：无可用库存 → 只有有预约的读者能借（预约队列）
-    if (available <= 0)
-    {
-        // 无库存，必须有有效预约才能借
-        if (!hasValidReservation)
-        {
-            return false;
-        }
-    }
-    else if (notifiedCount > available)
-    {
-        // 有库存但预约人数超过库存，必须有有效预约才能借
-        if (!hasValidReservation)
-        {
-            return false;
-        }
-    }
-    // 其他情况：有库存且预约人数不多于库存，或无预约者，任何人都能借
-
-    QDateTime now = QDateTime::currentDateTime();
-    QDateTime dueTime = now.addDays(30);
-
-    BorrowRecord record(isbn, readerId, now, dueTime);
-    dm->addBorrowRecord(record);
-
-    // 如果有有效预约，直接删除预约记录
-    if (reservationIndex >= 0)
-    {
-        dm->removeReservation(isbn, readerId);
-    }
-
-    return true;
-}
-
-// 借阅管理：办理还书
-bool Admin::returnBook(const QString &isbn, const QString &readerId)
-{
-    DataManager *dm = DataManager::getInstance();
-
-    bool success = dm->updateBorrowRecord(isbn, readerId);
-
-    return success;
-}
-
 // 借阅管理：办理续借审核
 bool Admin::renewBook(const QString &isbn, const QString &readerId, bool approved)
 {
@@ -697,7 +608,6 @@ std::vector<BorrowRecord> Admin::viewOverdueRecords()
     return overdueRecords;
 }
 
-// 修改结束
 //  析构函数
 Admin::~Admin()
 {

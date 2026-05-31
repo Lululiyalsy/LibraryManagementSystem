@@ -8,8 +8,6 @@
 #include <QString>
 #include <vector>
 
-class user;
-
 class Admin : public User
 {
 public:
@@ -82,10 +80,6 @@ public:
     // 预约管理：审核预约（按ISBN和读者ID，是否成功）
     bool approveReservation(const QString &isbn, const QString &readerId, bool isSuccess);
 
-    // 借阅管理：办理借书
-    bool borrowBook(const QString &isbn, const QString &readerId);
-    // 借阅管理：办理还书
-    bool returnBook(const QString &isbn, const QString &readerId);
     // 借阅管理：办理续借审核（approved为true表示批准，false表示拒绝）
     bool renewBook(const QString &isbn, const QString &readerId, bool approved);
     // 借阅管理：查看所有借阅记录

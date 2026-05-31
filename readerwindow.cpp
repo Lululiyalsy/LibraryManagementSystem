@@ -50,6 +50,7 @@ void ReaderWindow::setupCentralWidget()
     QAction *myBorrowAction = new QAction(QIcon(":/image/readerborrow.png"), "我的借阅", this);
     QAction *myReservationAction = new QAction(QIcon(":/image/readerReservation.png"), "我的预约", this);
     QAction *messageAction = new QAction(QIcon(":/image/message.png"), "消息管理", this);
+    QAction *infoAction = new QAction(QIcon(":/image/user.png"), "个人信息", this);
     QAction *logoutAction = new QAction(QIcon(":/image/logout.png"), "退出登录", this);
 
     // 添加动作到工具栏
@@ -57,6 +58,7 @@ void ReaderWindow::setupCentralWidget()
     toolbar->addAction(myBorrowAction);
     toolbar->addAction(myReservationAction);
     toolbar->addAction(messageAction);
+    toolbar->addAction(infoAction);
     toolbar->addAction(logoutAction);
 
     // 连接信号槽
@@ -64,6 +66,7 @@ void ReaderWindow::setupCentralWidget()
     connect(myBorrowAction, &QAction::triggered, this, &ReaderWindow::switchToMyBorrow);
     connect(myReservationAction, &QAction::triggered, this, &ReaderWindow::switchToMyReservation);
     connect(messageAction, &QAction::triggered, this, &ReaderWindow::onCheckMessages);
+    connect(infoAction, &QAction::triggered, this, &ReaderWindow::switchToInfo);
     connect(logoutAction, &QAction::triggered, this, &ReaderWindow::onLogout);
 
     // 设置各个页面
@@ -71,12 +74,14 @@ void ReaderWindow::setupCentralWidget()
     setupMyBorrowWidget();
     setupMyReservationWidget();
     setupMessageWidget();
+    setupInfoWidget();
 
     // 添加页面到堆叠窗口
     stackedWidget->addWidget(bookSearchWidget);
     stackedWidget->addWidget(myBorrowWidget);
     stackedWidget->addWidget(myReservationWidget);
     stackedWidget->addWidget(messageWidget);
+    stackedWidget->addWidget(infoWidget);
 
     // 默认显示图书查询页面
     stackedWidget->setCurrentIndex(0);
@@ -495,6 +500,10 @@ void ReaderWindow::onBookReserve()
         {
             QMessageBox::warning(this, "失败", "预约失败！该图书预约人数已达上限（预约量不超过库存的2倍）。");
         }
+        else if (result == Reader::ReserveResult::LOW_CREDIT)
+        {
+            QMessageBox::warning(this, "失败", "预约失败！您的信用分不足，暂时无法预约。");
+        }
     }
 }
 
@@ -631,6 +640,9 @@ void ReaderWindow::onBorrowBook()
         case Reader::BorrowResult::NO_VALID_RESERVATION:
             QMessageBox::warning(this, "失败", "借书失败！您未预约成功该图书，请先预约并等待管理员审核。");
             break;
+        case Reader::BorrowResult::LOW_CREDIT:
+            QMessageBox::warning(this, "失败", "借书失败！您的信用分不足，暂时无法借书。");
+            break;
         }
     }
 }
@@ -693,6 +705,9 @@ void ReaderWindow::onRenewBook()
             break;
         case Reader::RenewResult::EXCEED_LIMIT:
             QMessageBox::warning(this, "失败", "续借失败！续借后借期不得超过90天。");
+            break;
+        case Reader::RenewResult::LOW_CREDIT:
+            QMessageBox::warning(this, "失败", "续借失败！您的信用分不足，暂时无法续借。");
             break;
         }
     }
@@ -1017,6 +1032,61 @@ void ReaderWindow::setupMessageWidget()
     messageTable->setColumnWidth(2, 80);
 
     mainLayout->addWidget(messageTable);
+}
+
+// 设置个人信息页面
+void ReaderWindow::setupInfoWidget()
+{
+    infoWidget = new QWidget(this);
+    QVBoxLayout *mainLayout = new QVBoxLayout(infoWidget);
+
+    QLabel *titleLabel = new QLabel("个人信息", this);
+    titleLabel->setAlignment(Qt::AlignCenter);
+    QFont titleFont("Microsoft YaHei", 16, QFont::Bold);
+    titleLabel->setFont(titleFont);
+    titleLabel->setStyleSheet("padding: 20px; color: #333;");
+
+    infoListWidget = new QListWidget(this);
+    infoListWidget->setStyleSheet("QListWidget { border: 2px solid #ddd; border-radius: 5px; padding: 10px; background: transparent; }"
+                                  "QListWidget::item { padding: 12px; border-bottom: 1px solid #eee; background: transparent; }"
+                                  "QListWidget::item:last { border-bottom: none; }"
+                                  "QListWidget::item:hover { background: transparent; }"
+                                  "QListWidget::item:selected { background: transparent; border: none; outline: none; }"
+                                  "QListWidget::item:focus { outline: none; }");
+    infoListWidget->setSelectionMode(QAbstractItemView::NoSelection);
+
+    mainLayout->addWidget(titleLabel);
+    mainLayout->addWidget(infoListWidget);
+}
+
+// 切换到个人信息页面
+void ReaderWindow::switchToInfo()
+{
+    updateInfoList();
+    stackedWidget->setCurrentWidget(infoWidget);
+}
+
+// 更新个人信息列表
+void ReaderWindow::updateInfoList()
+{
+    ::Reader *reader = dynamic_cast<::Reader *>(currentUser);
+    if (!reader)
+        return;
+
+    infoListWidget->clear();
+
+    infoListWidget->addItem(QString("ID：%1").arg(reader->getID()));
+    infoListWidget->addItem(QString("用户名：%1").arg(reader->getName()));
+    infoListWidget->addItem(QString("手机号：%1").arg(reader->getPhone()));
+    infoListWidget->addItem(QString("邮箱：%1").arg(reader->getEmail()));
+    infoListWidget->addItem(QString("信用分：%1").arg(reader->getCreditScore()));
+
+    for (int i = 0; i < infoListWidget->count(); ++i)
+    {
+        QListWidgetItem *item = infoListWidget->item(i);
+        item->setFont(QFont("Microsoft YaHei", 12));
+        item->setTextAlignment(Qt::AlignLeft);
+    }
 }
 
 // 显示消息列表

@@ -49,7 +49,7 @@ public:
     std::vector<User *> &getUsers();
     // （用户数量）：获取用户数量
     int getUserCount() const;
-    
+
     // （数据清除）：清空预约记录
     void clearAllReservations();
     // （数据清除）：清空借书记录
@@ -62,8 +62,7 @@ public:
     // （图书管理）：写入图书数据到文件
     void writeBook();
 
-    // 修改5.16
-    //  （图书查询）：根据ISBN查找图书（精确匹配）
+    // （图书查询）：根据ISBN查找图书（精确匹配）
     Book *findBookByISBN(const QString &isbn);
     // （图书查询）：根据书名查找图书（模糊匹配）
     std::vector<Book> findBooksByTitle(const QString &title);
@@ -91,7 +90,6 @@ public:
     std::vector<Book> sortBooksByBorrowCount();
     // （图书排序）：按入库时间排序（降序，最新优先）
     std::vector<Book> sortBooksByInStockTime();
-    // 修改结束
 
     // （借阅记录管理）：初始化读取借阅记录数据
     void initBorrowRecord();
@@ -99,16 +97,10 @@ public:
     void writeBorrowRecord();
     // （借阅记录管理）：添加借阅记录
     bool addBorrowRecord(const BorrowRecord &record);
-    // （借阅记录管理）：更新借阅记录（还书）
-    bool updateBorrowRecord(const QString &isbn, const QString &readerId);
     // （借阅记录管理）：续借图书
     bool renewBorrowRecord(const QString &isbn, const QString &readerId, int days);
     // （借阅记录管理）：获取某读者的借阅记录
     std::vector<BorrowRecord> getBorrowRecordsByReader(const QString &readerId);
-    // （借阅记录管理）：获取某图书的借阅记录
-    std::vector<BorrowRecord> getBorrowRecordsByISBN(const QString &isbn);
-    // （借阅记录管理）：获取所有未归还的借阅记录
-    std::vector<BorrowRecord> getBorrowingRecords();
     // （借阅记录管理）：获取读者当前借阅数量
     int getBorrowCountByReader(const QString &readerId);
     // （借阅记录管理）：检查读者是否有逾期未还
@@ -145,7 +137,7 @@ public:
     void writeMessage();
 
     // （管理员消息）：添加管理员消息
-    void addAdminMessage(User *user, const QString& readerId, const QString& readerName, const QString &message);
+    void addAdminMessage(User *user, const QString &readerId, const QString &readerName, const QString &message);
 
     // （读者消息）：添加读者消息
     void addReaderMessage(User *reader, const QString &message);

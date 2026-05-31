@@ -5,6 +5,7 @@
 #include <QToolBar>
 #include <QStackedWidget>
 #include <QWidget>
+#include <QListWidget>
 #include <QTableWidget>
 #include <QLineEdit>
 #include <QComboBox>
@@ -83,6 +84,7 @@ private:
     QWidget *myBorrowWidget;      // 我的借阅页面
     QWidget *myReservationWidget; // 我的预约页面
     QWidget *messageWidget;       // 消息管理页面
+    QWidget *infoWidget;          // 个人信息页面
 
     QTableWidget *bookSearchTable;    // 图书查询表格
     QTableWidget *myBorrowTable;      // 我的借阅表格
@@ -119,6 +121,8 @@ private:
     QPushButton *renewBtn;       // 续借按钮
     QPushButton *payFineBtn;     // 支付所有罚款按钮
 
+    QListWidget *infoListWidget; // 个人信息列表
+
     // 设置中心窗口
     void setupCentralWidget();
     // 设置图书查询页面
@@ -129,6 +133,8 @@ private:
     void setupMyReservationWidget();
     // 设置消息管理页面
     void setupMessageWidget();
+    // 设置个人信息页面
+    void setupInfoWidget();
     // 显示图书列表
     void displayBooks(const std::vector<const Book *> &books);
     // 显示我的借阅记录
@@ -137,6 +143,10 @@ private:
     void displayMyReservations();
     // 显示消息列表
     void displayMessages(const std::vector<Message> &messages);
+    // 切换到个人信息页面
+    void switchToInfo();
+    // 更新个人信息列表
+    void updateInfoList();
     // 显示输入对话框
     QPair<QString, bool> showInputDialog(const QString &title, const QString &label, bool isPassword = false);
 };

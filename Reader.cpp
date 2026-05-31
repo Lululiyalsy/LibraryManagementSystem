@@ -40,6 +40,32 @@ int Reader::getCreditScore() { return creditScore; }
 void Reader::setMaxBooks(int max) { maxBooks = max; }
 void Reader::setCreditScore(int score) { creditScore = score; }
 
+// 检查信用分是否允许操作
+Reader::CreditCheckResult Reader::checkCreditScore() const
+{
+    if (creditScore < 50)
+    {
+        return CreditCheckResult::LOW_CREDIT_50;
+    }
+    else if (creditScore < 60)
+    {
+        return CreditCheckResult::LOW_CREDIT_60;
+    }
+    else if (creditScore < 70)
+    {
+        return CreditCheckResult::LOW_CREDIT_70;
+    }
+    else if (creditScore < 80)
+    {
+        return CreditCheckResult::LOW_CREDIT_80;
+    }
+    else if (creditScore < 90)
+    {
+        return CreditCheckResult::LOW_CREDIT_90;
+    }
+    return CreditCheckResult::OK;
+}
+
 // 预约图书（按ISBN）
 Reader::ReserveResult Reader::reserveBook(const QString &isbn)
 {
@@ -54,6 +80,13 @@ Reader::ReserveResult Reader::reserveBook(const QString &isbn)
     if (dm->hasReservation(isbn, ID))
     {
         return ReserveResult::ALREADY_EXISTS;
+    }
+
+    // 检查信用分
+    CreditCheckResult creditResult = checkCreditScore();
+    if (creditResult != CreditCheckResult::OK)
+    {
+        return ReserveResult::LOW_CREDIT;
     }
 
     std::vector<BorrowRecord> &allRecords = dm->getBorrowRecords();
@@ -126,6 +159,13 @@ Reader::BorrowResult Reader::borrowBook(const QString &isbn)
     int available = book->getStock() - book->getCurrentBorrowed();
     if (available <= 0)
         return BorrowResult::NO_STOCK;
+
+    // 检查信用分
+    CreditCheckResult creditResult = checkCreditScore();
+    if (creditResult != CreditCheckResult::OK)
+    {
+        return BorrowResult::LOW_CREDIT;
+    }
 
     std::vector<BorrowRecord> myRecords = dm->getBorrowRecordsByReader(ID);
     for (const auto &record : myRecords)
@@ -312,6 +352,13 @@ Reader::RenewResult Reader::renewBook(const QString &isbn)
     if (targetRecord->calculateOverdueDays() > 0)
     {
         return RenewResult::HAS_OVERDUE;
+    }
+
+    // 检查信用分
+    CreditCheckResult creditResult = checkCreditScore();
+    if (creditResult != CreditCheckResult::OK)
+    {
+        return RenewResult::LOW_CREDIT;
     }
 
     if (targetRecord->getRenewStatus() == BorrowRecord::RenewStatus::PENDING)

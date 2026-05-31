@@ -273,6 +273,12 @@ void DataManager::initUser()
         QString password = fields[3];
         QString phone = fields[4];
         QString email = fields[5];
+        int creditScore = 100; // 默认信用分100
+
+        if (fields.size() >= 7)
+        {
+            creditScore = fields[6].toInt();
+        }
 
         ::User *user = nullptr;
         if (type == 1)
@@ -282,6 +288,14 @@ void DataManager::initUser()
         else
         {
             user = new ::Reader(id, name, password, phone, email);
+            if (user)
+            {
+                ::Reader *reader = dynamic_cast<::Reader *>(user);
+                if (reader)
+                {
+                    reader->setCreditScore(creditScore);
+                }
+            }
         }
 
         users.push_back(user);
@@ -302,13 +316,23 @@ void DataManager::writeUser()
     QTextStream out(&file);
     for (auto user : users)
     {
-        QString line = QString("%1 %2 %3 %4 %5 %6")
+        int creditScore = 100;
+        if (user->getType() == 2) // 读者
+        {
+            ::Reader *reader = dynamic_cast<::Reader *>(user);
+            if (reader)
+            {
+                creditScore = reader->getCreditScore();
+            }
+        }
+        QString line = QString("%1 %2 %3 %4 %5 %6 %7")
                            .arg(user->getID())
                            .arg(user->getType())
                            .arg(user->getName())
                            .arg(user->getPassword())
                            .arg(user->getPhone())
-                           .arg(user->getEmail());
+                           .arg(user->getEmail())
+                           .arg(creditScore);
         out << line << "\n";
     }
 
@@ -731,62 +755,6 @@ bool DataManager::addBorrowRecord(const BorrowRecord &record)
     return true;
 }
 
-// （借阅记录管理）：更新借阅记录（还书）
-bool DataManager::updateBorrowRecord(const QString &isbn, const QString &readerId)
-{
-    for (auto &record : borrowRecords)
-    {
-        if (record.getISBN() == isbn &&
-            record.getReaderID() == readerId &&
-            !record.isReturned())
-        {
-            record.setReturned(true);
-
-            Book *book = findBookByISBN(isbn);
-
-            // 检查是否逾期，逾期扣减信用分
-            int overdueDays = record.calculateOverdueDays();
-            if (overdueDays > 0)
-            {
-                ::User *user = findUserById(readerId);
-                if (user && user->getType() == 2) // 读者类型
-                {
-                    ::Reader *reader = dynamic_cast<::Reader *>(user);
-                    if (reader)
-                    {
-                        // 逾期1天扣1分，最多扣10分
-                        int scoreDeduction = qMin(overdueDays, 10);
-                        int newScore = reader->getCreditScore() - scoreDeduction;
-                        reader->setCreditScore(qMax(newScore, 0)); // 最低0分
-
-                        // 发送消息通知
-                        QString bookTitle = book ? book->getTitle() : "未知书名";
-                        QString msgContent = QString("图书《%1》(ISBN:%2)逾期%3天归还，信用分扣减%4分，当前信用分：%5")
-                                                 .arg(bookTitle)
-                                                 .arg(isbn)
-                                                 .arg(overdueDays)
-                                                 .arg(scoreDeduction)
-                                                 .arg(reader->getCreditScore());
-                        Message msg(reader->getID(), reader->getName(), msgContent);
-                        reader->addMessage(msg);
-
-                        writeMessage();
-                    }
-                }
-            }
-            if (book)
-            {
-                book->setCurrentBorrowed(book->getCurrentBorrowed() - 1);
-                writeBook();
-            }
-
-            writeBorrowRecord();
-            return true;
-        }
-    }
-    return false;
-}
-
 // （借阅记录管理）：续借图书
 bool DataManager::renewBorrowRecord(const QString &isbn, const QString &readerId, int days)
 {
@@ -813,34 +781,6 @@ std::vector<BorrowRecord> DataManager::getBorrowRecordsByReader(const QString &r
     for (auto &record : borrowRecords)
     {
         if (record.getReaderID() == readerId)
-        {
-            result.push_back(record);
-        }
-    }
-    return result;
-}
-
-// （借阅记录管理）：获取某图书的借阅记录
-std::vector<BorrowRecord> DataManager::getBorrowRecordsByISBN(const QString &isbn)
-{
-    std::vector<BorrowRecord> result;
-    for (auto &record : borrowRecords)
-    {
-        if (record.getISBN() == isbn)
-        {
-            result.push_back(record);
-        }
-    }
-    return result;
-}
-
-// （借阅记录管理）：获取所有未归还的借阅记录
-std::vector<BorrowRecord> DataManager::getBorrowingRecords()
-{
-    std::vector<BorrowRecord> result;
-    for (auto &record : borrowRecords)
-    {
-        if (!record.isReturned())
         {
             result.push_back(record);
         }

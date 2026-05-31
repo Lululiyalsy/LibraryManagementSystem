@@ -177,10 +177,10 @@ void AdminWindow::setupUserTable()
 
     // （创建表格）：创建用户表格实例
     userTable = new QTableWidget(userWidget);
-    // （设置列数）：设置用户表格列数为6
-    userTable->setColumnCount(6);
+    // （设置列数）：设置用户表格列数为7
+    userTable->setColumnCount(7);
     // （设置表头）：设置用户表格表头
-    userTable->setHorizontalHeaderLabels({"ID", "类型", "姓名", "密码", "电话", "邮箱"});
+    userTable->setHorizontalHeaderLabels({"ID", "类型", "姓名", "密码", "电话", "邮箱", "信用分"});
     // （设置列调整模式）：列自动拉伸填充
     userTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     // （设置行调整模式）：行高根据内容自动调整
@@ -532,6 +532,23 @@ void AdminWindow::loadUserData()
         userTable->setItem(row, 3, new QTableWidgetItem(user->getPassword()));
         userTable->setItem(row, 4, new QTableWidgetItem(user->getPhone()));
         userTable->setItem(row, 5, new QTableWidgetItem(user->getEmail()));
+
+        if (user->getType() == 2) // 读者
+        {
+            ::Reader *reader = dynamic_cast<::Reader *>(user);
+            if (reader)
+            {
+                userTable->setItem(row, 6, new QTableWidgetItem(QString::number(reader->getCreditScore())));
+            }
+            else
+            {
+                userTable->setItem(row, 6, new QTableWidgetItem("-"));
+            }
+        }
+        else
+        {
+            userTable->setItem(row, 6, new QTableWidgetItem("-"));
+        }
     }
 }
 
@@ -1348,6 +1365,23 @@ void AdminWindow::displayUsers(const std::vector<::User *> &users)
         userTable->setItem(row, 3, new QTableWidgetItem(user->getPassword()));
         userTable->setItem(row, 4, new QTableWidgetItem(user->getPhone()));
         userTable->setItem(row, 5, new QTableWidgetItem(user->getEmail()));
+
+        if (user->getType() == 2) // 读者
+        {
+            ::Reader *reader = dynamic_cast<::Reader *>(user);
+            if (reader)
+            {
+                userTable->setItem(row, 6, new QTableWidgetItem(QString::number(reader->getCreditScore())));
+            }
+            else
+            {
+                userTable->setItem(row, 6, new QTableWidgetItem("-"));
+            }
+        }
+        else
+        {
+            userTable->setItem(row, 6, new QTableWidgetItem("-"));
+        }
     }
 }
 
