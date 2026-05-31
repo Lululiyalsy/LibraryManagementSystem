@@ -214,6 +214,8 @@ private:
     QLineEdit *borrowStatusEdit;
     // （借阅罚款状态查找下拉框）：借阅罚款状态查找下拉框指针
     QComboBox *borrowFineCombo;
+    // （借阅续借状态查找下拉框）：借阅续借状态查找下拉框指针
+    QComboBox *borrowRenewCombo;
     // （借阅查找按钮）：借阅查找按钮指针
     QPushButton *borrowSearchBtn;
     // （借阅续借审核按钮）：借阅续借审核按钮指针

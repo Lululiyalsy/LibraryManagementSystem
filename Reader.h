@@ -62,7 +62,8 @@ public:
         SUCCESS,          // 续借申请提交成功
         NOT_FOUND,        // 借阅记录不存在
         ALREADY_PENDING,  // 已有待审核的续借申请
-        HAS_OVERDUE       // 图书已逾期
+        HAS_OVERDUE,      // 图书已逾期
+        EXCEED_LIMIT      // 续借后借期超过90天
     };
 
     // 预约图书（按ISBN），返回预约结果

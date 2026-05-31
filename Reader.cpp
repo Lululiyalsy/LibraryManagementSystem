@@ -319,6 +319,13 @@ Reader::RenewResult Reader::renewBook(const QString &isbn)
         return RenewResult::ALREADY_PENDING;
     }
 
+    QDateTime newDueTime = targetRecord->getDueTime().addDays(30);
+    QDateTime maxDueTime = QDateTime::currentDateTime().addDays(90);
+    if (newDueTime > maxDueTime)
+    {
+        return RenewResult::EXCEED_LIMIT;
+    }
+
     targetRecord->setRenewStatus(BorrowRecord::RenewStatus::PENDING);
     dm->writeBorrowRecord();
 

@@ -354,6 +354,15 @@ void AdminWindow::setupBorrowTable()
     borrowStatusEdit->setPlaceholderText("状态");
     borrowStatusEdit->setFixedWidth(80);
 
+    // （创建续借状态下拉框）：创建续借状态查找下拉框
+    borrowRenewCombo = new QComboBox(borrowOperationWidget);
+    borrowRenewCombo->addItem("");
+    borrowRenewCombo->addItem("无申请");
+    borrowRenewCombo->addItem("待审核");
+    borrowRenewCombo->addItem("已通过");
+    borrowRenewCombo->addItem("已拒绝");
+    borrowRenewCombo->setFixedWidth(80);
+
     // （创建罚款状态下拉框）：创建罚款状态查找下拉框
     borrowFineCombo = new QComboBox(borrowOperationWidget);
     borrowFineCombo->addItem("");
@@ -373,16 +382,17 @@ void AdminWindow::setupBorrowTable()
     borrowOperationLayout->addWidget(borrowDueTimeLineEdit);
     borrowOperationLayout->addWidget(borrowReturnTimeLineEdit);
     borrowOperationLayout->addWidget(borrowStatusEdit);
+    borrowOperationLayout->addWidget(borrowRenewCombo);
     borrowOperationLayout->addWidget(borrowFineCombo);
     borrowOperationLayout->addWidget(borrowSearchBtn);
     borrowOperationLayout->addStretch();
 
     // （创建表格）：创建借阅表格实例
     borrowTable = new QTableWidget(borrowWidget);
-    // （设置列数）：设置借阅表格列数为11
-    borrowTable->setColumnCount(11);
+    // （设置列数）：设置借阅表格列数为12
+    borrowTable->setColumnCount(12);
     // （设置表头）：设置借阅表格表头
-    borrowTable->setHorizontalHeaderLabels({"ISBN", "书名", "读者ID", "读者姓名", "借阅时间", "应还时间", "归还时间", "状态", "罚款金额", "已支付罚款", "罚款状态"});
+    borrowTable->setHorizontalHeaderLabels({"ISBN", "书名", "读者ID", "读者姓名", "借阅时间", "应还时间", "归还时间", "状态", "续借状态", "罚款金额", "已支付罚款", "罚款状态"});
     // （设置列调整模式）：列自动拉伸填充
     borrowTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     // （设置行调整模式）：行高根据内容自动调整
@@ -1011,6 +1021,7 @@ void AdminWindow::onBorrowSearch()
     QString returnTime = borrowReturnTimeLineEdit->text().trimmed();
     QString status = borrowStatusEdit->text().trimmed();
     QString fineStatus = borrowFineCombo->currentText();
+    QString renewStatus = borrowRenewCombo->currentText();
 
     ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
     if (admin)
@@ -1074,6 +1085,19 @@ void AdminWindow::onBorrowSearch()
                     match = false;
             }
 
+            if (!renewStatus.isEmpty())
+            {
+                BorrowRecord::RenewStatus rs = record.getRenewStatus();
+                if (renewStatus == "无申请" && rs != BorrowRecord::RenewStatus::NONE)
+                    match = false;
+                if (renewStatus == "待审核" && rs != BorrowRecord::RenewStatus::PENDING)
+                    match = false;
+                if (renewStatus == "已通过" && rs != BorrowRecord::RenewStatus::APPROVED)
+                    match = false;
+                if (renewStatus == "已拒绝" && rs != BorrowRecord::RenewStatus::REJECTED)
+                    match = false;
+            }
+
             if (match)
                 filtered.push_back(record);
         }
@@ -1121,10 +1145,30 @@ void AdminWindow::displayBorrowRecords(const std::vector<BorrowRecord> &records)
         }
         borrowTable->setItem(row, 7, new QTableWidgetItem(status));
 
+        QString renewStatus;
+        switch (record.getRenewStatus())
+        {
+        case BorrowRecord::RenewStatus::NONE:
+            renewStatus = "无申请";
+            break;
+        case BorrowRecord::RenewStatus::PENDING:
+            renewStatus = "待审核";
+            break;
+        case BorrowRecord::RenewStatus::APPROVED:
+            renewStatus = "已通过";
+            break;
+        case BorrowRecord::RenewStatus::REJECTED:
+            renewStatus = "已拒绝";
+            break;
+        default:
+            renewStatus = "未知";
+        }
+        borrowTable->setItem(row, 8, new QTableWidgetItem(renewStatus));
+
         double fineAmount = record.calculateFine();
         double paidFine = record.getPaidFine();
-        borrowTable->setItem(row, 8, new QTableWidgetItem(QString::number(fineAmount, 'f', 2) + "元"));
-        borrowTable->setItem(row, 9, new QTableWidgetItem(QString::number(paidFine, 'f', 2) + "元"));
+        borrowTable->setItem(row, 9, new QTableWidgetItem(QString::number(fineAmount, 'f', 2) + "元"));
+        borrowTable->setItem(row, 10, new QTableWidgetItem(QString::number(paidFine, 'f', 2) + "元"));
 
         QString fineStatus;
         switch (record.getFineStatus())
@@ -1141,7 +1185,7 @@ void AdminWindow::displayBorrowRecords(const std::vector<BorrowRecord> &records)
         default:
             fineStatus = "未知";
         }
-        borrowTable->setItem(row, 10, new QTableWidgetItem(fineStatus));
+        borrowTable->setItem(row, 11, new QTableWidgetItem(fineStatus));
     }
 }
 
@@ -1158,7 +1202,7 @@ void AdminWindow::onBorrowRenewAudit()
 
     QString isbn = borrowTable->item(currentRow, 0)->text();
     QString readerId = borrowTable->item(currentRow, 2)->text();
-    QString status = borrowTable->item(currentRow, 8)->text();
+    QString status = borrowTable->item(currentRow, 7)->text();
 
     if (status == "已归还")
     {

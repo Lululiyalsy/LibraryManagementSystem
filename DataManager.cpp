@@ -662,14 +662,19 @@ void DataManager::initBorrowRecord()
             record.setReturned(fields[5] == "true");
         }
 
-        if (fields.size() >= 8)
+        if (fields.size() >= 7)
         {
-            record.setPaidFine(fields[6].toDouble());
+            record.setRenewStatus(static_cast<BorrowRecord::RenewStatus>(fields[6].toInt()));
         }
 
         if (fields.size() >= 9)
         {
-            record.setFineStatus(static_cast<BorrowRecord::FineStatus>(fields[8].toInt()));
+            record.setPaidFine(fields[7].toDouble());
+        }
+
+        if (fields.size() >= 10)
+        {
+            record.setFineStatus(static_cast<BorrowRecord::FineStatus>(fields[9].toInt()));
         }
 
         borrowRecords.push_back(record);
@@ -692,13 +697,14 @@ void DataManager::writeBorrowRecord()
     {
         QString returnTimeStr = record.getReturnTime().isValid() ? record.getReturnTime().toString("yyyy-MM-dd HH:mm:ss") : "";
 
-        QString line = QString("%1|%2|%3|%4|%5|%6|%7|%8|%9")
+        QString line = QString("%1|%2|%3|%4|%5|%6|%7|%8|%9|%10")
                            .arg(record.getISBN())
                            .arg(record.getReaderID())
                            .arg(record.getBorrowTime().toString("yyyy-MM-dd HH:mm:ss"))
                            .arg(record.getDueTime().toString("yyyy-MM-dd HH:mm:ss"))
                            .arg(returnTimeStr)
                            .arg(record.isReturned() ? "true" : "false")
+                           .arg(static_cast<int>(record.getRenewStatus()))
                            .arg(QString::number(record.calculateFine(), 'f', 2))
                            .arg(QString::number(record.getPaidFine(), 'f', 2))
                            .arg(static_cast<int>(record.getFineStatus()));

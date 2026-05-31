@@ -110,6 +110,7 @@ private:
     QLineEdit *borrowReturnTimeEdit; // 归还时间查询输入框
     QLineEdit *borrowStatusEdit;     // 借阅状态查询输入框
     QComboBox *borrowFineCombo;      // 借阅罚款状态下拉框
+    QComboBox *borrowRenewCombo;     // 借阅续借状态下拉框
 
     QPushButton *bookSearchBtn;  // 图书查询按钮
     QPushButton *bookReserveBtn; // 预约按钮

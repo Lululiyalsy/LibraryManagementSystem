@@ -632,7 +632,7 @@ bool Admin::renewBook(const QString &isbn, const QString &readerId, bool approve
                 QString readerMsgContent = QString("您申请续借图书《%1》(ISBN:%2)已通过审核，借阅期限已延长30天。")
                                                .arg(bookTitle)
                                                .arg(isbn);
-                Message readerMsg(readerId, reader->getName(), readerId, reader->getName(), readerMsgContent);
+                Message readerMsg(readerId, reader->getName(), readerMsgContent);
                 reader->addMessage(readerMsg);
 
                 QString adminMsgContent = QString("您已通过读者 %1 (ID:%2) 的续借申请，图书《%3》(ISBN:%4)，借阅期限已延长30天。")
@@ -650,7 +650,7 @@ bool Admin::renewBook(const QString &isbn, const QString &readerId, bool approve
                 QString readerMsgContent = QString("您申请续借图书《%1》(ISBN:%2)未通过审核。")
                                                .arg(bookTitle)
                                                .arg(isbn);
-                Message readerMsg(getID(), getName(), readerId, reader->getName(), readerMsgContent);
+                Message readerMsg(readerId, reader->getName(), readerMsgContent);
                 reader->addMessage(readerMsg);
 
                 QString adminMsgContent = QString("您已拒绝读者 %1 (ID:%2) 的续借申请，图书《%3》(ISBN:%4)。")
