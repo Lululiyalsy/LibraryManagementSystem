@@ -177,10 +177,10 @@ void AdminWindow::setupUserTable()
 
     // （创建表格）：创建用户表格实例
     userTable = new QTableWidget(userWidget);
-    // （设置列数）：设置用户表格列数为7
-    userTable->setColumnCount(7);
+    // （设置列数）：设置用户表格列数为8
+    userTable->setColumnCount(8);
     // （设置表头）：设置用户表格表头
-    userTable->setHorizontalHeaderLabels({"ID", "类型", "姓名", "密码", "电话", "邮箱", "信用分"});
+    userTable->setHorizontalHeaderLabels({"ID", "类型", "姓名", "密码", "电话", "邮箱", "信用分", "限制终止日期"});
     // （设置列调整模式）：列自动拉伸填充
     userTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     // （设置行调整模式）：行高根据内容自动调整
@@ -539,15 +539,28 @@ void AdminWindow::loadUserData()
             if (reader)
             {
                 userTable->setItem(row, 6, new QTableWidgetItem(QString::number(reader->getCreditScore())));
+
+                // 显示限制终止日期
+                QDateTime banUntil = reader->getBanUntil();
+                if (banUntil.isValid())
+                {
+                    userTable->setItem(row, 7, new QTableWidgetItem(banUntil.toString("yyyy-MM-dd HH:mm:ss")));
+                }
+                else
+                {
+                    userTable->setItem(row, 7, new QTableWidgetItem("-"));
+                }
             }
             else
             {
                 userTable->setItem(row, 6, new QTableWidgetItem("-"));
+                userTable->setItem(row, 7, new QTableWidgetItem("-"));
             }
         }
         else
         {
             userTable->setItem(row, 6, new QTableWidgetItem("-"));
+            userTable->setItem(row, 7, new QTableWidgetItem("-"));
         }
     }
 }
@@ -1372,15 +1385,28 @@ void AdminWindow::displayUsers(const std::vector<::User *> &users)
             if (reader)
             {
                 userTable->setItem(row, 6, new QTableWidgetItem(QString::number(reader->getCreditScore())));
+
+                // 显示限制终止日期
+                QDateTime banUntil = reader->getBanUntil();
+                if (banUntil.isValid())
+                {
+                    userTable->setItem(row, 7, new QTableWidgetItem(banUntil.toString("yyyy-MM-dd HH:mm:ss")));
+                }
+                else
+                {
+                    userTable->setItem(row, 7, new QTableWidgetItem("-"));
+                }
             }
             else
             {
                 userTable->setItem(row, 6, new QTableWidgetItem("-"));
+                userTable->setItem(row, 7, new QTableWidgetItem("-"));
             }
         }
         else
         {
             userTable->setItem(row, 6, new QTableWidgetItem("-"));
+            userTable->setItem(row, 7, new QTableWidgetItem("-"));
         }
     }
 }

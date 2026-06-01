@@ -59,10 +59,10 @@ DataManager::DataManager()
     initUser();
     initBook();
     initBorrowRecord();
-    // （信用分计算）：根据借阅记录重新计算所有读者信用分
-    recalculateCreditScores();
     initReservation();
     initMessage();
+    // （信用分计算）：根据借阅记录重新计算所有读者信用分（必须在initMessage之后调用）
+    recalculateCreditScores();
 }
 
 // （析构函数）：DataManager析构函数，自动保存数据
@@ -263,8 +263,8 @@ void DataManager::initUser()
         if (line.isEmpty())
             continue;
 
-        // 不跳过空字段，避免字段索引错位
-        QStringList fields = line.split(" ");
+        // 使用竖线作为分隔符，避免字段内容包含空格时错位
+        QStringList fields = line.split("|");
         if (fields.size() < 6)
         {
             continue;
@@ -509,7 +509,7 @@ void DataManager::writeUser()
                 }
             }
         }
-        QString line = QString("%1 %2 %3 %4 %5 %6 %7 %8 %9")
+        QString line = QString("%1|%2|%3|%4|%5|%6|%7|%8|%9")
                            .arg(user->getID())
                            .arg(user->getType())
                            .arg(user->getName())
