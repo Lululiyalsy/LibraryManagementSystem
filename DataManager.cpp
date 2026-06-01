@@ -263,7 +263,8 @@ void DataManager::initUser()
         if (line.isEmpty())
             continue;
 
-        QStringList fields = line.split(" ", Qt::SkipEmptyParts);
+        // 不跳过空字段，避免字段索引错位
+        QStringList fields = line.split(" ");
         if (fields.size() < 6)
         {
             continue;
@@ -275,11 +276,23 @@ void DataManager::initUser()
         QString password = fields[3];
         QString phone = fields[4];
         QString email = fields[5];
-        int creditScore = 100; // 默认信用分100
+        int creditScore = 100;     // 默认信用分100
+        int prevCreditScore = 100; // 默认之前的信用分等于当前信用分
+        QDateTime banUntil;
 
-        if (fields.size() >= 7)
+        if (fields.size() >= 7 && !fields[6].isEmpty())
         {
             creditScore = fields[6].toInt();
+        }
+
+        if (fields.size() >= 8 && !fields[7].isEmpty())
+        {
+            prevCreditScore = fields[7].toInt();
+        }
+
+        if (fields.size() >= 9 && !fields[8].isEmpty())
+        {
+            banUntil = QDateTime::fromString(fields[8], "yyyy-MM-dd HH:mm:ss");
         }
 
         ::User *user = nullptr;
@@ -296,6 +309,8 @@ void DataManager::initUser()
                 if (reader)
                 {
                     reader->setCreditScore(creditScore);
+                    reader->setPrevCreditScore(prevCreditScore);
+                    reader->setBanUntil(banUntil);
                 }
             }
         }
@@ -306,21 +321,35 @@ void DataManager::initUser()
     file.close();
 }
 
+// 辅助函数：获取信用分所在的区间（0-50返回5，50-60返回4，以此类推，90-100返回0）
+int getCreditTier(int score)
+{
+    if (score < 50)
+        return 5;
+    if (score < 60)
+        return 4;
+    if (score < 70)
+        return 3;
+    if (score < 80)
+        return 2;
+    if (score < 90)
+        return 1;
+    return 0;
+}
+
 // （用户管理）：重新计算所有读者信用分
 void DataManager::recalculateCreditScores()
 {
+    QDateTime now = QDateTime::currentDateTime();
+
+    // 第一步：处理逾期扣分
     for (auto &record : borrowRecords)
     {
         QString readerId = record.getReaderID();
         int overdueDays = record.calculateOverdueDays();
         int deductedScore = record.getDeductedScore();
 
-        // 计算需要扣除的分数（当前逾期天数 - 已扣分数）
         int needDeduct = overdueDays - deductedScore;
-
-        // 如果不需要扣分且没有逾期，跳过
-        if (needDeduct <= 0 && overdueDays <= 0)
-            continue;
 
         ::User *user = findUserById(readerId);
         if (!user || user->getType() != 2)
@@ -330,21 +359,126 @@ void DataManager::recalculateCreditScores()
         if (!reader)
             continue;
 
-        // 更新罚款金额（重新计算）
         record.setFineAmount(record.calculateFine());
 
-        // 只有"未还且逾期"的记录才扣分
-        if (!record.isReturned() && overdueDays > 0 && needDeduct > 0)
+        bool isBanned = reader->isBanned();
+
+        // 先更新 deductedScore（不管是否在限制期间，都要记录已扣分数）
+        if (!record.isReturned() && overdueDays > deductedScore)
+        {
+            record.setDeductedScore(overdueDays);
+        }
+
+        // 只有"不在限制期间、未还且逾期、需要扣分"的记录才扣分
+        if (!isBanned && !record.isReturned() && overdueDays > 0 && needDeduct > 0)
         {
             int currentScore = reader->getCreditScore();
             int newScore = qMax(currentScore - needDeduct, 0);
             reader->setCreditScore(newScore);
-            record.setDeductedScore(overdueDays); // 更新已扣分数为当前逾期天数
+
+            // 发送扣分消息给读者
+            QString bookTitle = "未知";
+            Book *book = findBookByISBN(record.getISBN());
+            if (book)
+            {
+                bookTitle = book->getTitle();
+            }
+
+            QString msgContent = QString("您借阅的图书《%1》(ISBN:%2)已逾期%3天，扣除%4分信用分，当前信用分：%5")
+                                     .arg(bookTitle)
+                                     .arg(record.getISBN())
+                                     .arg(overdueDays)
+                                     .arg(needDeduct)
+                                     .arg(newScore);
+            Message msg(readerId, reader->getName(), msgContent);
+            reader->addMessage(msg);
         }
     }
 
+    // 第二步：检查信用分变化，触发限制
+    for (auto user : users)
+    {
+        if (user->getType() != 2)
+            continue;
+
+        ::Reader *reader = dynamic_cast<::Reader *>(user);
+        if (!reader)
+            continue;
+
+        int creditScore = reader->getCreditScore();
+        int prevCreditScore = reader->getPrevCreditScore();
+        bool isBanned = reader->isBanned();
+
+        int currentTier = getCreditTier(creditScore);
+        int prevTier = getCreditTier(prevCreditScore);
+
+        // 只有从更高区间下跌到更低区间时才触发限制
+        if (currentTier > prevTier)
+        {
+            QDateTime banUntil;
+            if (creditScore < 50)
+            {
+                banUntil = now.addDays(30);
+            }
+            else if (creditScore < 60)
+            {
+                banUntil = now.addDays(14);
+            }
+            else if (creditScore < 70)
+            {
+                banUntil = now.addDays(7);
+            }
+            else if (creditScore < 80)
+            {
+                banUntil = now.addDays(3);
+            }
+            else if (creditScore < 90)
+            {
+                banUntil = now.addDays(1);
+            }
+
+            if (banUntil.isValid())
+            {
+                reader->setBanUntil(banUntil);
+
+                // 发送限制消息给读者
+                QString limitDays;
+                if (creditScore < 50)
+                {
+                    limitDays = "1个月";
+                }
+                else if (creditScore < 60)
+                {
+                    limitDays = "2周";
+                }
+                else if (creditScore < 70)
+                {
+                    limitDays = "1周";
+                }
+                else if (creditScore < 80)
+                {
+                    limitDays = "3天";
+                }
+                else if (creditScore < 90)
+                {
+                    limitDays = "1天";
+                }
+
+                QString msgContent = QString("由于您的信用分降至%1分，已被限制预约、借书和续借%2。限制期间您仍可正常还书。")
+                                         .arg(creditScore)
+                                         .arg(limitDays);
+                Message msg(reader->getID(), reader->getName(), msgContent);
+                reader->addMessage(msg);
+            }
+        }
+
+        // 不管怎样，更新 prevCreditScore 为当前 creditScore
+        reader->setPrevCreditScore(creditScore);
+    }
+
     writeUser();
-    writeBorrowRecord(); // 写入借阅记录，保存已扣分数
+    writeBorrowRecord();
+    writeMessage(); // 写入消息，包含扣分通知
 }
 
 // （用户管理）：写入用户数据到文件
@@ -360,22 +494,31 @@ void DataManager::writeUser()
     for (auto user : users)
     {
         int creditScore = 100;
+        int prevCreditScore = 100;
+        QString banUntilStr = "";
         if (user->getType() == 2) // 读者
         {
             ::Reader *reader = dynamic_cast<::Reader *>(user);
             if (reader)
             {
                 creditScore = reader->getCreditScore();
+                prevCreditScore = reader->getPrevCreditScore();
+                if (reader->getBanUntil().isValid())
+                {
+                    banUntilStr = reader->getBanUntil().toString("yyyy-MM-dd HH:mm:ss");
+                }
             }
         }
-        QString line = QString("%1 %2 %3 %4 %5 %6 %7")
+        QString line = QString("%1 %2 %3 %4 %5 %6 %7 %8 %9")
                            .arg(user->getID())
                            .arg(user->getType())
                            .arg(user->getName())
                            .arg(user->getPassword())
                            .arg(user->getPhone())
                            .arg(user->getEmail())
-                           .arg(creditScore);
+                           .arg(creditScore)
+                           .arg(prevCreditScore)
+                           .arg(banUntilStr);
         out << line << "\n";
     }
 

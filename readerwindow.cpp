@@ -502,7 +502,7 @@ void ReaderWindow::onBookReserve()
         }
         else if (result == Reader::ReserveResult::LOW_CREDIT)
         {
-            QMessageBox::warning(this, "失败", "预约失败！您的信用分不足，暂时无法预约。");
+            QMessageBox::warning(this, "失败", "您因信用分下降被限制操作，暂时无法预约。");
         }
     }
 }
@@ -641,7 +641,7 @@ void ReaderWindow::onBorrowBook()
             QMessageBox::warning(this, "失败", "借书失败！您未预约成功该图书，请先预约并等待管理员审核。");
             break;
         case Reader::BorrowResult::LOW_CREDIT:
-            QMessageBox::warning(this, "失败", "借书失败！您的信用分不足，暂时无法借书。");
+            QMessageBox::warning(this, "失败", "您因信用分下降被限制操作，暂时无法借书。");
             break;
         }
     }
@@ -707,7 +707,7 @@ void ReaderWindow::onRenewBook()
             QMessageBox::warning(this, "失败", "续借失败！续借后借期不得超过90天。");
             break;
         case Reader::RenewResult::LOW_CREDIT:
-            QMessageBox::warning(this, "失败", "续借失败！您的信用分不足，暂时无法续借。");
+            QMessageBox::warning(this, "失败", "您因信用分下降被限制操作，暂时无法续借。");
             break;
         }
     }

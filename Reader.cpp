@@ -13,6 +13,7 @@ Reader::Reader(QString &I, QString &n, QString &pa, QString &ph, QString &e)
     type = 2;
     maxBooks = 10;
     creditScore = 100;
+    prevCreditScore = 100; // 初始时之前的信用分等于当前信用分
 }
 
 // 实现User的纯虚函数：获取用户身份
@@ -36,13 +37,52 @@ QString Reader::generateVerificationCode()
 // getter和setter方法
 int Reader::getMaxBooks() { return maxBooks; }
 int Reader::getCreditScore() { return creditScore; }
+int Reader::getPrevCreditScore() { return prevCreditScore; }
+QDateTime Reader::getBanUntil() { return banUntil; }
 
 void Reader::setMaxBooks(int max) { maxBooks = max; }
 void Reader::setCreditScore(int score) { creditScore = score; }
+void Reader::setPrevCreditScore(int score) { prevCreditScore = score; }
+void Reader::setBanUntil(QDateTime time) { banUntil = time; }
+
+// 检查是否在限制期间
+bool Reader::isBanned() const
+{
+    if (!banUntil.isValid())
+    {
+        return false;
+    }
+    return QDateTime::currentDateTime() < banUntil;
+}
 
 // 检查信用分是否允许操作
 Reader::CreditCheckResult Reader::checkCreditScore() const
 {
+    if (isBanned())
+    {
+        // 在限制期间，根据信用分返回对应的限制级别，这样调用者可以显示提示
+        if (creditScore < 50)
+        {
+            return CreditCheckResult::LOW_CREDIT_50;
+        }
+        else if (creditScore < 60)
+        {
+            return CreditCheckResult::LOW_CREDIT_60;
+        }
+        else if (creditScore < 70)
+        {
+            return CreditCheckResult::LOW_CREDIT_70;
+        }
+        else if (creditScore < 80)
+        {
+            return CreditCheckResult::LOW_CREDIT_80;
+        }
+        else
+        {
+            return CreditCheckResult::LOW_CREDIT_90;
+        }
+    }
+
     if (creditScore < 50)
     {
         return CreditCheckResult::LOW_CREDIT_50;

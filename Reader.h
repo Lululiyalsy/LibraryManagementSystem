@@ -6,6 +6,7 @@
 #include "Reservation.h"
 #include "BorrowRecord.h"
 #include <QString>
+#include <QDateTime>
 #include <vector>
 
 class Reader : public User
@@ -23,9 +24,13 @@ public:
     // getter和setter方法
     int getMaxBooks();
     int getCreditScore();
+    int getPrevCreditScore();
+    QDateTime getBanUntil();
 
     void setMaxBooks(int max);
     void setCreditScore(int score);
+    void setPrevCreditScore(int score);
+    void setBanUntil(QDateTime time);
 
     // 预约结果枚举
     enum class ReserveResult
@@ -82,6 +87,8 @@ public:
 
     // 检查信用分是否允许操作
     CreditCheckResult checkCreditScore() const;
+    // 检查是否在限制期间
+    bool isBanned() const;
     // 计算信用分变化（逾期扣分或按时加分）
     void calculateCreditScore(int overdueDays, Book *book, const QString &isbn);
 
@@ -117,6 +124,10 @@ public:
     int maxBooks;
     // 信用分
     int creditScore;
+    // 之前的信用分（用于判断是否下跌）
+    int prevCreditScore;
+    // 限制到期日
+    QDateTime banUntil;
 };
 
 #endif // READER_H
