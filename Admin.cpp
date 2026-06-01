@@ -312,13 +312,19 @@ void Admin::generateReport()
     std::vector<User *> allUsers = dm->getUsers();
 
     // 统计数据
-    int totalBorrowCount = allRecords.size();
-    int returnedCount = 0;
+    int currentBorrowCount = allRecords.size(); // 当前借阅数量（未归还）
+    int totalBorrowCount = 0;                   // 总借阅次数（历史总和）
     int overdueCount = overdueRecords.size();
     int totalBooks = allBooks.size();
     int totalUsers = allUsers.size();
     int readerCount = 0;
     int adminCount = 0;
+
+    // 计算历史借阅总次数（所有图书的借阅次数之和）
+    for (auto &book : allBooks)
+    {
+        totalBorrowCount += book.getBorrowCount();
+    }
 
     // 计算读者和管理员数量
     for (auto user : allUsers)
@@ -328,17 +334,6 @@ void Admin::generateReport()
         else
             readerCount++;
     }
-
-    // 计算已归还数量
-    for (auto &record : allRecords)
-    {
-        if (record.isReturned())
-            returnedCount++;
-    }
-
-    // 计算借阅率和逾期率
-    double returnRate = totalBorrowCount > 0 ? (double)returnedCount / totalBorrowCount * 100 : 0;
-    double overdueRate = totalBorrowCount > 0 ? (double)overdueCount / totalBorrowCount * 100 : 0;
 
     // 按分类统计图书
     std::map<QString, int> categoryCount;
@@ -375,12 +370,20 @@ void Admin::generateReport()
     }
     report += "\n";
 
+    // 计算已归还次数（历史总借阅次数 - 当前借阅数量）
+    int returnedCount = totalBorrowCount - currentBorrowCount;
+
+    // 计算借阅率和逾期率
+    double returnRate = totalBorrowCount > 0 ? (double)returnedCount / totalBorrowCount * 100 : 0;
+    double overdueRate = currentBorrowCount > 0 ? (double)overdueCount / currentBorrowCount * 100 : 0;
+
     // 借阅统计
     report += "【借阅统计】\n";
-    report += QString("  总借阅次数: %1\n").arg(totalBorrowCount);
-    report += QString("  已归还次数: %1\n").arg(returnedCount);
+    report += QString("  总借阅次数: %1\n").arg(totalBorrowCount);     // 历史总和
+    report += QString("  当前借阅数量: %1\n").arg(currentBorrowCount); // 当前未归还数量
+    report += QString("  已归还次数: %1\n").arg(returnedCount);        // 历史已归还
     report += QString("  借阅归还率: %1%\n").arg(QString::number(returnRate, 'f', 2));
-    report += QString("  逾期数量: %1\n").arg(overdueCount);
+    report += QString("  逾期数量: %1\n").arg(overdueCount); // 当前逾期数量
     report += QString("  逾期率: %1%\n\n").arg(QString::number(overdueRate, 'f', 2));
 
     // 热门图书

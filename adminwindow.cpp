@@ -25,7 +25,6 @@
 #include <QLabel>
 #include <QDateTime>
 #include <vector>
-#include <algorithm>
 
 // （构造函数）：创建管理员窗口实例，初始化窗口属性和部件
 AdminWindow::AdminWindow(::User *user, QWidget *parent)
@@ -207,7 +206,6 @@ void AdminWindow::setupUserTable()
 // （初始化图书表格）：创建图书管理表格，设置列和属性
 void AdminWindow::setupBookTable()
 {
-    // 修改5.16
     //  （创建图书管理容器）：创建图书管理界面的容器
     bookWidget = new QWidget(this);
     QVBoxLayout *bookMainLayout = new QVBoxLayout(bookWidget);
@@ -294,8 +292,6 @@ void AdminWindow::setupBookTable()
     connect(bookClearBtn, &QPushButton::clicked, this, &AdminWindow::onBookClear);
     connect(bookSortBtn, &QPushButton::clicked, this, &AdminWindow::onBookSort);
     connect(bookSortByTimeBtn, &QPushButton::clicked, this, &AdminWindow::onBookSortByTime);
-
-    // 修改结束
 }
 
 // （初始化借阅表格）：创建借阅管理表格，设置列和属性
@@ -1027,7 +1023,6 @@ void AdminWindow::onBookSortByTime()
         dm->addAdminMessage(currentUser, currentUser->getID(), currentUser->getName(), msgContent);
     }
 }
-// 修改结束
 
 // （加载借阅数据）：从数据管理器加载借阅数据到表格
 void AdminWindow::loadBorrowData()
