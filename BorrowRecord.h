@@ -39,12 +39,7 @@ public:
     // （减免罚款）：减免全部或部分罚款
     bool waiveFine(double amount = 0);
 
-    // （获取罚款状态）：获取当前罚款状态
-    FineStatus getFineStatus() const;
-
-    // （获取已支付罚款）：获取已支付的罚款金额
-    double getPaidFine() const;
-
+    // ========== getter 方法 ==========
     // （getter和setter）：获取ISBN
     QString getISBN() const;
     // （getter和setter）：获取读者ID
@@ -57,6 +52,18 @@ public:
     QDateTime getReturnTime() const;
     // （getter和setter）：获取是否已归还
     bool isReturned() const;
+    // （获取罚款状态）：获取当前罚款状态
+    FineStatus getFineStatus() const;
+    // （获取已支付罚款）：获取已支付的罚款金额
+    double getPaidFine() const;
+    // （getter和setter）：获取罚款金额
+    double getFineAmount() const;
+    // （getter和setter）：获取续借审核状态
+    RenewStatus getRenewStatus() const;
+    // （getter和setter）：获取已扣信用分数
+    int getDeductedScore() const;
+
+    // ========== setter 方法 ==========
     // （getter和setter）：设置应还时间
     void setDueTime(QDateTime time);
     // （getter和setter）：设置归还时间
@@ -67,16 +74,10 @@ public:
     void setPaidFine(double amount);
     // （getter和setter）：设置罚款状态
     void setFineStatus(FineStatus status);
-    // （getter和setter）：获取续借审核状态
-    RenewStatus getRenewStatus() const;
-    // （getter和setter）：设置续借审核状态
-    void setRenewStatus(RenewStatus status);
-    // （getter和setter）：获取罚款金额
-    double getFineAmount() const;
     // （getter和setter）：设置罚款金额
     void setFineAmount(double amount);
-    // （getter和setter）：获取已扣信用分数
-    int getDeductedScore() const;
+    // （getter和setter）：设置续借审核状态
+    void setRenewStatus(RenewStatus status);
     // （getter和setter）：设置已扣信用分数
     void setDeductedScore(int score);
 
@@ -97,7 +98,7 @@ private:
     // （是否已归还）：标记图书是否已归还
     bool returned;
     // （罚款金额）：计算出的罚款金额
-    mutable double fineAmount;
+    double fineAmount;
     // （已支付罚款）：已支付的罚款金额
     double paidFine;
     // （罚款状态）：罚款支付状态

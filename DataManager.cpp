@@ -331,7 +331,7 @@ void DataManager::recalculateCreditScores()
             continue;
 
         // 更新罚款金额（重新计算）
-        record.calculateFine();
+        record.setFineAmount(record.calculateFine());
 
         // 只有"未还且逾期"的记录才扣分
         if (!record.isReturned() && overdueDays > 0 && needDeduct > 0)

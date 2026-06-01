@@ -33,8 +33,7 @@ double BorrowRecord::calculateFine() const
 {
     int overdueDays = calculateOverdueDays();
     const double finePerDay = 1.0; // 每天罚款1元
-    fineAmount = overdueDays * finePerDay;
-    return fineAmount;
+    return overdueDays * finePerDay;
 }
 
 // （减免罚款）：减免全部或部分罚款
@@ -93,30 +92,7 @@ bool BorrowRecord::waiveFine(double amount)
     return true;
 }
 
-// （获取罚款状态）：获取当前罚款状态
-BorrowRecord::FineStatus BorrowRecord::getFineStatus() const
-{
-    return fineStatus;
-}
-
-// （获取已支付罚款）：获取已支付的罚款金额
-double BorrowRecord::getPaidFine() const
-{
-    return paidFine;
-}
-
-// （获取罚款金额）：获取罚款金额
-double BorrowRecord::getFineAmount() const
-{
-    return fineAmount;
-}
-
-// （设置罚款金额）：设置罚款金额
-void BorrowRecord::setFineAmount(double amount)
-{
-    fineAmount = amount;
-}
-
+// ========== getter 方法 ==========
 // （getter和setter）：获取ISBN
 QString BorrowRecord::getISBN() const
 {
@@ -153,6 +129,43 @@ bool BorrowRecord::isReturned() const
     return returned;
 }
 
+// （获取罚款状态）：获取当前罚款状态
+BorrowRecord::FineStatus BorrowRecord::getFineStatus() const
+{
+    return fineStatus;
+}
+
+// （获取已支付罚款）：获取已支付的罚款金额
+double BorrowRecord::getPaidFine() const
+{
+    return paidFine;
+}
+
+// （getter和setter）：获取罚款金额
+double BorrowRecord::getFineAmount() const
+{
+    return fineAmount;
+}
+
+// （getter和setter）：获取续借审核状态
+BorrowRecord::RenewStatus BorrowRecord::getRenewStatus() const
+{
+    return renewStatus;
+}
+
+// （getter和setter）：获取已扣信用分数
+int BorrowRecord::getDeductedScore() const
+{
+    return deductedScore;
+}
+
+// ========== setter 方法 ==========
+// （getter和setter）：设置应还时间
+void BorrowRecord::setDueTime(QDateTime time)
+{
+    dueTime = time;
+}
+
 // （getter和setter）：设置归还时间
 void BorrowRecord::setReturnTime(QDateTime time)
 {
@@ -169,12 +182,6 @@ void BorrowRecord::setReturned(bool isReturned)
     }
 }
 
-// （getter和setter）：设置应还时间
-void BorrowRecord::setDueTime(QDateTime time)
-{
-    dueTime = time;
-}
-
 // （getter和setter）：设置已支付罚款金额
 void BorrowRecord::setPaidFine(double amount)
 {
@@ -187,22 +194,16 @@ void BorrowRecord::setFineStatus(FineStatus status)
     fineStatus = status;
 }
 
-// （getter和setter）：获取续借审核状态
-BorrowRecord::RenewStatus BorrowRecord::getRenewStatus() const
+// （getter和setter）：设置罚款金额
+void BorrowRecord::setFineAmount(double amount)
 {
-    return renewStatus;
+    fineAmount = amount;
 }
 
 // （getter和setter）：设置续借审核状态
 void BorrowRecord::setRenewStatus(RenewStatus status)
 {
     renewStatus = status;
-}
-
-// （getter和setter）：获取已扣信用分数
-int BorrowRecord::getDeductedScore() const
-{
-    return deductedScore;
 }
 
 // （getter和setter）：设置已扣信用分数
