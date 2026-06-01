@@ -71,6 +71,10 @@ public:
     RenewStatus getRenewStatus() const;
     // （getter和setter）：设置续借审核状态
     void setRenewStatus(RenewStatus status);
+    // （getter和setter）：获取罚款金额
+    double getFineAmount() const;
+    // （getter和setter）：设置罚款金额
+    void setFineAmount(double amount);
     // （getter和setter）：获取已扣信用分数
     int getDeductedScore() const;
     // （getter和setter）：设置已扣信用分数

@@ -105,6 +105,18 @@ double BorrowRecord::getPaidFine() const
     return paidFine;
 }
 
+// （获取罚款金额）：获取罚款金额
+double BorrowRecord::getFineAmount() const
+{
+    return fineAmount;
+}
+
+// （设置罚款金额）：设置罚款金额
+void BorrowRecord::setFineAmount(double amount)
+{
+    fineAmount = amount;
+}
+
 // （getter和setter）：获取ISBN
 QString BorrowRecord::getISBN() const
 {

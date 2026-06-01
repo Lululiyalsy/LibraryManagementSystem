@@ -318,8 +318,8 @@ void DataManager::recalculateCreditScores()
         // 计算需要扣除的分数（当前逾期天数 - 已扣分数）
         int needDeduct = overdueDays - deductedScore;
 
-        // 如果不需要扣分，跳过
-        if (needDeduct <= 0)
+        // 如果不需要扣分且没有逾期，跳过
+        if (needDeduct <= 0 && overdueDays <= 0)
             continue;
 
         ::User *user = findUserById(readerId);
@@ -330,8 +330,11 @@ void DataManager::recalculateCreditScores()
         if (!reader)
             continue;
 
+        // 更新罚款金额（重新计算）
+        record.calculateFine();
+
         // 只有"未还且逾期"的记录才扣分
-        if (!record.isReturned() && overdueDays > 0)
+        if (!record.isReturned() && overdueDays > 0 && needDeduct > 0)
         {
             int currentScore = reader->getCreditScore();
             int newScore = qMax(currentScore - needDeduct, 0);
@@ -702,7 +705,7 @@ void DataManager::initBorrowRecord()
         if (line.isEmpty())
             continue;
 
-        QStringList fields = line.split("|", Qt::SkipEmptyParts);
+        QStringList fields = line.split("|");
         if (fields.size() < 4)
         {
             continue;
@@ -729,6 +732,11 @@ void DataManager::initBorrowRecord()
         if (fields.size() >= 7)
         {
             record.setRenewStatus(static_cast<BorrowRecord::RenewStatus>(fields[6].toInt()));
+        }
+
+        if (fields.size() >= 8)
+        {
+            record.setFineAmount(fields[7].toDouble());
         }
 
         if (fields.size() >= 9)
@@ -773,7 +781,7 @@ void DataManager::writeBorrowRecord()
                        returnTimeStr + "|" +
                        (record.isReturned() ? "true" : "false") + "|" +
                        QString::number(static_cast<int>(record.getRenewStatus())) + "|" +
-                       QString::number(record.calculateFine(), 'f', 2) + "|" +
+                       QString::number(record.getFineAmount(), 'f', 2) + "|" +
                        QString::number(record.getPaidFine(), 'f', 2) + "|" +
                        QString::number(static_cast<int>(record.getFineStatus())) + "|" +
                        QString::number(record.getDeductedScore());
