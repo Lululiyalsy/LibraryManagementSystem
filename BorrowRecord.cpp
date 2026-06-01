@@ -1,3 +1,11 @@
+/**
+ * @file BorrowRecord.cpp
+ * @brief 借阅记录类实现
+ *
+ * 实现BorrowRecord类的所有成员函数，包括借阅记录管理、逾期计算、
+ * 罚款管理和续借状态管理。
+ */
+
 #include "BorrowRecord.h"
 #include <QCoreApplication>
 #include <QDir>
@@ -5,7 +13,21 @@
 #include <QTextStream>
 #include <QIODevice>
 
-// （构造函数）：借阅记录构造函数
+/**
+ * @brief 构造函数
+ * @param isbn 图书ISBN编号
+ * @param readerID 读者ID
+ * @param borrowTime 借阅时间
+ * @param dueTime 应还时间
+ *
+ * 初始化借阅记录，默认状态：
+ * - 未归还 (returned = false)
+ * - 罚款金额为0 (fineAmount = 0)
+ * - 已支付罚款为0 (paidFine = 0)
+ * - 罚款状态未支付 (fineStatus = UNPAID)
+ * - 无续借申请 (renewStatus = NONE)
+ * - 已扣信用分数为0 (deductedScore = 0)
+ */
 BorrowRecord::BorrowRecord(QString isbn, QString readerID, QDateTime borrowTime, QDateTime dueTime)
     : ISBN(isbn), readerID(readerID), borrowTime(borrowTime), dueTime(dueTime),
       returned(false), fineAmount(0), paidFine(0), fineStatus(FineStatus::UNPAID),
@@ -13,7 +35,14 @@ BorrowRecord::BorrowRecord(QString isbn, QString readerID, QDateTime borrowTime,
 {
 }
 
-// （计算逾期天数）：计算图书逾期天数
+/**
+ * @brief 计算逾期天数
+ * @return 逾期天数（未逾期或已归还返回0）
+ *
+ * 如果图书已归还，返回0；
+ * 如果当前时间超过应还时间，计算逾期天数；
+ * 否则返回0。
+ */
 int BorrowRecord::calculateOverdueDays() const
 {
     if (returned)
@@ -28,7 +57,12 @@ int BorrowRecord::calculateOverdueDays() const
     return 0;
 }
 
-// （计算罚款）：根据逾期天数计算罚款金额
+/**
+ * @brief 计算罚款金额
+ * @return 罚款金额
+ *
+ * 罚款规则：每天1元，根据逾期天数计算。
+ */
 double BorrowRecord::calculateFine() const
 {
     int overdueDays = calculateOverdueDays();
@@ -36,7 +70,16 @@ double BorrowRecord::calculateFine() const
     return overdueDays * finePerDay;
 }
 
-// （减免罚款）：减免全部或部分罚款
+/**
+ * @brief 减免罚款
+ * @param amount 减免金额（默认0表示全额减免）
+ * @return 减免成功返回true，失败返回false
+ *
+ * 减免流程：
+ * 1. 如果amount <= 0，执行全额减免
+ * 2. 如果amount > 0，执行部分减免（需检查金额是否合理）
+ * 3. 记录减免日志到 fine_payments.log
+ */
 bool BorrowRecord::waiveFine(double amount)
 {
     double totalFine = calculateFine();
@@ -93,86 +136,145 @@ bool BorrowRecord::waiveFine(double amount)
 }
 
 // ========== getter 方法 ==========
-// （getter和setter）：获取ISBN
+
+/**
+ * @brief 获取图书ISBN
+ * @return 图书ISBN编号
+ */
 QString BorrowRecord::getISBN() const
 {
     return ISBN;
 }
 
-// （getter和setter）：获取读者ID
+/**
+ * @brief 获取读者ID
+ * @return 读者ID
+ */
 QString BorrowRecord::getReaderID() const
 {
     return readerID;
 }
 
-// （getter和setter）：获取借阅时间
+/**
+ * @brief 获取借阅时间
+ * @return 借阅时间
+ */
 QDateTime BorrowRecord::getBorrowTime() const
 {
     return borrowTime;
 }
 
-// （getter和setter）：获取应还时间
+/**
+ * @brief 获取应还时间
+ * @return 应还时间
+ */
 QDateTime BorrowRecord::getDueTime() const
 {
     return dueTime;
 }
 
-// （getter和setter）：获取归还时间
+/**
+ * @brief 获取归还时间
+ * @return 归还时间（未归还返回无效时间）
+ */
 QDateTime BorrowRecord::getReturnTime() const
 {
     return returnTime;
 }
 
-// （getter和setter）：获取是否已归还
+/**
+ * @brief 判断是否已归还
+ * @return true表示已归还，false表示未归还
+ */
 bool BorrowRecord::isReturned() const
 {
     return returned;
 }
 
-// （获取罚款状态）：获取当前罚款状态
+/**
+ * @brief 获取罚款状态
+ * @return 罚款状态
+ *
+ * 特殊逻辑：如果当前状态为已支付，但已支付金额小于当前计算的罚款金额，
+ * 说明有新的逾期产生，返回未支付状态。
+ * 这处理了支付罚款后继续逾期的情况。
+ */
 BorrowRecord::FineStatus BorrowRecord::getFineStatus() const
 {
+    if (fineStatus == FineStatus::PAID)
+    {
+        double currentFine = calculateFine();
+        if (paidFine < currentFine - 0.01) // 允许微小的浮点误差
+        {
+            // 已支付金额小于当前罚款，说明有新的逾期产生
+            return FineStatus::UNPAID;
+        }
+    }
     return fineStatus;
 }
 
-// （获取已支付罚款）：获取已支付的罚款金额
+/**
+ * @brief 获取已支付罚款金额
+ * @return 已支付的罚款金额
+ */
 double BorrowRecord::getPaidFine() const
 {
     return paidFine;
 }
 
-// （getter和setter）：获取罚款金额
+/**
+ * @brief 获取罚款金额
+ * @return 罚款金额
+ */
 double BorrowRecord::getFineAmount() const
 {
     return fineAmount;
 }
 
-// （getter和setter）：获取续借审核状态
+/**
+ * @brief 获取续借审核状态
+ * @return 续借审核状态
+ */
 BorrowRecord::RenewStatus BorrowRecord::getRenewStatus() const
 {
     return renewStatus;
 }
 
-// （getter和setter）：获取已扣信用分数
+/**
+ * @brief 获取已扣信用分数
+ * @return 已扣除的信用分数
+ */
 int BorrowRecord::getDeductedScore() const
 {
     return deductedScore;
 }
 
 // ========== setter 方法 ==========
-// （getter和setter）：设置应还时间
+
+/**
+ * @brief 设置应还时间
+ * @param time 新的应还时间
+ */
 void BorrowRecord::setDueTime(QDateTime time)
 {
     dueTime = time;
 }
 
-// （getter和setter）：设置归还时间
+/**
+ * @brief 设置归还时间
+ * @param time 归还时间
+ */
 void BorrowRecord::setReturnTime(QDateTime time)
 {
     returnTime = time;
 }
 
-// （getter和setter）：设置是否已归还
+/**
+ * @brief 设置是否已归还
+ * @param isReturned 是否已归还
+ *
+ * 如果设置为已归还，自动设置归还时间为当前时间。
+ */
 void BorrowRecord::setReturned(bool isReturned)
 {
     returned = isReturned;
@@ -182,37 +284,54 @@ void BorrowRecord::setReturned(bool isReturned)
     }
 }
 
-// （getter和setter）：设置已支付罚款金额
+/**
+ * @brief 设置已支付罚款金额
+ * @param amount 已支付金额
+ */
 void BorrowRecord::setPaidFine(double amount)
 {
     paidFine = amount;
 }
 
-// （getter和setter）：设置罚款状态
+/**
+ * @brief 设置罚款状态
+ * @param status 罚款状态
+ */
 void BorrowRecord::setFineStatus(FineStatus status)
 {
     fineStatus = status;
 }
 
-// （getter和setter）：设置罚款金额
+/**
+ * @brief 设置罚款金额
+ * @param amount 罚款金额
+ */
 void BorrowRecord::setFineAmount(double amount)
 {
     fineAmount = amount;
 }
 
-// （getter和setter）：设置续借审核状态
+/**
+ * @brief 设置续借审核状态
+ * @param status 续借审核状态
+ */
 void BorrowRecord::setRenewStatus(RenewStatus status)
 {
     renewStatus = status;
 }
 
-// （getter和setter）：设置已扣信用分数
+/**
+ * @brief 设置已扣信用分数
+ * @param score 已扣除的信用分数
+ */
 void BorrowRecord::setDeductedScore(int score)
 {
     deductedScore = score;
 }
 
-// （析构函数）：借阅记录析构函数
+/**
+ * @brief 析构函数
+ */
 BorrowRecord::~BorrowRecord()
 {
 }

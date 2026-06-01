@@ -910,6 +910,12 @@ void ReaderWindow::onPayAllFines()
             }
         }
         dm->writeBorrowRecord();
+
+        // 发送消息给自己
+        Message msg(reader->getID(), reader->getName(), QString("已成功支付所有罚款，共计：%1元").arg(totalFine));
+        reader->addMessage(msg);
+        dm->writeMessage();
+
         QMessageBox::information(this, "成功", QString("成功支付罚款：%1元").arg(totalFine));
         displayMyBorrowRecords();
     }

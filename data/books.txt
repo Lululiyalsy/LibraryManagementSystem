@@ -1,10 +1,9 @@
-978-7-115-42839-0|C++ Primer Plus|Stephen Prata|Programming|5|2024-01-15 10:00:00|11|0|0
+978-7-115-42839-0|C++ Primer Plus|Stephen Prata|Programming|5|2024-01-15 10:00:00|11|0|1
 978-7-121-29807-0|Effective C++|Scott Meyers|Programming|3|2024-02-20 14:30:00|8|0|0
 978-7-111-54742-0|Design Patterns|Gang of Four|Design|4|2024-03-10 09:15:00|8|0|0
 978-7-115-42875-8|Python Crash Course|Eric Matthes|Programming|6|2024-01-25 11:20:00|12|0|0
 978-7-111-52148-7|Clean Code|Robert Martin|Programming|3|2024-02-05 16:45:00|15|0|0
 978-7-115-42880-2|The Art of Computer Programming|Donal Knuth|Programming|2|2024-03-01 08:00:00|3|0|0
 978-7-121-35211-6|Thinking in Java|Bruce Eckel|Programming|4|2024-02-15 13:30:00|7|0|0
-978-7-111-54758-1|Code Complete|Steve McConnell|Programming|3|2024-01-30 15:00:00|9|0|0
-978-7-115-42895-6|Algorithms|Robert Sedgewick|Algorithms|6|2026-05-25 16:18:44|11|0|0
-1|1|1|1|44|2026-05-25 17:09:09|1|0|0
+978-7-111-54758-1|Code Complete|Steve McConnell|Programming|3|2024-01-30 15:00:00|10|0|0
+978-7-115-42895-6|Algorithms|Robert Sedgewick|Algorithms|6|2026-05-25 16:18:44|12|0|0

@@ -1,3 +1,11 @@
+/**
+ * @file Admin.cpp
+ * @brief 管理员类实现
+ * 
+ * 实现Admin类的所有成员函数，包括用户管理、图书管理、预约管理、
+ * 借阅管理和统计报表生成等功能。
+ */
+
 #include "Admin.h"
 #include "DataManager.h"
 #include "Reader.h"
@@ -11,20 +19,33 @@
 #include <QDateTime>
 #include <algorithm>
 
-// 构造函数
+/**
+ * @brief 构造函数
+ * @param I 用户ID
+ * @param n 用户姓名
+ * @param pa 用户密码
+ * @param ph 联系电话
+ * @param e 电子邮箱
+ */
 Admin::Admin(QString &I, QString &n, QString &pa, QString &ph, QString &e)
     : User(I, n, pa, ph, e)
 {
-    type = 1;
+    type = 1; // 管理员类型为1
 }
 
-// 实现User的纯虚函数：获取用户身份
+/**
+ * @brief 获取用户身份标识（实现User的纯虚函数）
+ * @return 返回"管理员"
+ */
 QString Admin::typeToIdentity()
 {
     return QString("管理员");
 }
 
-// （生成验证码）：生成管理员验证码（大小写字母+数字，6位）
+/**
+ * @brief 生成验证码（实现User的纯虚函数）
+ * @return 6位验证码（大小写字母+数字）
+ */
 QString Admin::generateVerificationCode()
 {
     const QString chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -37,7 +58,17 @@ QString Admin::generateVerificationCode()
     return code;
 }
 
-// 注册用户账号（包括管理员和读者）
+// ========== 用户管理 ==========
+
+/**
+ * @brief 注册用户账号（包括管理员和读者）
+ * @param id 用户ID
+ * @param type 用户类型（1=管理员，2=读者）
+ * @param name 用户姓名
+ * @param password 用户密码
+ * @param phone 联系电话
+ * @param email 电子邮箱
+ */
 void Admin::registerUser(const QString &id, const QString &type, const QString &name,
                          const QString &password, const QString &phone, const QString &email)
 {
@@ -56,7 +87,7 @@ void Admin::registerUser(const QString &id, const QString &type, const QString &
     }
     if (idExists)
     {
-        return;
+        return; // ID已存在，直接返回
     }
 
     QString idRef = id;
@@ -78,7 +109,12 @@ void Admin::registerUser(const QString &id, const QString &type, const QString &
     dm->addUser(user);
 }
 
-// 删除用户账号（包括管理员和读者）
+/**
+ * @brief 删除用户账号（包括管理员和读者）
+ * @param id 用户ID
+ * @param name 用户姓名
+ * @return 删除成功返回true，失败返回false
+ */
 bool Admin::deleteUser(const QString &id, const QString &name)
 {
     DataManager *dm = DataManager::getInstance();
@@ -107,14 +143,22 @@ bool Admin::deleteUser(const QString &id, const QString &name)
             dm->addUser(newAdmin);
         }
     }
-    else
-    {
-    }
 
     return success;
 }
 
-// 修改用户信息（包括管理员和读者）
+/**
+ * @brief 修改用户信息（包括管理员和读者）
+ * @param oldId 原用户ID
+ * @param oldName 原用户姓名
+ * @param newId 新用户ID
+ * @param newType 新用户类型
+ * @param newName 新用户姓名
+ * @param password 新密码
+ * @param phone 新联系电话
+ * @param email 新电子邮箱
+ * @return 修改成功返回true，失败返回false
+ */
 bool Admin::updateUser(const QString &oldId, const QString &oldName,
                        const QString &newId, const QString &newType, const QString &newName,
                        const QString &password, const QString &phone, const QString &email)
@@ -144,18 +188,18 @@ bool Admin::updateUser(const QString &oldId, const QString &oldName,
     }
 
     bool success = dm->updateUser(oldId, oldName, newUser);
-    if (success)
+    if (!success)
     {
-    }
-    else
-    {
-        delete newUser;
+        delete newUser; // 更新失败，释放内存
     }
 
     return success;
 }
 
-// 查看全部用户信息（包括管理员和读者）
+/**
+ * @brief 查看全部用户信息（包括管理员和读者）
+ * @return 用户指针列表
+ */
 std::vector<User *> Admin::findAllUser()
 {
     DataManager *dm = DataManager::getInstance();
@@ -163,7 +207,12 @@ std::vector<User *> Admin::findAllUser()
     return users;
 }
 
-// 查找用户信息（支持ID、姓名、ID+姓名模糊匹配）
+/**
+ * @brief 查找用户信息（支持ID、姓名模糊匹配）
+ * @param id 用户ID（可选）
+ * @param name 用户姓名（可选）
+ * @return 匹配的用户指针列表
+ */
 std::vector<User *> Admin::findUser(const QString &id, const QString &name)
 {
     DataManager *dm = DataManager::getInstance();
@@ -174,7 +223,11 @@ std::vector<User *> Admin::findUser(const QString &id, const QString &name)
     return users;
 }
 
-// 清空用户信息（包括管理员和读者），保留当前管理员，返回新的用户指针
+/**
+ * @brief 清空用户信息（包括管理员和读者），保留当前管理员
+ * @param currentAdmin 当前管理员指针（用于保留当前管理员）
+ * @return 新的当前管理员指针
+ */
 User *Admin::clearUser(User *currentAdmin)
 {
     DataManager *dm = DataManager::getInstance();
@@ -208,7 +261,17 @@ User *Admin::clearUser(User *currentAdmin)
     return nullptr;
 }
 
-// 添加书本信息，返回值：0=成功新增，1=库存已增加，-1=ISBN冲突
+// ========== 图书管理 ==========
+
+/**
+ * @brief 添加书本信息
+ * @param isbn 图书ISBN
+ * @param title 书名
+ * @param author 作者
+ * @param category 分类
+ * @param stock 库存数量
+ * @return 0=成功新增，1=库存已增加，-1=ISBN冲突
+ */
 int Admin::addBook(const QString &isbn, const QString &title, const QString &author,
                    const QString &category, int stock)
 {
@@ -220,14 +283,29 @@ int Admin::addBook(const QString &isbn, const QString &title, const QString &aut
     return dm->addBook(book);
 }
 
-// 删除书本信息，返回值：0=成功删除记录，1=库存已减少，-1=ISBN不存在，-2=存在预约或借出无法删除
+/**
+ * @brief 删除书本信息
+ * @param isbn 图书ISBN
+ * @param decreaseStock 减少的库存数量
+ * @return 0=成功删除记录，1=库存已减少，-1=ISBN不存在，-2=存在预约或借出无法删除
+ */
 int Admin::deleteBook(const QString &isbn, int decreaseStock)
 {
     DataManager *dm = DataManager::getInstance();
     return dm->deleteBook(isbn, decreaseStock);
 }
 
-// 修改书本信息，返回值：0=成功修改，-1=原ISBN不存在，-2=存在预约或借出无法修改，-3=新ISBN已存在
+/**
+ * @brief 修改书本信息
+ * @param oldIsbn 原ISBN
+ * @param newIsbn 新ISBN
+ * @param title 书名
+ * @param author 作者
+ * @param category 分类
+ * @param stock 库存数量
+ * @param inStockTime 入库时间
+ * @return 0=成功修改，-1=原ISBN不存在，-2=存在预约或借出无法修改，-3=新ISBN已存在
+ */
 int Admin::updateBook(const QString &oldIsbn, const QString &newIsbn, const QString &title,
                       const QString &author, const QString &category, int stock,
                       const QDateTime &inStockTime)
@@ -238,7 +316,14 @@ int Admin::updateBook(const QString &oldIsbn, const QString &newIsbn, const QStr
     return dm->updateBook(oldIsbn, newBook);
 }
 
-// 查找书本信息（支持多条件模糊搜索）
+/**
+ * @brief 查找书本信息（支持多条件模糊搜索）
+ * @param isbn ISBN（可选）
+ * @param title 书名（可选）
+ * @param author 作者（可选）
+ * @param category 分类（可选）
+ * @return 匹配的图书指针列表
+ */
 std::vector<const Book *> Admin::findBook(const QString &isbn, const QString &title,
                                           const QString &author, const QString &category)
 {
@@ -246,7 +331,10 @@ std::vector<const Book *> Admin::findBook(const QString &isbn, const QString &ti
     return dm->searchBooks(isbn, title, author, category);
 }
 
-// 查找所有图书
+/**
+ * @brief 查找所有图书
+ * @return 所有图书指针列表
+ */
 std::vector<const Book *> Admin::findAllBook()
 {
     DataManager *dm = DataManager::getInstance();
@@ -258,7 +346,9 @@ std::vector<const Book *> Admin::findAllBook()
     return results;
 }
 
-// 清空书本信息
+/**
+ * @brief 清空书本信息
+ */
 void Admin::clearBook()
 {
     DataManager *dm = DataManager::getInstance();
@@ -266,7 +356,10 @@ void Admin::clearBook()
     dm->writeBook();
 }
 
-// 按借阅次数排序
+/**
+ * @brief 按借阅次数排序
+ * @return 按借阅次数降序排列的图书列表
+ */
 std::vector<const Book *> Admin::sortBookByBorrowCount()
 {
     DataManager *dm = DataManager::getInstance();
@@ -283,7 +376,10 @@ std::vector<const Book *> Admin::sortBookByBorrowCount()
     return sortedBooks;
 }
 
-// 按入库时间排序（最新入库优先）
+/**
+ * @brief 按入库时间排序（最新入库优先）
+ * @return 按入库时间排序的图书列表
+ */
 std::vector<const Book *> Admin::sortBookByInStockTime()
 {
     DataManager *dm = DataManager::getInstance();
@@ -300,7 +396,12 @@ std::vector<const Book *> Admin::sortBookByInStockTime()
     return sortedBooks;
 }
 
-// 生成统计报表(主要是借书情况)
+/**
+ * @brief 生成统计报表（主要是借书情况）
+ * 
+ * 生成包含用户统计、图书统计、借阅统计、热门图书和逾期图书列表的报表，
+ * 并保存到reports目录下。
+ */
 void Admin::generateReport()
 {
     DataManager *dm = DataManager::getInstance();
@@ -436,14 +537,25 @@ void Admin::generateReport()
     }
 }
 
-// 预约管理：查看所有预约记录
+// ========== 预约管理 ==========
+
+/**
+ * @brief 查看所有预约记录
+ * @return 预约记录列表
+ */
 std::vector<Reservation> Admin::viewAllReservations()
 {
     DataManager *dm = DataManager::getInstance();
     return dm->getReservations();
 }
 
-// 预约管理：审核预约（按ISBN和读者ID，是否成功）
+/**
+ * @brief 审核预约
+ * @param isbn 图书ISBN
+ * @param readerId 读者ID
+ * @param isSuccess 是否通过审核
+ * @return 审核成功返回true，失败返回false
+ */
 bool Admin::approveReservation(const QString &isbn, const QString &readerId, bool isSuccess)
 {
     DataManager *dm = DataManager::getInstance();
@@ -508,7 +620,15 @@ bool Admin::approveReservation(const QString &isbn, const QString &readerId, boo
     return false;
 }
 
-// 借阅管理：办理续借审核
+// ========== 借阅管理 ==========
+
+/**
+ * @brief 办理续借审核
+ * @param isbn 图书ISBN
+ * @param readerId 读者ID
+ * @param approved 是否批准续借
+ * @return 审核成功返回true，失败返回false
+ */
 bool Admin::renewBook(const QString &isbn, const QString &readerId, bool approved)
 {
     DataManager *dm = DataManager::getInstance();
@@ -520,19 +640,19 @@ bool Admin::renewBook(const QString &isbn, const QString &readerId, bool approve
         {
             if (record.getRenewStatus() != BorrowRecord::RenewStatus::PENDING)
             {
-                return false;
+                return false; // 续借状态不是待审核
             }
 
             ::User *user = dm->findUserById(readerId);
             if (!user || user->getType() != 2)
             {
-                return false;
+                return false; // 用户不存在或不是读者
             }
 
             ::Reader *reader = dynamic_cast<::Reader *>(user);
             if (!reader)
             {
-                return false;
+                return false; // 类型转换失败
             }
 
             Book *book = dm->findBookByISBN(isbn);
@@ -585,14 +705,20 @@ bool Admin::renewBook(const QString &isbn, const QString &readerId, bool approve
     return false;
 }
 
-// 借阅管理：查看所有借阅记录
+/**
+ * @brief 查看所有借阅记录
+ * @return 借阅记录列表
+ */
 std::vector<BorrowRecord> Admin::viewBorrowRecords()
 {
     DataManager *dm = DataManager::getInstance();
     return dm->getBorrowRecords();
 }
 
-// 借阅管理：查看逾期记录
+/**
+ * @brief 查看逾期记录
+ * @return 逾期借阅记录列表
+ */
 std::vector<BorrowRecord> Admin::viewOverdueRecords()
 {
     DataManager *dm = DataManager::getInstance();
@@ -611,7 +737,9 @@ std::vector<BorrowRecord> Admin::viewOverdueRecords()
     return overdueRecords;
 }
 
-//  析构函数
+/**
+ * @brief 析构函数
+ */
 Admin::~Admin()
 {
 }

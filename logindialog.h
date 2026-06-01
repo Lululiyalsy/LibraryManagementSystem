@@ -1,3 +1,11 @@
+/**
+ * @file logindialog.h
+ * @brief 登录对话框类定义
+ *
+ * LoginDialog类提供用户登录界面，支持管理员和读者两种身份登录，
+ * 包含账号密码验证和验证码验证功能。
+ */
+
 #ifndef LOGINDIALOG_H
 #define LOGINDIALOG_H
 
@@ -9,30 +17,53 @@ namespace Ui
     class LoginDialog;
 }
 
+/**
+ * @class LoginDialog
+ * @brief 登录对话框类
+ *
+ * 提供用户登录界面，支持管理员和读者两种身份登录，包含账号密码验证、
+ * 身份选择验证和验证码验证功能。验证通过后保存登录用户对象。
+ */
 class LoginDialog : public QDialog
 {
     Q_OBJECT
 
 public:
-    //（构造函数）：显式构造函数，用于创建登录对话框实例
+    /**
+     * @brief 构造函数
+     * @param parent 父窗口指针
+     */
     explicit LoginDialog(QWidget *parent = nullptr);
-    //（析构函数）：析构函数，用于释放窗口资源
+
+    /**
+     * @brief 析构函数
+     */
     ~LoginDialog();
 
-    //（获取登录用户）：获取登录成功的用户对象
-    User* getLoggedInUser() const;
+    /**
+     * @brief 获取登录成功的用户对象
+     * @return 登录成功的用户指针，未登录则返回nullptr
+     */
+    User *getLoggedInUser() const;
 
 private slots:
-    //（添加槽函数）：确定按钮的点击槽函数，用于处理登录确认
+    /**
+     * @brief 确定按钮点击事件处理槽函数
+     *
+     * 处理用户登录请求，包括输入校验、身份验证和验证码验证
+     */
     void on_commitBtn_clicked();
-    //（添加槽函数）：取消按钮的点击槽函数，用于处理退出确认
+
+    /**
+     * @brief 取消按钮点击事件处理槽函数
+     *
+     * 处理用户退出登录请求，弹出确认对话框
+     */
     void on_cancelBtn_clicked();
 
 private:
-    //（UI对象）：指向自动生成的UI界面的指针
-    Ui::LoginDialog *ui;
-    //（登录用户）：存储登录成功的用户对象
-    User* loggedInUser;
+    Ui::LoginDialog *ui; ///< 指向自动生成的UI界面的指针
+    User *loggedInUser;  ///< 存储登录成功的用户对象
 };
 
 #endif // LOGINDIALOG_H

@@ -490,19 +490,7 @@ void AdminWindow::setupReservationTable()
 // （初始化统计表格）：创建统计报表表格，设置列和属性
 void AdminWindow::setupStatisticsTable()
 {
-    statisticsWidget = new StatisticsWidget(this);
-    // // （设置表头）：设置统计表格表头
-    // statisticsTable->setHorizontalHeaderLabels({"排名", "项目", "数量"});
-    // // （设置列调整模式）：列自动拉伸填充
-    // statisticsTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    // // （设置行调整模式）：行高根据内容自动调整
-    // statisticsTable->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
-    // // （设置编辑属性）：表格只读，不可编辑
-    // statisticsTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    // // （设置选择行为）：选择整行
-    // statisticsTable->setSelectionBehavior(QAbstractItemView::SelectRows);
-    // // （设置选择模式）：单选模式
-    // statisticsTable->setSelectionMode(QAbstractItemView::SingleSelection);
+    statisticsWidget = new StatisticsWidget(this, currentUser);
 }
 
 // （加载用户数据）：从数据管理器加载用户数据到表格

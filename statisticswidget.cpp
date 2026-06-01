@@ -1,3 +1,16 @@
+/**
+ * @file statisticswidget.cpp
+ * @brief 统计报表界面组件实现
+ *
+ * 该文件实现了图书管理系统的统计报表功能，包括：
+ * - 用户统计（管理员、读者数量）
+ * - 图书统计（总数）
+ * - 借阅统计（借阅次数、归还率、逾期率）
+ * - 热门图书排行
+ * - 逾期图书列表
+ * - 报表生成与消息通知
+ */
+
 #include "statisticswidget.h"
 #include "DataManager.h"
 #include "Admin.h"
@@ -12,23 +25,40 @@
 #include <QTextStream>
 #include <QSplitter>
 
-StatisticsWidget::StatisticsWidget(QWidget *parent)
-    : QWidget(parent), summaryTable(nullptr), hotBooksTable(nullptr),
+/**
+ * @brief 构造函数
+ * @param parent 父窗口指针
+ * @param user 当前登录的管理员用户
+ */
+StatisticsWidget::StatisticsWidget(QWidget *parent, User *user)
+    : QWidget(parent), currentUser(user), summaryTable(nullptr), hotBooksTable(nullptr),
       overdueTable(nullptr), generateReportBtn(nullptr), refreshBtn(nullptr)
 {
     setupUI();
 }
 
+/**
+ * @brief 析构函数
+ */
 StatisticsWidget::~StatisticsWidget()
 {
 }
 
+/**
+ * @brief 初始化界面布局
+ *
+ * 创建三个可拖动的区域：
+ * 1. 统计摘要 - 显示用户、图书、借阅等统计数据
+ * 2. 热门图书 TOP5 - 按借阅次数排序的图书排行
+ * 3. 逾期图书 - 当前逾期未归还的图书列表
+ */
 void StatisticsWidget::setupUI()
 {
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
     mainLayout->setSpacing(10);
     mainLayout->setContentsMargins(10, 10, 10, 10);
 
+    // 操作按钮区域
     QWidget *operationWidget = new QWidget(this);
     QHBoxLayout *operationLayout = new QHBoxLayout(operationWidget);
 
@@ -41,7 +71,7 @@ void StatisticsWidget::setupUI()
 
     mainLayout->addWidget(operationWidget);
 
-    // 创建可拖动的分割器
+    // 创建可拖动的垂直分割器
     QSplitter *splitter = new QSplitter(Qt::Vertical, this);
     splitter->setHandleWidth(5);
     splitter->setStyleSheet("QSplitter::handle { background-color: #4a4a4a; }");
@@ -64,7 +94,7 @@ void StatisticsWidget::setupUI()
     summaryTable->setSelectionMode(QAbstractItemView::SingleSelection);
     summaryLayout->addWidget(summaryTable);
 
-    // 第二部分：热门图书
+    // 第二部分：热门图书 TOP5
     QWidget *hotBooksWidget = new QWidget(splitter);
     QVBoxLayout *hotBooksLayout = new QVBoxLayout(hotBooksWidget);
 
@@ -102,14 +132,24 @@ void StatisticsWidget::setupUI()
 
     mainLayout->addWidget(splitter);
 
+    // 连接信号槽
     connect(generateReportBtn, &QPushButton::clicked, this, &StatisticsWidget::onGenerateReportClicked);
     connect(refreshBtn, &QPushButton::clicked, this, &StatisticsWidget::onRefreshStatistics);
 }
 
+/**
+ * @brief 更新统计数据并刷新界面显示
+ *
+ * 从 DataManager 获取最新数据，计算各项统计指标，然后更新三个表格：
+ * 1. 统计摘要表格 - 用户、图书、借阅等统计数据
+ * 2. 热门图书表格 - 按借阅次数排序的前5本图书
+ * 3. 逾期图书表格 - 当前逾期未归还的图书列表
+ */
 void StatisticsWidget::updateStatistics()
 {
     DataManager *dm = DataManager::getInstance();
 
+    // 统计用户数据
     std::vector<User *> users = dm->getUsers();
     int totalUsers = users.size();
     int admins = 0, readers = 0;
@@ -121,9 +161,11 @@ void StatisticsWidget::updateStatistics()
             readers++;
     }
 
+    // 获取图书数据
     std::vector<Book> books = dm->getBooks();
     int totalBooks = books.size();
 
+    // 获取借阅记录
     std::vector<BorrowRecord> records = dm->getBorrowRecords();
     int currentBorrowCount = records.size(); // 当前借阅数量（未归还）
     int totalBorrowCount = 0;                // 总借阅次数（历史总和）
@@ -134,6 +176,7 @@ void StatisticsWidget::updateStatistics()
         totalBorrowCount += book.getBorrowCount();
     }
 
+    // 统计当前逾期数量
     int overdueCount = 0;
     for (auto &record : records)
     {
@@ -141,10 +184,12 @@ void StatisticsWidget::updateStatistics()
             overdueCount++;
     }
 
+    // 计算归还率和逾期率
     int returnedCount = totalBorrowCount - currentBorrowCount; // 已归还次数
     double returnRate = totalBorrowCount > 0 ? (double)returnedCount / totalBorrowCount * 100 : 0;
     double overdueRate = currentBorrowCount > 0 ? (double)overdueCount / currentBorrowCount * 100 : 0;
 
+    // 更新统计摘要表格
     summaryTable->setRowCount(0);
     QStringList items = {
         "总用户数", QString::number(totalUsers),
@@ -165,6 +210,7 @@ void StatisticsWidget::updateStatistics()
         summaryTable->setItem(row, 1, new QTableWidgetItem(items[i + 1]));
     }
 
+    // 更新热门图书表格（TOP5）
     std::vector<Book> sortedBooks = dm->sortBooksByBorrowCount();
     hotBooksTable->setRowCount(0);
     for (int i = 0; i < (int)sortedBooks.size() && i < 5; ++i)
@@ -176,6 +222,7 @@ void StatisticsWidget::updateStatistics()
         hotBooksTable->setItem(row, 2, new QTableWidgetItem(QString::number(sortedBooks[i].getBorrowCount())));
     }
 
+    // 更新逾期图书表格
     overdueTable->setRowCount(0);
     for (auto &record : records)
     {
@@ -192,14 +239,37 @@ void StatisticsWidget::updateStatistics()
     }
 }
 
+/**
+ * @brief 刷新数据按钮点击事件处理
+ *
+ * 调用 updateStatistics() 重新加载并显示统计数据
+ */
 void StatisticsWidget::onRefreshStatistics()
 {
     updateStatistics();
 }
 
+/**
+ * @brief 生成报表按钮点击事件处理
+ *
+ * 生成统计报表文本文件，保存到应用程序目录下的 reports 文件夹，
+ * 文件名格式为 report_yyyyMMdd_HHmmss.txt
+ *
+ * 报表内容包括：
+ * - 统计时间
+ * - 用户统计（总用户数、管理员数、读者数）
+ * - 图书统计（图书总数）
+ * - 借阅统计（总借阅次数、当前借阅数量、已归还次数、归还率、逾期数量、逾期率）
+ * - 热门图书 TOP5
+ * - 逾期图书列表
+ *
+ * 生成成功后会向当前管理员发送消息通知
+ */
 void StatisticsWidget::onGenerateReportClicked()
 {
     DataManager *dm = DataManager::getInstance();
+
+    // 统计用户数据
     std::vector<User *> users = dm->getUsers();
     int totalUsers = users.size();
     int admins = 0, readers = 0;
@@ -211,6 +281,7 @@ void StatisticsWidget::onGenerateReportClicked()
             readers++;
     }
 
+    // 获取图书和借阅记录数据
     std::vector<Book> books = dm->getBooks();
     std::vector<BorrowRecord> records = dm->getBorrowRecords();
 
@@ -223,6 +294,7 @@ void StatisticsWidget::onGenerateReportClicked()
         totalBorrowCount += book.getBorrowCount();
     }
 
+    // 统计当前逾期数量
     int overdueCount = 0;
     for (auto &record : records)
     {
@@ -232,8 +304,10 @@ void StatisticsWidget::onGenerateReportClicked()
 
     int returned = totalBorrowCount - currentBorrowCount; // 已归还次数
 
+    // 获取热门图书排行
     std::vector<Book> sortedBooks = dm->sortBooksByBorrowCount();
 
+    // 构建报表内容
     QString report;
     report += "========================================\n";
     report += "          图书管理系统统计报表\n";
@@ -243,6 +317,7 @@ void StatisticsWidget::onGenerateReportClicked()
     report += QString("[用户统计]\n  总用户数: %1\n  管理员数: %2\n  读者数: %3\n\n").arg(totalUsers).arg(admins).arg(readers);
     report += QString("[图书统计]\n  图书总数: %1\n\n").arg((int)books.size());
 
+    // 计算比率
     double returnRate = totalBorrowCount > 0 ? (double)returned / totalBorrowCount * 100 : 0;
     double overdueRate = currentBorrowCount > 0 ? (double)overdueCount / currentBorrowCount * 100 : 0;
 
@@ -254,30 +329,67 @@ void StatisticsWidget::onGenerateReportClicked()
                   .arg(overdueCount)
                   .arg(QString::number(overdueRate, 'f', 2));
 
+    // 添加热门图书 TOP5
     report += "[热门图书 TOP5]\n";
     for (int i = 0; i < (int)sortedBooks.size() && i < 5; i++)
     {
         report += QString("  %1. %2 - 借阅%3次\n").arg(i + 1).arg(sortedBooks[i].getTitle()).arg(sortedBooks[i].getBorrowCount());
     }
 
+    // 添加逾期图书列表
+    report += "\n[逾期图书]\n";
+    bool hasOverdue = false;
+    for (auto &record : records)
+    {
+        if (!record.isReturned() && record.calculateOverdueDays() > 0)
+        {
+            hasOverdue = true;
+            Book *book = dm->findBookByISBN(record.getISBN());
+            QString bookTitle = book ? book->getTitle() : "未知";
+            report += QString("  ISBN: %1, 书名: %2, 读者ID: %3, 逾期天数: %4\n")
+                          .arg(record.getISBN())
+                          .arg(bookTitle)
+                          .arg(record.getReaderID())
+                          .arg(record.calculateOverdueDays());
+        }
+    }
+    if (!hasOverdue)
+    {
+        report += "  暂无逾期图书\n";
+    }
+
     report += "\n========================================\n";
 
+    // 保存报表文件
     QString appDir = QCoreApplication::applicationDirPath();
     QString reportFileName = QString("report_%1.txt").arg(QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss"));
     QString reportPath = appDir + "/reports/" + reportFileName;
 
+    // 确保 reports 目录存在
     QDir reportDir(appDir + "/reports");
     if (!reportDir.exists())
     {
         reportDir.mkpath(".");
     }
 
+    // 写入文件
     QFile reportFile(reportPath);
     if (reportFile.open(QIODevice::WriteOnly | QIODevice::Text))
     {
         QTextStream out(&reportFile);
         out << report;
         reportFile.close();
+
+        // 发送消息给当前管理员（自己发给自己）
+        if (currentUser)
+        {
+            Message msg(currentUser->getID(), currentUser->getName(),
+                        currentUser->getID(), currentUser->getName(),
+                        "统计报表已生成！");
+            currentUser->addMessage(msg);
+            dm->writeMessage();
+        }
+
         QMessageBox::information(this, "成功", QString("报表已生成！\n保存位置: %1").arg(reportPath));
     }
     else

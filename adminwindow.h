@@ -1,3 +1,11 @@
+/**
+ * @file adminwindow.h
+ * @brief 管理员窗口类定义
+ *
+ * AdminWindow类是图书馆管理系统的管理员主界面，提供用户管理、图书管理、
+ * 借阅管理、预约管理、统计报表和消息管理等功能。
+ */
+
 #ifndef ADMINWINDOW_H
 #define ADMINWINDOW_H
 
@@ -16,232 +24,346 @@
 #include "Message.h"
 #include "statisticswidget.h"
 
+/**
+ * @class AdminWindow
+ * @brief 管理员窗口类
+ *
+ * 管理员主界面窗口，提供完整的图书馆管理功能，包括：
+ * - 用户管理（增删改查）
+ * - 图书管理（增删改查、排序）
+ * - 借阅管理（查询、续借审核）
+ * - 预约管理（审核、查询）
+ * - 统计报表（数据统计）
+ * - 消息管理（查看、删除、标记已读）
+ */
 class AdminWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    // （构造函数）：显式构造函数，用于创建管理员窗口实例
+    /**
+     * @brief 构造函数
+     * @param user 当前登录的管理员用户对象
+     * @param parent 父窗口指针
+     */
     explicit AdminWindow(User *user, QWidget *parent = nullptr);
-    // （析构函数）：析构函数，用于释放窗口资源
+
+    /**
+     * @brief 析构函数
+     */
     ~AdminWindow();
 
 private slots:
-    // （用户管理）：用户管理按钮点击槽函数
+    /**
+     * @brief 用户管理按钮点击槽函数
+     */
     void onUserManagement();
-    // （图书管理）：图书管理按钮点击槽函数
+
+    /**
+     * @brief 图书管理按钮点击槽函数
+     */
     void onBookManagement();
-    // （借阅管理）：借阅管理按钮点击槽函数
+
+    /**
+     * @brief 借阅管理按钮点击槽函数
+     */
     void onBorrowManagement();
-    // （预约管理）：预约管理按钮点击槽函数
+
+    /**
+     * @brief 预约管理按钮点击槽函数
+     */
     void onReservationManagement();
-    // （统计报表）：统计报表按钮点击槽函数
+
+    /**
+     * @brief 统计报表按钮点击槽函数
+     */
     void onStatistics();
-    // （审核预约）：审核预约按钮点击槽函数
+
+    /**
+     * @brief 审核预约按钮点击槽函数
+     */
     void onProcessReservation();
-    // （查询预约）：查询预约按钮点击槽函数
+
+    /**
+     * @brief 查询预约按钮点击槽函数
+     */
     void onSearchReservation();
-    // （退出登录）：退出按钮点击槽函数
+
+    /**
+     * @brief 退出登录按钮点击槽函数
+     */
     void onLogout();
-    // （消息管理）：消息按钮点击槽函数
+
+    /**
+     * @brief 消息管理按钮点击槽函数
+     */
     void onMessage();
-    // （删除消息）：删除选中消息
+
+    /**
+     * @brief 删除选中消息
+     */
     void onDeleteMessage();
-    // （清除所有消息）：清除所有消息
+
+    /**
+     * @brief 清除所有消息
+     */
     void onClearAllMessages();
-    // （全部设为已读）：将所有未读消息设为已读
+
+    /**
+     * @brief 将所有未读消息设为已读
+     */
     void onMarkAllRead();
-    // （查找消息）：查找消息
+
+    /**
+     * @brief 查找消息
+     */
     void onSearchMessage();
 
 signals:
-    // （退出登录信号）：通知主程序退出登录
+    /**
+     * @brief 退出登录信号
+     * 通知主程序管理员已退出登录
+     */
     void logout();
 
 private:
-    // （初始化工具栏）：初始化左侧工具栏
+    /**
+     * @brief 初始化左侧工具栏
+     */
     void setupToolbar();
-    // （初始化中心部件）：初始化中心堆叠部件
+
+    /**
+     * @brief 初始化中心堆叠部件
+     */
     void setupCentralWidget();
-    // （初始化用户表格）：初始化用户管理表格
+
+    /**
+     * @brief 初始化用户管理表格
+     */
     void setupUserTable();
-    // （初始化图书表格）：初始化图书管理表格
+
+    /**
+     * @brief 初始化图书管理表格
+     */
     void setupBookTable();
-    // （初始化借阅表格）：初始化借阅管理表格
+
+    /**
+     * @brief 初始化借阅管理表格
+     */
     void setupBorrowTable();
-    // （初始化预约表格）：初始化预约管理表格
+
+    /**
+     * @brief 初始化预约管理表格
+     */
     void setupReservationTable();
-    // （初始化统计表格）：初始化统计报表表格
+
+    /**
+     * @brief 初始化统计报表表格
+     */
     void setupStatisticsTable();
 
-    // （加载用户数据）：从数据管理器加载用户数据到表格
+    /**
+     * @brief 从数据管理器加载用户数据到表格
+     */
     void loadUserData();
-    // （加载图书数据）：从数据管理器加载图书数据到表格
+
+    /**
+     * @brief 从数据管理器加载图书数据到表格
+     */
     void loadBookData();
-    // （加载借阅数据）：从数据管理器加载借阅数据到表格
+
+    /**
+     * @brief 从数据管理器加载借阅数据到表格
+     */
     void loadBorrowData();
-    // （加载预约数据）：从数据管理器加载预约数据到表格
+
+    /**
+     * @brief 从数据管理器加载预约数据到表格
+     */
     void loadReservationData();
-    // （加载统计数据）：从数据管理器加载统计数据到表格
+
+    /**
+     * @brief 从数据管理器加载统计数据到表格
+     */
     void loadStatisticsData();
 
-    // （中文输入对话框）：显示带中文按钮的输入对话框
-    //  返回 QPair：first=输入内容，second=true表示取消，false表示确定
+    /**
+     * @brief 显示带中文按钮的输入对话框
+     * @param title 对话框标题
+     * @param label 输入标签
+     * @param required 是否必填
+     * @return QPair：first=输入内容，second=true表示取消，false表示确定
+     */
     QPair<QString, bool> showInputDialog(const QString &title, const QString &label, bool required = false);
-    // （用户查找）：查找按钮点击处理
+
+    /**
+     * @brief 用户查找按钮点击处理
+     */
     void onUserSearch();
-    // （显示用户）：将用户数据显示到表格
+
+    /**
+     * @brief 将用户数据显示到表格
+     * @param users 用户列表
+     */
     void displayUsers(const std::vector<User *> &users);
-    // （用户增加）：增加按钮点击处理
+
+    /**
+     * @brief 用户增加按钮点击处理
+     */
     void onUserAdd();
-    // （用户删除）：删除按钮点击处理
+
+    /**
+     * @brief 用户删除按钮点击处理
+     */
     void onUserDelete();
-    // （用户修改）：修改按钮点击处理
+
+    /**
+     * @brief 用户修改按钮点击处理
+     */
     void onUserUpdate();
-    // （用户清除）：清除按钮点击处理
+
+    /**
+     * @brief 用户清除按钮点击处理
+     */
     void onUserClear();
 
-    // （图书查找）：查找按钮点击处理
+    /**
+     * @brief 图书查找按钮点击处理
+     */
     void onBookSearch();
-    // （显示图书）：将图书数据显示到表格
+
+    /**
+     * @brief 将图书数据显示到表格
+     * @param books 图书指针列表
+     */
     void displayBooks(const std::vector<const Book *> &books);
-    // （图书增加）：增加按钮点击处理
+
+    /**
+     * @brief 图书增加按钮点击处理
+     */
     void onBookAdd();
-    // （图书删除）：删除按钮点击处理
+
+    /**
+     * @brief 图书删除按钮点击处理
+     */
     void onBookDelete();
-    // （图书修改）：修改按钮点击处理
+
+    /**
+     * @brief 图书修改按钮点击处理
+     */
     void onBookUpdate();
-    // （图书清除）：清除按钮点击处理
+
+    /**
+     * @brief 图书清除按钮点击处理
+     */
     void onBookClear();
-    // （图书排序）：按借阅次数排序
+
+    /**
+     * @brief 图书按借阅次数排序按钮点击处理
+     */
     void onBookSort();
-    // （图书排序）：按入库时间排序
+
+    /**
+     * @brief 图书按入库时间排序按钮点击处理
+     */
     void onBookSortByTime();
 
-    // （借阅查找）：查找按钮点击处理
+    /**
+     * @brief 借阅查找按钮点击处理
+     */
     void onBorrowSearch();
-    // （显示借阅记录）：将借阅记录显示到表格
+
+    /**
+     * @brief 将借阅记录显示到表格
+     * @param records 借阅记录列表
+     */
     void displayBorrowRecords(const std::vector<BorrowRecord> &records);
-    // （借阅续借审核）：续借审核按钮点击处理
+
+    /**
+     * @brief 借阅续借审核按钮点击处理
+     */
     void onBorrowRenewAudit();
 
-    // （消息管理）：初始化消息表格
+    /**
+     * @brief 初始化消息表格
+     */
     void setupMessageWidget();
-    // （显示消息）：显示消息到消息表格
+
+    /**
+     * @brief 显示消息到消息表格
+     * @param messages 消息列表
+     */
     void displayMessages(const std::vector<Message> &messages);
 
 private:
-    // （当前用户）：当前登录的管理员用户对象
-    User *currentUser;
-    // （工具栏）：左侧工具栏指针
-    QToolBar *toolbar;
-    // （堆叠部件）：中心堆叠部件指针，用于切换不同表格视图
-    QStackedWidget *stackedWidget;
+    User *currentUser;             ///< 当前登录的管理员用户对象
+    QToolBar *toolbar;             ///< 左侧工具栏
+    QStackedWidget *stackedWidget; ///< 中心堆叠部件，用于切换不同视图
 
-    // （用户管理容器）：用户管理界面的容器指针
-    QWidget *userWidget;
-    // （图书管理容器）：图书管理界面的容器指针
-    QWidget *bookWidget;
-    // （用户表格）：用户管理表格指针
-    QTableWidget *userTable;
-    // （图书表格）：图书管理表格指针
-    QTableWidget *bookTable;
-    // （借阅管理容器）：借阅管理界面的容器指针
-    QWidget *borrowWidget;
-    // （借阅表格）：借阅管理表格指针
-    QTableWidget *borrowTable;
-    // （预约管理容器）：预约管理界面的容器指针
-    QWidget *reservationWidget;
-    // （预约表格）：预约管理表格指针
-    QTableWidget *reservationTable;
-    // （统计表格）：统计报表表格指针
-    QTableWidget *statisticsTable;
-    // （统计报表界面）：统计报表自定义界面指针
-    StatisticsWidget *statisticsWidget;
+    // 界面容器
+    QWidget *userWidget;        ///< 用户管理界面容器
+    QWidget *bookWidget;        ///< 图书管理界面容器
+    QWidget *borrowWidget;      ///< 借阅管理界面容器
+    QWidget *reservationWidget; ///< 预约管理界面容器
+    QWidget *messageWidget;     ///< 消息管理界面容器
 
-    // （用户ID查找输入框）：用户ID查找输入框指针
-    QLineEdit *userIdLineEdit;
-    // （用户姓名查找输入框）：用户姓名查找输入框指针
-    QLineEdit *userNameLineEdit;
-    // （用户查找按钮）：用户查找按钮指针
-    QPushButton *userSearchBtn;
-    // （用户增加按钮）：用户增加按钮指针
-    QPushButton *userAddBtn;
-    // （用户删除按钮）：用户删除按钮指针
-    QPushButton *userDeleteBtn;
-    // （用户修改按钮）：用户修改按钮指针
-    QPushButton *userUpdateBtn;
-    // （用户清除按钮）：用户清除按钮指针
-    QPushButton *userClearBtn;
+    // 表格控件
+    QTableWidget *userTable;            ///< 用户管理表格
+    QTableWidget *bookTable;            ///< 图书管理表格
+    QTableWidget *borrowTable;          ///< 借阅管理表格
+    QTableWidget *reservationTable;     ///< 预约管理表格
+    QTableWidget *statisticsTable;      ///< 统计报表表格
+    StatisticsWidget *statisticsWidget; ///< 统计报表自定义界面
 
-    // 修改5.16
-    // （图书ISBN查找输入框）：图书ISBN查找输入框指针
-    QLineEdit *bookISBNLineEdit;
-    // （图书书名查找输入框）：图书书名查找输入框指针
-    QLineEdit *bookTitleLineEdit;
-    // （图书作者查找输入框）：图书作者查找输入框指针
-    QLineEdit *bookAuthorLineEdit;
-    // （图书分类查找输入框）：图书分类查找输入框指针
-    QLineEdit *bookCategoryLineEdit;
-    // （图书查找按钮）：图书查找按钮指针
-    QPushButton *bookSearchBtn;
-    // （图书增加按钮）：图书增加按钮指针
-    QPushButton *bookAddBtn;
-    // （图书删除按钮）：图书删除按钮指针
-    QPushButton *bookDeleteBtn;
-    // （图书修改按钮）：图书修改按钮指针
-    QPushButton *bookUpdateBtn;
-    // （图书清除按钮）：图书清除按钮指针
-    QPushButton *bookClearBtn;
-    // （图书排序按钮）：图书排序按钮指针
-    QPushButton *bookSortBtn;
-    // （图书按时间排序按钮）：图书按入库时间排序按钮指针
-    QPushButton *bookSortByTimeBtn;
+    // 用户管理控件
+    QLineEdit *userIdLineEdit;   ///< 用户ID查找输入框
+    QLineEdit *userNameLineEdit; ///< 用户姓名查找输入框
+    QPushButton *userSearchBtn;  ///< 用户查找按钮
+    QPushButton *userAddBtn;     ///< 用户增加按钮
+    QPushButton *userDeleteBtn;  ///< 用户删除按钮
+    QPushButton *userUpdateBtn;  ///< 用户修改按钮
+    QPushButton *userClearBtn;   ///< 用户清除按钮
 
-    // （借阅ISBN查找输入框）：借阅ISBN查找输入框指针
-    QLineEdit *borrowISBNLineEdit;
-    // （借阅书名查找输入框）：借阅书名查找输入框指针
-    QLineEdit *borrowTitleLineEdit;
-    // （借阅读者ID查找输入框）：借阅读者ID查找输入框指针
-    QLineEdit *borrowReaderIdLineEdit;
-    // （借阅时间查找输入框）：借阅时间查找输入框指针
-    QLineEdit *borrowTimeLineEdit;
-    // （借阅应还时间查找输入框）：借阅应还时间查找输入框指针
-    QLineEdit *borrowDueTimeLineEdit;
-    // （借阅归还时间查找输入框）：借阅归还时间查找输入框指针
-    QLineEdit *borrowReturnTimeLineEdit;
-    // （借阅状态查找输入框）：借阅状态查找输入框指针
-    QLineEdit *borrowStatusEdit;
-    // （借阅罚款状态查找下拉框）：借阅罚款状态查找下拉框指针
-    QComboBox *borrowFineCombo;
-    // （借阅续借状态查找下拉框）：借阅续借状态查找下拉框指针
-    QComboBox *borrowRenewCombo;
-    // （借阅查找按钮）：借阅查找按钮指针
-    QPushButton *borrowSearchBtn;
-    // （借阅续借审核按钮）：借阅续借审核按钮指针
-    QPushButton *borrowRenewAuditBtn;
-    // 修改结束
+    // 图书管理控件
+    QLineEdit *bookISBNLineEdit;     ///< 图书ISBN查找输入框
+    QLineEdit *bookTitleLineEdit;    ///< 图书书名查找输入框
+    QLineEdit *bookAuthorLineEdit;   ///< 图书作者查找输入框
+    QLineEdit *bookCategoryLineEdit; ///< 图书分类查找输入框
+    QPushButton *bookSearchBtn;      ///< 图书查找按钮
+    QPushButton *bookAddBtn;         ///< 图书增加按钮
+    QPushButton *bookDeleteBtn;      ///< 图书删除按钮
+    QPushButton *bookUpdateBtn;      ///< 图书修改按钮
+    QPushButton *bookClearBtn;       ///< 图书清除按钮
+    QPushButton *bookSortBtn;        ///< 图书按借阅次数排序按钮
+    QPushButton *bookSortByTimeBtn;  ///< 图书按入库时间排序按钮
 
-    // （审核预约按钮）：审核预约按钮指针
-    QPushButton *processReservationBtn;
-    // （预约ISBN查找输入框）：预约ISBN查找输入框指针
-    QLineEdit *reservationISBNLineEdit;
-    // （预约读者ID查找输入框）：预约读者ID查找输入框指针
-    QLineEdit *reservationReaderIdLineEdit;
-    // （预约时间查找输入框）：预约时间查找输入框指针
-    QLineEdit *reservationTimeLineEdit;
-    // （预约状态下拉框）：预约状态下拉框指针
-    QComboBox *reservationStatusCombo;
+    // 借阅管理控件
+    QLineEdit *borrowISBNLineEdit;       ///< 借阅ISBN查找输入框
+    QLineEdit *borrowTitleLineEdit;      ///< 借阅书名查找输入框
+    QLineEdit *borrowReaderIdLineEdit;   ///< 借阅读者ID查找输入框
+    QLineEdit *borrowTimeLineEdit;       ///< 借阅时间查找输入框
+    QLineEdit *borrowDueTimeLineEdit;    ///< 借阅应还时间查找输入框
+    QLineEdit *borrowReturnTimeLineEdit; ///< 借阅归还时间查找输入框
+    QLineEdit *borrowStatusEdit;         ///< 借阅状态查找输入框
+    QComboBox *borrowFineCombo;          ///< 借阅罚款状态下拉框
+    QComboBox *borrowRenewCombo;         ///< 借阅续借状态下拉框
+    QPushButton *borrowSearchBtn;        ///< 借阅查找按钮
+    QPushButton *borrowRenewAuditBtn;    ///< 借阅续借审核按钮
 
-    // （消息容器）：消息管理界面的容器指针
-    QWidget *messageWidget;
-    // （消息表格）：消息表格指针
-    QTableWidget *messageTable;
-    // 消息查找输入框
-    QLineEdit *messageReaderIdEdit;
-    QLineEdit *messageReaderNameEdit;
-    QLineEdit *messageTimeEdit;
-    QLineEdit *messageContentEdit;
-    QComboBox *messageStatusCombo;
+    // 预约管理控件
+    QPushButton *processReservationBtn;     ///< 审核预约按钮
+    QLineEdit *reservationISBNLineEdit;     ///< 预约ISBN查找输入框
+    QLineEdit *reservationReaderIdLineEdit; ///< 预约读者ID查找输入框
+    QLineEdit *reservationTimeLineEdit;     ///< 预约时间查找输入框
+    QComboBox *reservationStatusCombo;      ///< 预约状态下拉框
+
+    // 消息管理控件
+    QTableWidget *messageTable;       ///< 消息表格
+    QLineEdit *messageReaderIdEdit;   ///< 消息读者ID查找输入框
+    QLineEdit *messageReaderNameEdit; ///< 消息读者姓名查找输入框
+    QLineEdit *messageTimeEdit;       ///< 消息时间查找输入框
+    QLineEdit *messageContentEdit;    ///< 消息内容查找输入框
+    QComboBox *messageStatusCombo;    ///< 消息状态下拉框
 };
+
 #endif // ADMINWINDOW_H

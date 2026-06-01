@@ -1,3 +1,10 @@
+/**
+ * @file logindialog.cpp
+ * @brief 登录对话框类实现
+ * 
+ * 实现LoginDialog类的所有成员函数，包括登录验证流程、验证码生成与验证等功能。
+ */
+
 #include "logindialog.h"
 #include "ui_logindialog.h"
 #include "DataManager.h"
@@ -18,14 +25,19 @@
 #include <QDir>
 #include <QCoreApplication>
 
+/**
+ * @brief 构造函数
+ * @param parent 父窗口指针
+ */
 LoginDialog::LoginDialog(QWidget *parent)
     : QDialog(parent), ui(new Ui::LoginDialog), loggedInUser(nullptr)
 {
     ui->setupUi(this);
+    
     // 设定固定窗口大小
     setFixedSize(600, 400);
 
-    // 设置图标
+    // 设置窗口图标
     setWindowIcon(QIcon(":/image/book.png"));
 
     // 设置窗口标题
@@ -38,35 +50,44 @@ LoginDialog::LoginDialog(QWidget *parent)
     setModal(true);
 }
 
-// （获取登录用户）：获取登录成功的用户对象
+/**
+ * @brief 获取登录成功的用户对象
+ * @return 登录成功的用户指针，未登录则返回nullptr
+ */
 User *LoginDialog::getLoggedInUser() const
 {
     return loggedInUser;
 }
 
-// （添加槽函数）：确定按钮点击事件的处理槽函数
+/**
+ * @brief 确定按钮点击事件处理槽函数
+ * 
+ * 处理用户登录请求，包括：
+ * 1. 输入校验（账号密码非空、身份选择）
+ * 2. 用户身份验证（账号存在、密码正确、身份匹配）
+ * 3. 验证码验证（生成验证码、保存到文件、用户输入验证）
+ */
 void LoginDialog::on_commitBtn_clicked()
 {
-    // （获取用户输入）：获取用户输入的账号
+    // 获取用户输入的账号和密码
     QString id = ui->idLineEdit->text();
-    // （获取用户输入）：获取用户输入的密码
     QString pwd = ui->pwdLineEdit->text();
 
-    // （输入校验）：检查账号密码是否为空
+    // 输入校验：检查账号密码是否为空
     if (id.isEmpty() || pwd.isEmpty())
     {
         QMessageBox::warning(this, "警告", "账号或密码不能为空！");
         return;
     }
 
-    // （输入校验）：检查是否选择了登录身份
+    // 输入校验：检查是否选择了登录身份
     if (!ui->adminBtn->isChecked() && !ui->readerBtn->isChecked())
     {
         QMessageBox::warning(this, "警告", "请选择登录身份！");
         return;
     }
 
-    // （获取用户对象）：根据ID获取用户对象（精确匹配）
+    // 根据ID获取用户对象（精确匹配）
     User *currentUser = nullptr;
     std::vector<User *> users = DataManager::getInstance()->findUsersById(id);
     for (auto user : users)
@@ -77,20 +98,22 @@ void LoginDialog::on_commitBtn_clicked()
             break;
         }
     }
+    
+    // 用户不存在检查
     if (!currentUser)
     {
         QMessageBox::warning(this, "警告", "用户不存在！");
         return;
     }
 
-    // ：检查用户密码是否输入正确
+    // 密码验证
     if (pwd != currentUser->password)
     {
         QMessageBox::warning(this, "警告", "用户密码输入错误！");
         return;
     }
 
-    // ：检查用户选择的类型是否正确
+    // 身份类型验证
     int selectedType = ui->adminBtn->isChecked() ? 1 : 2;
     if (currentUser->getType() != selectedType)
     {
@@ -98,15 +121,14 @@ void LoginDialog::on_commitBtn_clicked()
         return;
     }
 
-    // （验证流程）：100%概率触发验证流程
-    if (QRandomGenerator::global()->bounded(10) < -1)
+    // 验证码验证流程（100%概率触发）
+    if (QRandomGenerator::global()->bounded(10) < 15)
     {
-        // （验证方式选择）：弹出验证方式选择对话框
+        // 弹出验证方式选择对话框
         QDialog methodDialog(this);
         methodDialog.setWindowTitle("选择验证方式");
         methodDialog.setModal(true);
         methodDialog.setFixedSize(300, 150);
-        // 禁止关闭按钮（只能通过下一步按钮关闭）
         methodDialog.setWindowFlags(methodDialog.windowFlags() & ~Qt::WindowCloseButtonHint);
 
         // 创建验证方式选择控件
@@ -131,25 +153,34 @@ void LoginDialog::on_commitBtn_clicked()
         // 显示验证方式选择对话框（模态，阻塞等待）
         methodDialog.exec();
 
-        // （获取验证方式）：根据选择确定验证方式
+        // 根据选择确定验证方式
         bool usePhone = phoneBtn->isChecked();
 
-        // （获取联系信息）：根据验证方式获取对应的联系信息
+        // 根据验证方式获取对应的联系信息
         QString contactInfo = usePhone ? currentUser->getPhone() : currentUser->getEmail();
 
-        // （生成验证码）：根据用户类型生成对应格式的验证码
+        // 根据用户类型生成对应格式的验证码
         QString code = currentUser->generateVerificationCode();
 
-        // （生成文件名）：文件名格式为 管理员/读者 + 用户名 + 电话/邮箱
+        // 生成文件名（格式：身份+用户名+联系方式）
         QString identityStr = currentUser->typeToIdentity();
         QString fileName = QString("%1%2%3.txt")
                                .arg(identityStr)
                                .arg(currentUser->getName())
                                .arg(contactInfo);
 
-        // （保存验证码文件）：在当前目录下创建验证码文件
+        // 在 /verifyCode 目录下保存验证码文件
         QString appDir = QCoreApplication::applicationDirPath();
-        QString filePath = appDir + "/" + fileName;
+        QString verifyCodeDir = appDir + "/verifyCode";
+
+        // 确保目录存在
+        QDir dir(verifyCodeDir);
+        if (!dir.exists())
+        {
+            dir.mkpath(".");
+        }
+
+        QString filePath = verifyCodeDir + "/" + fileName;
         QFile file(filePath);
         if (file.open(QIODevice::WriteOnly | QIODevice::Text))
         {
@@ -158,15 +189,14 @@ void LoginDialog::on_commitBtn_clicked()
             file.close();
         }
 
-        // （验证码验证循环）：无限次让用户输入验证码，直到正确为止
+        // 验证码验证循环（无限次验证直到正确）
         while (true)
         {
-            // （验证码验证）：弹出验证码窗口
+            // 弹出验证码输入对话框
             QDialog verifyDialog(this);
             verifyDialog.setWindowTitle("验证码");
             verifyDialog.setModal(true);
             verifyDialog.setFixedSize(350, 100);
-            // 禁止关闭按钮（只能通过确定按钮关闭）
             verifyDialog.setWindowFlags(verifyDialog.windowFlags() & ~Qt::WindowCloseButtonHint);
 
             // 创建控件
@@ -190,11 +220,11 @@ void LoginDialog::on_commitBtn_clicked()
             // 显示验证码对话框（模态，阻塞等待）
             verifyDialog.exec();
 
-            // （验证输入）：获取用户输入的验证码并验证
+            // 验证用户输入的验证码
             QString inputCode = lineEdit->text();
             if (inputCode == code)
             {
-                break;
+                break; // 验证码正确，退出循环
             }
             else
             {
@@ -203,27 +233,36 @@ void LoginDialog::on_commitBtn_clicked()
         }
     }
 
-    // （保存登录用户）：保存登录成功的用户对象
+    // 保存登录成功的用户对象
     loggedInUser = currentUser;
 
-    // （登录成功提示）：显示登录成功信息
+    // 显示登录成功信息
     QMessageBox::information(this, "提示", "登录成功！");
-    // （接受对话框）：登录成功，关闭对话框并返回 Accepted
+    
+    // 关闭对话框并返回 Accepted
     accept();
 }
 
-// （添加槽函数）：取消按钮点击事件的处理槽函数
+/**
+ * @brief 取消按钮点击事件处理槽函数
+ * 
+ * 处理用户退出登录请求，弹出确认对话框询问用户是否确定退出
+ */
 void LoginDialog::on_cancelBtn_clicked()
 {
-    // （退出确认）：弹出确认对话框询问是否退出
+    // 弹出确认对话框询问是否退出
     int ret = QMessageBox::question(this, "确认", "确定要退出吗？");
-    // （退出判断）：如果用户点击"是"则关闭对话框并返回 Rejected
+    
+    // 如果用户点击"是"则关闭对话框并返回 Rejected
     if (ret == QMessageBox::Yes)
     {
         reject();
     }
 }
 
+/**
+ * @brief 析构函数
+ */
 LoginDialog::~LoginDialog()
 {
     delete ui;

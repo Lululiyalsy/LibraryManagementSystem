@@ -1,3 +1,10 @@
+/**
+ * @file DataManager.cpp
+ * @brief 数据管理器类实现
+ *
+ * 实现DataManager类的所有成员函数，包括数据初始化、读写操作和查询功能。
+ */
+
 #include "DataManager.h"
 #include "Admin.h"
 #include "Reader.h"
@@ -9,10 +16,17 @@
 #include <QFileInfo>
 #include <algorithm>
 
-// （单例静态变量）：DataManager单例对象的静态指针
+/**
+ * @brief DataManager单例对象的静态指针
+ */
 DataManager *DataManager::instance = nullptr;
 
-// （单例获取）：获取DataManager单例对象
+/**
+ * @brief 获取DataManager单例对象
+ * @return DataManager单例指针
+ *
+ * 采用懒汉式单例模式，第一次调用时创建实例。
+ */
 DataManager *DataManager::getInstance()
 {
     if (instance == nullptr)
@@ -22,10 +36,15 @@ DataManager *DataManager::getInstance()
     return instance;
 }
 
-// （私有构造）：单例模式私有构造函数
+/**
+ * @brief 私有构造函数
+ *
+ * 初始化数据文件路径，创建数据目录（如果不存在），
+ * 并加载所有数据文件。
+ */
 DataManager::DataManager()
 {
-    // （初始化文件路径）：设置数据文件保存路径
+    // 设置数据文件保存路径
     // 优先使用应用程序目录下的data子目录
     QString appDir = QCoreApplication::applicationDirPath();
     QString dataDir = appDir + "/data";
@@ -42,6 +61,7 @@ DataManager::DataManager()
         }
     }
 
+    // 设置各数据文件路径
     userFilePath = dataDir + "/users.txt";
     bookFilePath = dataDir + "/books.txt";
     borrowRecordFilePath = dataDir + "/borrow_records.txt";
@@ -55,33 +75,44 @@ DataManager::DataManager()
         dir.mkpath(dataDir);
     }
 
-    // （初始化数据）：读取所有数据文件
+    // 读取所有数据文件
     initUser();
     initBook();
     initBorrowRecord();
     initReservation();
     initMessage();
-    // （信用分计算）：根据借阅记录重新计算所有读者信用分（必须在initMessage之后调用）
+
+    // 根据借阅记录重新计算所有读者信用分（必须在initMessage之后调用）
     recalculateCreditScores();
 }
 
-// （析构函数）：DataManager析构函数，自动保存数据
+/**
+ * @brief 析构函数
+ *
+ * 析构时自动保存所有数据到文件，并释放用户对象的内存。
+ */
 DataManager::~DataManager()
 {
-    // （自动保存）：析构时自动保存所有数据
+    // 保存所有数据
     writeUser();
     writeBook();
     writeBorrowRecord();
     writeReservation();
 
-    // （清理资源）：释放users中动态分配的内存
+    // 释放users中动态分配的内存
     for (auto user : users)
     {
         delete user;
     }
 }
 
-// （用户查询）：根据ID查找用户（模糊匹配，可能多个）
+// ========== 用户管理 ==========
+
+/**
+ * @brief 根据ID查找用户（模糊匹配）
+ * @param id 用户ID关键字
+ * @return 匹配的用户指针列表
+ */
 std::vector<::User *> DataManager::findUsersById(const QString &id)
 {
     std::vector<::User *> results;
@@ -95,7 +126,11 @@ std::vector<::User *> DataManager::findUsersById(const QString &id)
     return results;
 }
 
-// （用户查询）：根据姓名查找用户（模糊匹配，可能多个）
+/**
+ * @brief 根据姓名查找用户（模糊匹配）
+ * @param name 用户姓名关键字
+ * @return 匹配的用户指针列表
+ */
 std::vector<::User *> DataManager::findUsersByName(const QString &name)
 {
     std::vector<::User *> results;
@@ -109,7 +144,11 @@ std::vector<::User *> DataManager::findUsersByName(const QString &name)
     return results;
 }
 
-// （用户查询）：根据ID精确查找用户（返回单个）
+/**
+ * @brief 根据ID精确查找用户
+ * @param id 用户ID
+ * @return 匹配的用户指针（未找到返回nullptr）
+ */
 ::User *DataManager::findUserById(const QString &id)
 {
     for (::User *user : users)
@@ -122,7 +161,12 @@ std::vector<::User *> DataManager::findUsersByName(const QString &name)
     return nullptr;
 }
 
-// （用户查询）：根据ID和姓名同时查找用户（均为模糊匹配，可能多个）
+/**
+ * @brief 根据ID和姓名同时查找用户（均为模糊匹配）
+ * @param id 用户ID关键字
+ * @param name 用户姓名关键字
+ * @return 匹配的用户指针列表
+ */
 std::vector<::User *> DataManager::searchUsers(const QString &id, const QString &name)
 {
     std::vector<::User *> results;
@@ -158,14 +202,22 @@ std::vector<::User *> DataManager::searchUsers(const QString &id, const QString 
     return results;
 }
 
-// （用户添加）：添加用户并保存到文件
+/**
+ * @brief 添加用户并保存到文件
+ * @param user 用户指针
+ */
 void DataManager::addUser(::User *user)
 {
     users.push_back(user);
     writeUser();
 }
 
-// （用户删除）：根据ID和姓名同时删除用户并保存到文件（两个关键字都需要匹配）
+/**
+ * @brief 根据ID和姓名同时删除用户并保存到文件
+ * @param id 用户ID
+ * @param name 用户姓名
+ * @return 删除成功返回true，失败返回false
+ */
 bool DataManager::deleteUser(const QString &id, const QString &name)
 {
     for (auto it = users.begin(); it != users.end(); ++it)
@@ -182,7 +234,13 @@ bool DataManager::deleteUser(const QString &id, const QString &name)
     return false;
 }
 
-// （用户修改）：根据ID和姓名同时修改用户信息并保存到文件（两个关键字都需要匹配）
+/**
+ * @brief 根据ID和姓名同时修改用户信息并保存到文件
+ * @param id 用户ID
+ * @param name 用户姓名
+ * @param newUser 新用户信息
+ * @return 修改成功返回true，失败返回false
+ */
 bool DataManager::updateUser(const QString &id, const QString &name, ::User *newUser)
 {
     for (auto it = users.begin(); it != users.end(); ++it)
@@ -199,7 +257,9 @@ bool DataManager::updateUser(const QString &id, const QString &name, ::User *new
     return false;
 }
 
-// （用户清除）：清除所有用户并保存到文件
+/**
+ * @brief 清除所有用户并保存到文件
+ */
 void DataManager::clearAllUsers()
 {
     for (auto user : users)
@@ -210,21 +270,29 @@ void DataManager::clearAllUsers()
     writeUser();
 }
 
-// （数据清除）：清空预约记录
+// ========== 数据清除 ==========
+
+/**
+ * @brief 清空预约记录
+ */
 void DataManager::clearAllReservations()
 {
     reservations.clear();
     writeReservation();
 }
 
-// （数据清除）：清空借书记录
+/**
+ * @brief 清空借书记录
+ */
 void DataManager::clearAllBorrowRecords()
 {
     borrowRecords.clear();
     writeBorrowRecord();
 }
 
-// （数据清除）：清空消息记录
+/**
+ * @brief 清空消息记录
+ */
 void DataManager::clearAllMessages()
 {
     for (auto user : users)
@@ -234,13 +302,19 @@ void DataManager::clearAllMessages()
     writeMessage();
 }
 
-// （用户获取）：获取所有用户
+/**
+ * @brief 获取所有用户
+ * @return 用户指针列表引用
+ */
 std::vector<::User *> &DataManager::getUsers()
 {
     return users;
 }
 
-// （用户数量）：获取用户数量
+/**
+ * @brief 获取用户数量
+ * @return 用户总数
+ */
 int DataManager::getUserCount() const
 {
     return users.size();
@@ -1354,4 +1428,20 @@ void DataManager::addReaderMessage(User *reader, const QString &message)
         reader->addMessage(msg);
         writeMessage();
     }
+}
+
+// （消息发送）：向所有管理员发送消息
+void DataManager::sendMessageToAdmin(const QString &content)
+{
+    std::vector<User *> users = getUsers();
+    for (auto user : users)
+    {
+        if (user->getType() == 1) // 管理员类型
+        {
+            // 创建消息（系统发给管理员）
+            Message msg(user->getID(), user->getName(), "系统", "系统管理员", content);
+            user->addMessage(msg);
+        }
+    }
+    writeMessage();
 }
