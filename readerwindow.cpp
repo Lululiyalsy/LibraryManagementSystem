@@ -1,3 +1,11 @@
+/**
+ * @file readerwindow.cpp
+ * @brief 读者窗口类实现
+ *
+ * 实现ReaderWindow类的所有成员函数，包括图书查询、借阅管理、
+ * 预约管理、消息管理和个人信息等功能。
+ */
+
 #include "readerwindow.h"
 #include "Reader.h"
 #include "DataManager.h"
@@ -9,7 +17,13 @@
 #include <QDateTime>
 #include <QInputDialog>
 
-// 构造函数：初始化读者窗口
+/**
+ * @brief 构造函数
+ * @param user 当前登录的用户对象
+ * @param parent 父窗口
+ *
+ * 初始化读者窗口，设置窗口属性、工具栏和各个功能页面。
+ */
 ReaderWindow::ReaderWindow(User *user, QWidget *parent)
     : QMainWindow(parent)
 {
@@ -29,12 +43,18 @@ ReaderWindow::ReaderWindow(User *user, QWidget *parent)
     setupCentralWidget();
 }
 
-// 析构函数
+/**
+ * @brief 析构函数
+ */
 ReaderWindow::~ReaderWindow()
 {
 }
 
-// 设置中心窗口：初始化工具栏和堆叠窗口
+/**
+ * @brief 设置中心窗口
+ *
+ * 初始化工具栏和堆叠窗口，创建各个功能页面并添加到堆叠窗口中。
+ */
 void ReaderWindow::setupCentralWidget()
 {
     stackedWidget = new QStackedWidget(this);
@@ -87,7 +107,11 @@ void ReaderWindow::setupCentralWidget()
     stackedWidget->setCurrentIndex(0);
 }
 
-// 设置图书查询页面
+/**
+ * @brief 设置图书查询页面
+ *
+ * 创建图书查询界面，包括搜索输入框、操作按钮和图书表格。
+ */
 void ReaderWindow::setupBookSearchWidget()
 {
     bookSearchWidget = new QWidget(this);
@@ -158,7 +182,12 @@ void ReaderWindow::setupBookSearchWidget()
     onBookSearch();
 }
 
-// 设置我的借阅页面
+/**
+ * @brief 设置我的借阅页面
+ *
+ * 创建借阅管理界面，包括操作按钮（还书、续借、支付罚款）、
+ * 查询输入框和借阅记录表格。
+ */
 void ReaderWindow::setupMyBorrowWidget()
 {
     myBorrowWidget = new QWidget(this);
@@ -256,7 +285,11 @@ void ReaderWindow::setupMyBorrowWidget()
     displayMyBorrowRecords();
 }
 
-// 设置我的预约页面
+/**
+ * @brief 设置我的预约页面
+ *
+ * 创建预约管理界面，包括取消预约按钮、查询输入框和预约记录表格。
+ */
 void ReaderWindow::setupMyReservationWidget()
 {
     myReservationWidget = new QWidget(this);
@@ -328,7 +361,12 @@ void ReaderWindow::setupMyReservationWidget()
     displayMyReservations();
 }
 
-// 图书查询：根据输入条件查询图书
+/**
+ * @brief 根据输入条件查询图书
+ *
+ * 从输入框获取ISBN、书名、作者、分类等条件，
+ * 调用读者的findBook方法进行查询，并显示结果。
+ */
 void ReaderWindow::onBookSearch()
 {
     QString isbn = bookISBNLineEdit->text();
@@ -344,7 +382,13 @@ void ReaderWindow::onBookSearch()
     }
 }
 
-// 显示图书列表
+/**
+ * @brief 显示图书列表
+ * @param books 要显示的图书列表
+ *
+ * 将图书列表显示在图书查询表格中，包括ISBN、书名、作者、
+ * 分类、库存、入库时间、借阅次数、当前借出、状态和预约人数。
+ */
 void ReaderWindow::displayBooks(const std::vector<const Book *> &books)
 {
     bookSearchTable->setRowCount(0);
@@ -365,7 +409,13 @@ void ReaderWindow::displayBooks(const std::vector<const Book *> &books)
     }
 }
 
-// 显示我的借阅记录
+/**
+ * @brief 显示我的借阅记录
+ *
+ * 获取当前读者的所有借阅记录，显示在借阅记录表格中，
+ * 包括ISBN、书名、借阅时间、应还时间、归还时间、状态、
+ * 续借状态、罚款金额、已支付罚款和罚款状态。
+ */
 void ReaderWindow::displayMyBorrowRecords()
 {
     myBorrowTable->setRowCount(0);
@@ -445,7 +495,12 @@ void ReaderWindow::displayMyBorrowRecords()
     }
 }
 
-// 显示我的预约记录
+/**
+ * @brief 显示我的预约记录
+ *
+ * 获取当前读者的所有预约记录，显示在预约记录表格中，
+ * 包括ISBN、书名、预约时间和状态。
+ */
 void ReaderWindow::displayMyReservations()
 {
     myReservationTable->setRowCount(0);
@@ -470,7 +525,12 @@ void ReaderWindow::displayMyReservations()
     }
 }
 
-// 预约图书
+/**
+ * @brief 预约图书
+ *
+ * 弹出对话框输入ISBN，调用读者的reserveBook方法进行预约，
+ * 并根据返回结果显示相应的提示信息。
+ */
 void ReaderWindow::onBookReserve()
 {
     QPair<QString, bool> result = showInputDialog("预约图书", "请输入要预约的图书ISBN：");
@@ -507,7 +567,12 @@ void ReaderWindow::onBookReserve()
     }
 }
 
-// 取消预约（弹出对话框输入ISBN）
+/**
+ * @brief 取消预约
+ *
+ * 弹出对话框输入ISBN，调用读者的cancelReservation方法取消预约，
+ * 并根据返回结果显示相应的提示信息。
+ */
 void ReaderWindow::onCancelReservation()
 {
     QPair<QString, bool> result = showInputDialog("取消预约", "请输入要取消预约的图书ISBN：");
@@ -532,7 +597,12 @@ void ReaderWindow::onCancelReservation()
     }
 }
 
-// 查找预约
+/**
+ * @brief 查找预约
+ *
+ * 根据预约时间、ISBN、书名和状态等条件筛选预约记录，
+ * 并显示在预约记录表格中。
+ */
 void ReaderWindow::onSearchReservation()
 {
     Reader *reader = dynamic_cast<Reader *>(currentUser);
@@ -603,7 +673,12 @@ void ReaderWindow::onSearchReservation()
     myReservationTable->setColumnWidth(3, 80);
 }
 
-// 借书
+/**
+ * @brief 借书
+ *
+ * 弹出对话框输入ISBN，调用读者的borrowBook方法进行借阅，
+ * 并根据返回结果显示相应的提示信息。
+ */
 void ReaderWindow::onBorrowBook()
 {
     QPair<QString, bool> result = showInputDialog("借书", "请输入要借阅的图书ISBN：");
@@ -647,7 +722,12 @@ void ReaderWindow::onBorrowBook()
     }
 }
 
-// 还书
+/**
+ * @brief 还书
+ *
+ * 弹出对话框输入ISBN，调用读者的returnBook方法进行还书，
+ * 并根据返回结果显示相应的提示信息。
+ */
 void ReaderWindow::onReturnBook()
 {
     QPair<QString, bool> result = showInputDialog("还书", "请输入要归还的图书ISBN：");
@@ -676,7 +756,12 @@ void ReaderWindow::onReturnBook()
     }
 }
 
-// 续借
+/**
+ * @brief 续借
+ *
+ * 弹出对话框输入ISBN，调用读者的renewBook方法申请续借，
+ * 并根据返回结果显示相应的提示信息。
+ */
 void ReaderWindow::onRenewBook()
 {
     QPair<QString, bool> result = showInputDialog("续借", "请输入要续借的图书ISBN：");
@@ -713,7 +798,12 @@ void ReaderWindow::onRenewBook()
     }
 }
 
-// 查找借阅记录
+/**
+ * @brief 查找借阅记录
+ *
+ * 根据ISBN、书名、借阅时间、应还时间、归还时间、状态、
+ * 续借状态和罚款状态等条件筛选借阅记录，并显示在表格中。
+ */
 void ReaderWindow::onSearchBorrow()
 {
     QString isbn = borrowISBNEdit->text();
@@ -866,7 +956,12 @@ void ReaderWindow::onSearchBorrow()
     }
 }
 
-// 支付所有罚款
+/**
+ * @brief 支付所有罚款
+ *
+ * 计算当前读者的所有未支付罚款总额，调用读者的payAllFines方法进行支付，
+ * 支付成功后发送消息通知读者，并更新借阅记录显示。
+ */
 void ReaderWindow::onPayAllFines()
 {
     Reader *reader = dynamic_cast<Reader *>(currentUser);
@@ -921,27 +1016,39 @@ void ReaderWindow::onPayAllFines()
     }
 }
 
-// 切换到图书查询页面
+/**
+ * @brief 切换到图书查询页面
+ */
 void ReaderWindow::switchToBookSearch()
 {
     stackedWidget->setCurrentWidget(bookSearchWidget);
 }
 
-// 切换到我的借阅页面
+/**
+ * @brief 切换到我的借阅页面
+ */
 void ReaderWindow::switchToMyBorrow()
 {
     displayMyBorrowRecords();
     stackedWidget->setCurrentWidget(myBorrowWidget);
 }
 
-// 切换到我的预约页面
+/**
+ * @brief 切换到我的预约页面
+ */
 void ReaderWindow::switchToMyReservation()
 {
     displayMyReservations();
     stackedWidget->setCurrentWidget(myReservationWidget);
 }
 
-// 显示输入对话框
+/**
+ * @brief 显示输入对话框
+ * @param title 对话框标题
+ * @param label 输入框标签
+ * @param isPassword 是否为密码输入
+ * @return 输入的文本和是否取消（true表示取消）
+ */
 QPair<QString, bool> ReaderWindow::showInputDialog(const QString &title, const QString &label, bool isPassword)
 {
     QDialog dialog(this);
@@ -970,7 +1077,11 @@ QPair<QString, bool> ReaderWindow::showInputDialog(const QString &title, const Q
     return qMakePair("", true);
 }
 
-// 设置消息管理页面
+/**
+ * @brief 设置消息管理页面
+ *
+ * 创建消息管理界面，包括操作按钮、查找输入框和消息列表。
+ */
 void ReaderWindow::setupMessageWidget()
 {
     messageWidget = new QWidget(this);
@@ -1040,7 +1151,11 @@ void ReaderWindow::setupMessageWidget()
     mainLayout->addWidget(messageTable);
 }
 
-// 设置个人信息页面
+/**
+ * @brief 设置个人信息页面
+ *
+ * 创建个人信息展示界面，显示读者的基本信息。
+ */
 void ReaderWindow::setupInfoWidget()
 {
     infoWidget = new QWidget(this);
@@ -1065,14 +1180,20 @@ void ReaderWindow::setupInfoWidget()
     mainLayout->addWidget(infoListWidget);
 }
 
-// 切换到个人信息页面
+/**
+ * @brief 切换到个人信息页面
+ */
 void ReaderWindow::switchToInfo()
 {
     updateInfoList();
     stackedWidget->setCurrentWidget(infoWidget);
 }
 
-// 更新个人信息列表
+/**
+ * @brief 更新个人信息列表
+ *
+ * 更新显示当前读者的个人信息，包括ID、用户名、手机号、邮箱和信用分。
+ */
 void ReaderWindow::updateInfoList()
 {
     ::Reader *reader = dynamic_cast<::Reader *>(currentUser);
@@ -1095,7 +1216,12 @@ void ReaderWindow::updateInfoList()
     }
 }
 
-// 显示消息列表
+/**
+ * @brief 显示消息列表
+ * @param messages 消息列表
+ *
+ * 将消息列表显示在消息表格中，包括消息时间、消息内容和消息状态。
+ */
 void ReaderWindow::displayMessages(const std::vector<Message> &messages)
 {
     messageTable->setRowCount(messages.size());
@@ -1117,7 +1243,11 @@ void ReaderWindow::displayMessages(const std::vector<Message> &messages)
     messageTable->setColumnWidth(2, 80);
 }
 
-// 查看消息
+/**
+ * @brief 查看消息
+ *
+ * 切换到消息管理页面并显示当前读者的消息列表。
+ */
 void ReaderWindow::onCheckMessages()
 {
     Reader *reader = dynamic_cast<Reader *>(currentUser);
@@ -1130,7 +1260,11 @@ void ReaderWindow::onCheckMessages()
     displayMessages(reader->getMessages());
 }
 
-// 退出登录
+/**
+ * @brief 退出登录
+ *
+ * 弹出确认对话框，确认后发送logout信号并关闭窗口。
+ */
 void ReaderWindow::onLogout()
 {
     QMessageBox confirmBox(QMessageBox::Question, "确认退出", "确定要退出登录吗？", QMessageBox::NoButton, this);
@@ -1145,7 +1279,11 @@ void ReaderWindow::onLogout()
     }
 }
 
-// 删除消息
+/**
+ * @brief 删除消息
+ *
+ * 删除选中的消息，更新消息列表并保存到文件。
+ */
 void ReaderWindow::onDeleteMessage()
 {
     int currentRow = messageTable->currentRow();
@@ -1174,7 +1312,11 @@ void ReaderWindow::onDeleteMessage()
     }
 }
 
-// 清除所有消息
+/**
+ * @brief 清除所有消息
+ *
+ * 清除当前读者的所有消息，更新消息列表并保存到文件。
+ */
 void ReaderWindow::onClearAllMessages()
 {
     QMessageBox confirmBox(QMessageBox::Question, "确认清除", "确定要清除所有消息吗？此操作不可恢复！", QMessageBox::NoButton, this);
@@ -1194,7 +1336,11 @@ void ReaderWindow::onClearAllMessages()
     }
 }
 
-// 全部设为已读
+/**
+ * @brief 全部设为已读
+ *
+ * 将所有未读消息标记为已读，更新消息列表并保存到文件。
+ */
 void ReaderWindow::onMarkAllRead()
 {
     std::vector<Message> &messages = currentUser->getMessages();
@@ -1226,7 +1372,11 @@ void ReaderWindow::onMarkAllRead()
     }
 }
 
-// 查找消息
+/**
+ * @brief 查找消息
+ *
+ * 根据消息时间、消息内容和消息状态等条件筛选消息，并显示在消息表格中。
+ */
 void ReaderWindow::onSearchMessage()
 {
     QString time = messageTimeEdit->text().trimmed();

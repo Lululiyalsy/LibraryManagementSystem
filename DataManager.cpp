@@ -320,7 +320,13 @@ int DataManager::getUserCount() const
     return users.size();
 }
 
-// （用户管理）：初始化读取用户数据
+/**
+ * @brief 初始化读取用户数据
+ *
+ * 从users.txt文件中读取用户信息，包括ID、类型、姓名、密码、电话、邮箱、
+ * 信用分、之前信用分和限制终止日期。
+ * 对于读者类型用户，额外初始化信用分相关信息。
+ */
 void DataManager::initUser()
 {
     // 处理用户自身属性users.txt
@@ -395,7 +401,19 @@ void DataManager::initUser()
     file.close();
 }
 
-// 辅助函数：获取信用分所在的区间（0-50返回5，50-60返回4，以此类推，90-100返回0）
+/**
+ * @brief 获取信用分所在的区间
+ * @param score 信用分
+ * @return 区间编号（0-5）
+ *
+ * 信用分区间划分：
+ * - 90-100分：返回0
+ * - 80-89分：返回1
+ * - 70-79分：返回2
+ * - 60-69分：返回3
+ * - 50-59分：返回4
+ * - 0-49分：返回5
+ */
 int getCreditTier(int score)
 {
     if (score < 50)
@@ -411,7 +429,23 @@ int getCreditTier(int score)
     return 0;
 }
 
-// （用户管理）：重新计算所有读者信用分
+/**
+ * @brief 重新计算所有读者信用分
+ *
+ * 执行两步操作：
+ * 1. 处理逾期扣分：遍历所有借阅记录，对未归还且逾期的记录扣除信用分，
+ *    并发送扣分消息给读者。限制期间不扣分，但继续记录已扣分数。
+ * 2. 检查信用分变化：检查读者信用分是否从高区间跌落到低区间，
+ *    如果是则触发限制，并发送限制消息给读者。
+ *
+ * 信用分限制规则：
+ * - 90-100分：无限制
+ * - 80-89分：限制1天
+ * - 70-79分：限制3天
+ * - 60-69分：限制1周
+ * - 50-59分：限制2周
+ * - 0-49分：限制1个月
+ */
 void DataManager::recalculateCreditScores()
 {
     QDateTime now = QDateTime::currentDateTime();
@@ -555,7 +589,13 @@ void DataManager::recalculateCreditScores()
     writeMessage(); // 写入消息，包含扣分通知
 }
 
-// （用户管理）：写入用户数据到文件
+/**
+ * @brief 写入用户数据到文件
+ *
+ * 将所有用户信息写入users.txt文件，包括ID、类型、姓名、密码、电话、邮箱、
+ * 信用分、之前信用分和限制终止日期。
+ * 对于读者类型用户，额外写入信用分相关信息。
+ */
 void DataManager::writeUser()
 {
     QFile file(userFilePath);
@@ -599,8 +639,12 @@ void DataManager::writeUser()
     file.close();
 }
 
-// 修改5.16
-//  （图书管理）：初始化读取图书数据
+/**
+ * @brief 初始化读取图书数据
+ *
+ * 从books.txt文件中读取图书信息，包括ISBN、书名、作者、分类、
+ * 库存、入库时间、借阅次数、当前借出数量和预约人数。
+ */
 void DataManager::initBook()
 {
     QFile file(bookFilePath);
@@ -638,7 +682,12 @@ void DataManager::initBook()
     file.close();
 }
 
-// （图书管理）：写入图书数据到文件
+/**
+ * @brief 写入图书数据到文件
+ *
+ * 将所有图书信息写入books.txt文件，包括ISBN、书名、作者、分类、
+ * 库存、入库时间、借阅次数、当前借出数量和预约人数。
+ */
 void DataManager::writeBook()
 {
     QFile file(bookFilePath);
@@ -666,7 +715,11 @@ void DataManager::writeBook()
     file.close();
 }
 
-// （图书查询）：根据ISBN查找图书（精确匹配）
+/**
+ * @brief 根据ISBN查找图书（精确匹配）
+ * @param isbn 图书ISBN编号
+ * @return 匹配的图书指针（未找到返回nullptr）
+ */
 Book *DataManager::findBookByISBN(const QString &isbn)
 {
     for (auto &book : books)
@@ -679,7 +732,11 @@ Book *DataManager::findBookByISBN(const QString &isbn)
     return nullptr;
 }
 
-// （图书查询）：根据书名查找图书（模糊匹配）
+/**
+ * @brief 根据书名查找图书（模糊匹配）
+ * @param title 书名关键字
+ * @return 匹配的图书列表
+ */
 std::vector<Book> DataManager::findBooksByTitle(const QString &title)
 {
     std::vector<Book> results;
@@ -693,7 +750,11 @@ std::vector<Book> DataManager::findBooksByTitle(const QString &title)
     return results;
 }
 
-// （图书查询）：根据作者查找图书（模糊匹配）
+/**
+ * @brief 根据作者查找图书（模糊匹配）
+ * @param author 作者关键字
+ * @return 匹配的图书列表
+ */
 std::vector<Book> DataManager::findBooksByAuthor(const QString &author)
 {
     std::vector<Book> results;
@@ -707,7 +768,11 @@ std::vector<Book> DataManager::findBooksByAuthor(const QString &author)
     return results;
 }
 
-// （图书查询）：根据分类查找图书（模糊匹配）
+/**
+ * @brief 根据分类查找图书（模糊匹配）
+ * @param category 分类关键字
+ * @return 匹配的图书列表
+ */
 std::vector<Book> DataManager::findBooksByCategory(const QString &category)
 {
     std::vector<Book> results;
@@ -721,7 +786,17 @@ std::vector<Book> DataManager::findBooksByCategory(const QString &category)
     return results;
 }
 
-// （图书查询）：多条件搜索图书
+/**
+ * @brief 多条件搜索图书
+ * @param isbn ISBN关键字（模糊匹配）
+ * @param title 书名关键字（模糊匹配）
+ * @param author 作者关键字（模糊匹配）
+ * @param category 分类关键字（模糊匹配）
+ * @return 匹配的图书指针列表
+ *
+ * 支持按ISBN、书名、作者、分类的组合条件搜索，
+ * 所有条件都是模糊匹配，只有同时满足所有条件的图书才会被返回。
+ */
 std::vector<const Book *> DataManager::searchBooks(const QString &isbn, const QString &title,
                                                    const QString &author, const QString &category)
 {
@@ -760,8 +835,15 @@ std::vector<const Book *> DataManager::searchBooks(const QString &isbn, const QS
     return results;
 }
 
-// （图书添加）：添加图书并保存到文件
-// 返回值：0=成功新增，1=库存已增加，-1=ISBN冲突（其他信息不匹配）
+/**
+ * @brief 添加图书并保存到文件
+ * @param book 要添加的图书
+ * @return 返回值：0=成功新增，1=库存已增加，-1=ISBN冲突（其他信息不匹配）
+ *
+ * 如果ISBN已存在且其他信息（书名、作者、分类）也相同，则增加库存；
+ * 如果ISBN已存在但其他信息不匹配，则返回错误；
+ * 如果ISBN不存在，则新增图书。
+ */
 int DataManager::addBook(const Book &book)
 {
     // 先按ISBN精确查找
@@ -801,8 +883,16 @@ int DataManager::addBook(const Book &book)
     return 0; // 成功新增
 }
 
-// （图书删除）：根据ISBN删除图书并保存到文件
-// 返回值：0=成功删除记录，1=库存已减少，-1=ISBN不存在，-2=存在预约或借出无法删除
+/**
+ * @brief 根据ISBN删除图书并保存到文件
+ * @param isbn 图书ISBN编号
+ * @param decreaseStock 要减少的库存数量
+ * @return 返回值：0=成功删除记录，1=库存已减少，-1=ISBN不存在，-2=存在预约或借出无法删除
+ *
+ * 如果decreaseStock >= 当前库存，则删除整条记录；
+ * 如果decreaseStock < 当前库存，则减少库存；
+ * 如果存在预约或借出，则无法删除。
+ */
 int DataManager::deleteBook(const QString &isbn, int decreaseStock)
 {
     for (auto it = books.begin(); it != books.end(); ++it)
@@ -835,8 +925,16 @@ int DataManager::deleteBook(const QString &isbn, int decreaseStock)
     return -1; // ISBN不存在
 }
 
-// （图书修改）：根据ISBN修改图书信息并保存到文件
-// 返回值：0=成功修改，-1=原ISBN不存在，-2=存在预约或借出无法修改，-3=新ISBN已存在
+/**
+ * @brief 根据ISBN修改图书信息并保存到文件
+ * @param oldIsbn 原ISBN编号
+ * @param newBook 新的图书信息
+ * @return 返回值：0=成功修改，-1=原ISBN不存在，-2=存在预约或借出无法修改，-3=新ISBN已存在
+ *
+ * 如果存在预约或借出，则无法修改；
+ * 如果新ISBN与原ISBN不同且新ISBN已存在，则返回错误；
+ * 修改后借阅次数、当前借出、预约人数都重置为0。
+ */
 int DataManager::updateBook(const QString &oldIsbn, const Book &newBook)
 {
     for (auto it = books.begin(); it != books.end(); ++it)
@@ -875,20 +973,30 @@ int DataManager::updateBook(const QString &oldIsbn, const Book &newBook)
     return -1; // 原ISBN不存在
 }
 
-// （图书获取）：获取所有图书
+/**
+ * @brief 获取所有图书
+ * @return 图书列表引用
+ */
 std::vector<Book> &DataManager::getBooks()
 {
     return books;
 }
-// 修改结束
 
-// （图书数量）：获取图书数量
+/**
+ * @brief 获取图书数量
+ * @return 图书总数
+ */
 int DataManager::getBookCount() const
 {
     return books.size();
 }
 
-// （图书排序）：按借阅次数排序（降序）
+/**
+ * @brief 按借阅次数排序（降序）
+ * @return 排序后的图书列表
+ *
+ * 借阅次数多的图书排在前面。
+ */
 std::vector<Book> DataManager::sortBooksByBorrowCount()
 {
     std::vector<Book> sorted = books;
@@ -897,7 +1005,12 @@ std::vector<Book> DataManager::sortBooksByBorrowCount()
     return sorted;
 }
 
-// （图书排序）：按入库时间排序（降序，最新优先）
+/**
+ * @brief 按入库时间排序（降序，最新优先）
+ * @return 排序后的图书列表
+ *
+ * 最新入库的图书排在前面。
+ */
 std::vector<Book> DataManager::sortBooksByInStockTime()
 {
     std::vector<Book> sorted = books;
@@ -906,7 +1019,13 @@ std::vector<Book> DataManager::sortBooksByInStockTime()
     return sorted;
 }
 
-// （借阅记录管理）：初始化读取借阅记录数据
+/**
+ * @brief 初始化读取借阅记录数据
+ *
+ * 从borrow_records.txt文件中读取借阅记录，包括ISBN、读者ID、借阅时间、
+ * 应还时间、归还时间、归还状态、罚款金额、已支付罚款、罚款状态、
+ * 续借状态和已扣信用分数。
+ */
 void DataManager::initBorrowRecord()
 {
     QFile file(borrowRecordFilePath);
@@ -977,7 +1096,13 @@ void DataManager::initBorrowRecord()
     file.close();
 }
 
-// （借阅记录管理）：写入借阅记录数据到文件
+/**
+ * @brief 写入借阅记录数据到文件
+ *
+ * 将所有借阅记录写入borrow_records.txt文件，包括ISBN、读者ID、借阅时间、
+ * 应还时间、归还时间、归还状态、续借状态、罚款金额、已支付罚款、
+ * 罚款状态和已扣信用分数。
+ */
 void DataManager::writeBorrowRecord()
 {
     QFile file(borrowRecordFilePath);
@@ -1008,7 +1133,13 @@ void DataManager::writeBorrowRecord()
     file.close();
 }
 
-// （借阅记录管理）：添加借阅记录
+/**
+ * @brief 添加借阅记录
+ * @param record 借阅记录
+ * @return 成功返回true
+ *
+ * 添加借阅记录后，自动更新图书的当前借出数量和借阅次数。
+ */
 bool DataManager::addBorrowRecord(const BorrowRecord &record)
 {
     borrowRecords.push_back(record);
@@ -1025,7 +1156,15 @@ bool DataManager::addBorrowRecord(const BorrowRecord &record)
     return true;
 }
 
-// （借阅记录管理）：续借图书
+/**
+ * @brief 续借图书
+ * @param isbn 图书ISBN编号
+ * @param readerId 读者ID
+ * @param days 续借天数
+ * @return 成功返回true，失败返回false
+ *
+ * 找到匹配的未归还借阅记录，延长应还时间。
+ */
 bool DataManager::renewBorrowRecord(const QString &isbn, const QString &readerId, int days)
 {
     for (auto &record : borrowRecords)
@@ -1044,7 +1183,11 @@ bool DataManager::renewBorrowRecord(const QString &isbn, const QString &readerId
     return false;
 }
 
-// （借阅记录管理）：获取某读者的借阅记录
+/**
+ * @brief 获取某读者的借阅记录
+ * @param readerId 读者ID
+ * @return 该读者的所有借阅记录
+ */
 std::vector<BorrowRecord> DataManager::getBorrowRecordsByReader(const QString &readerId)
 {
     std::vector<BorrowRecord> result;
@@ -1058,7 +1201,11 @@ std::vector<BorrowRecord> DataManager::getBorrowRecordsByReader(const QString &r
     return result;
 }
 
-// （借阅记录管理）：获取读者当前借阅数量
+/**
+ * @brief 获取读者当前借阅数量
+ * @param readerId 读者ID
+ * @return 当前未归还的借阅数量
+ */
 int DataManager::getBorrowCountByReader(const QString &readerId)
 {
     int count = 0;
@@ -1072,7 +1219,11 @@ int DataManager::getBorrowCountByReader(const QString &readerId)
     return count;
 }
 
-// （借阅记录管理）：检查读者是否有逾期未还
+/**
+ * @brief 检查读者是否有逾期未还
+ * @param readerId 读者ID
+ * @return 有逾期返回true，否则返回false
+ */
 bool DataManager::hasOverdueBooks(const QString &readerId)
 {
     QDateTime now = QDateTime::currentDateTime();
@@ -1088,14 +1239,21 @@ bool DataManager::hasOverdueBooks(const QString &readerId)
     return false;
 }
 
-// （借阅记录管理）：获取所有借阅记录
+/**
+ * @brief 获取所有借阅记录
+ * @return 借阅记录列表引用
+ */
 std::vector<BorrowRecord> &DataManager::getBorrowRecords()
 {
     return borrowRecords;
 }
-// 修改结束
 
-// （预约管理）：初始化读取预约数据
+/**
+ * @brief 初始化读取预约数据
+ *
+ * 从reservations.txt文件中读取预约记录，包括ISBN、读者ID、预约时间和状态。
+ * 读取完成后，重新计算每本书的预约人数。
+ */
 void DataManager::initReservation()
 {
     // 修改5.16
@@ -1149,6 +1307,11 @@ void DataManager::initReservation()
     writeBook();
 }
 
+/**
+ * @brief 写入预约数据到文件
+ *
+ * 将所有预约记录写入reservations.txt文件，包括ISBN、读者ID、预约时间和状态。
+ */
 void DataManager::writeReservation()
 {
     QFile file(reservationFilePath);
@@ -1171,7 +1334,13 @@ void DataManager::writeReservation()
     file.close();
 }
 
-// （预约管理）：添加预约记录
+/**
+ * @brief 添加预约记录
+ * @param reservation 预约记录
+ * @return 成功返回true，已存在返回false
+ *
+ * 添加预约记录后，自动更新图书的预约人数。
+ */
 bool DataManager::addReservation(const Reservation &reservation)
 {
     if (hasReservation(reservation.getISBN(), reservation.getReaderID()))
@@ -1192,7 +1361,14 @@ bool DataManager::addReservation(const Reservation &reservation)
     return true;
 }
 
-// （预约管理）：取消预约记录（按ISBN和读者ID，直接删除记录）
+/**
+ * @brief 取消预约记录（按ISBN和读者ID，直接删除记录）
+ * @param isbn 图书ISBN编号
+ * @param readerId 读者ID
+ * @return 成功返回true，失败返回false
+ *
+ * 只能取消待审核状态的预约，取消后自动更新图书的预约人数。
+ */
 bool DataManager::cancelReservation(const QString &isbn, const QString &readerId)
 {
     for (auto it = reservations.begin(); it != reservations.end(); ++it)
@@ -1214,7 +1390,14 @@ bool DataManager::cancelReservation(const QString &isbn, const QString &readerId
     return false;
 }
 
-// （预约管理）：删除预约记录（硬删除，从容器中移除）
+/**
+ * @brief 删除预约记录（硬删除，从容器中移除）
+ * @param isbn 图书ISBN编号
+ * @param readerId 读者ID
+ * @return 成功返回true，失败返回false
+ *
+ * 删除任意状态的预约记录，删除后自动更新图书的预约人数。
+ */
 bool DataManager::removeReservation(const QString &isbn, const QString &readerId)
 {
     for (auto it = reservations.begin(); it != reservations.end(); ++it)
@@ -1236,7 +1419,11 @@ bool DataManager::removeReservation(const QString &isbn, const QString &readerId
     return false;
 }
 
-// （预约管理）：获取某图书的所有预约（按预约时间排序）
+/**
+ * @brief 获取某图书的所有预约（按预约时间排序）
+ * @param isbn 图书ISBN编号
+ * @return 该图书的待审核预约列表，按预约时间升序排列
+ */
 std::vector<Reservation> DataManager::getReservationsByISBN(const QString &isbn)
 {
     std::vector<Reservation> result;
@@ -1255,7 +1442,11 @@ std::vector<Reservation> DataManager::getReservationsByISBN(const QString &isbn)
     return result;
 }
 
-// （预约管理）：获取某读者的所有预约
+/**
+ * @brief 获取某读者的所有预约
+ * @param readerId 读者ID
+ * @return 该读者的所有预约记录
+ */
 std::vector<Reservation> DataManager::getReservationsByReader(const QString &readerId)
 {
     std::vector<Reservation> result;
@@ -1273,13 +1464,21 @@ std::vector<Reservation> DataManager::getReservationsByReader(const QString &rea
     return result;
 }
 
-// （预约管理）：获取所有预约记录
+/**
+ * @brief 获取所有预约记录
+ * @return 预约记录列表引用
+ */
 std::vector<Reservation> &DataManager::getReservations()
 {
     return reservations;
 }
 
-// （预约管理）：通知可借的预约（图书入库时）- 只通知审核成功的预约
+/**
+ * @brief 通知可借的预约（图书入库时）
+ * @param isbn 图书ISBN编号
+ *
+ * 只通知审核成功的预约，发送消息给相关读者。
+ */
 void DataManager::notifyReservations(const QString &isbn)
 {
     Book *book = findBookByISBN(isbn);
@@ -1319,12 +1518,23 @@ void DataManager::notifyReservations(const QString &isbn)
 
     writeMessage();
 }
+/**
+ * @brief 获取预约数量
+ * @return 预约记录总数
+ */
 int DataManager::getReservationCount() const
 {
     return reservations.size();
 }
 
-// （预约管理）：检查读者是否已预约某图书
+/**
+ * @brief 检查读者是否已预约某图书
+ * @param isbn 图书ISBN编号
+ * @param readerId 读者ID
+ * @return 已预约返回true，否则返回false
+ *
+ * 不包括已取消的预约。
+ */
 bool DataManager::hasReservation(const QString &isbn, const QString &readerId)
 {
     for (auto &reservation : reservations)
@@ -1339,7 +1549,12 @@ bool DataManager::hasReservation(const QString &isbn, const QString &readerId)
     return false;
 }
 
-// （消息管理）：初始化读取消息数据
+/**
+ * @brief 初始化读取消息数据
+ *
+ * 从messages.txt文件中读取消息，根据消息类型（管理员消息/读者消息）
+ * 分发给对应的用户。
+ */
 void DataManager::initMessage()
 {
     QFile msgFile(messageFilePath);
@@ -1387,7 +1602,11 @@ void DataManager::initMessage()
     }
 }
 
-// （消息管理）：写入消息数据到文件
+/**
+ * @brief 写入消息数据到文件
+ *
+ * 将所有用户的消息写入messages.txt文件。
+ */
 void DataManager::writeMessage()
 {
     QFile msgFile(messageFilePath);
@@ -1406,7 +1625,15 @@ void DataManager::writeMessage()
     }
 }
 
-// （管理员消息）：添加管理员消息
+/**
+ * @brief 添加管理员消息
+ * @param user 管理员用户对象
+ * @param readerId 读者ID
+ * @param readerName 读者姓名
+ * @param message 消息内容
+ *
+ * 创建管理员消息并添加到管理员的消息列表中。
+ */
 void DataManager::addAdminMessage(User *user, const QString &readerId, const QString &readerName, const QString &message)
 {
     if (user)
@@ -1418,7 +1645,13 @@ void DataManager::addAdminMessage(User *user, const QString &readerId, const QSt
     }
 }
 
-// （读者消息）：添加读者消息
+/**
+ * @brief 添加读者消息
+ * @param reader 读者用户对象
+ * @param message 消息内容
+ *
+ * 创建读者消息并添加到读者的消息列表中。
+ */
 void DataManager::addReaderMessage(User *reader, const QString &message)
 {
     if (reader)

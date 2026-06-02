@@ -1,3 +1,11 @@
+/**
+ * @file adminwindow.cpp
+ * @brief 管理员窗口实现文件
+ *
+ * 管理员窗口提供用户管理、图书管理、借阅管理、预约管理、统计报表和消息管理等功能。
+ * 继承自QMainWindow，使用QStackedWidget管理多个功能页面。
+ */
+
 #include "adminwindow.h"
 #include "statisticswidget.h"
 #include "DataManager.h"
@@ -26,7 +34,13 @@
 #include <QDateTime>
 #include <vector>
 
-// （构造函数）：创建管理员窗口实例，初始化窗口属性和部件
+/**
+ * @brief 构造函数
+ * @param user 当前登录的管理员用户对象
+ * @param parent 父窗口
+ *
+ * 初始化管理员窗口，设置窗口属性、工具栏和各个功能页面。
+ */
 AdminWindow::AdminWindow(::User *user, QWidget *parent)
     : QMainWindow(parent), currentUser(user), toolbar(nullptr), stackedWidget(nullptr), userWidget(nullptr), bookWidget(nullptr), borrowWidget(nullptr), reservationWidget(nullptr), userTable(nullptr), bookTable(nullptr), borrowTable(nullptr), reservationTable(nullptr), statisticsTable(nullptr), statisticsWidget(nullptr), userIdLineEdit(nullptr), userNameLineEdit(nullptr), userSearchBtn(nullptr), userAddBtn(nullptr), userDeleteBtn(nullptr), userUpdateBtn(nullptr), userClearBtn(nullptr), bookISBNLineEdit(nullptr), bookTitleLineEdit(nullptr), bookAuthorLineEdit(nullptr), bookCategoryLineEdit(nullptr), bookSearchBtn(nullptr), bookAddBtn(nullptr), bookDeleteBtn(nullptr), bookUpdateBtn(nullptr), bookClearBtn(nullptr), bookSortBtn(nullptr), bookSortByTimeBtn(nullptr), borrowISBNLineEdit(nullptr), borrowReaderIdLineEdit(nullptr), borrowSearchBtn(nullptr), borrowRenewAuditBtn(nullptr), processReservationBtn(nullptr), messageWidget(nullptr), messageTable(nullptr)
 {
@@ -51,12 +65,20 @@ AdminWindow::AdminWindow(::User *user, QWidget *parent)
     onUserManagement();
 }
 
-// （析构函数）：释放窗口资源
+/**
+ * @brief 析构函数
+ *
+ * 释放窗口资源。
+ */
 AdminWindow::~AdminWindow()
 {
 }
 
-// （初始化工具栏）：创建左侧工具栏，添加功能按钮
+/**
+ * @brief 初始化工具栏
+ *
+ * 创建左侧工具栏，添加用户管理、图书管理、借阅管理、预约管理、统计报表、消息管理和退出登录按钮。
+ */
 void AdminWindow::setupToolbar()
 {
     // （创建工具栏）：创建工具栏实例
@@ -108,20 +130,21 @@ void AdminWindow::setupToolbar()
     toolbar->addAction(logoutAct);
 }
 
-// （初始化中心部件）：创建堆叠部件，管理多个表格视图
+/**
+ * @brief 初始化中心部件
+ *
+ * 创建堆叠部件，管理用户管理、图书管理、借阅管理、预约管理、统计报表和消息管理等多个页面。
+ */
 void AdminWindow::setupCentralWidget()
 {
-    // （创建堆叠部件）：创建堆叠部件实例
     stackedWidget = new QStackedWidget(this);
-    // （设置中心部件）：将堆叠部件设置为中心部件
     setCentralWidget(stackedWidget);
 
-    // （初始化表格）：初始化各个功能表格
     setupUserTable();
     setupBookTable();
     setupBorrowTable();
     setupReservationTable();
-    setupStatisticsTable(); // 内部已经完成了 new
+    setupStatisticsTable();
     setupMessageWidget();
 
     stackedWidget->addWidget(userWidget);
@@ -132,7 +155,11 @@ void AdminWindow::setupCentralWidget()
     stackedWidget->addWidget(messageWidget);
 }
 
-// （初始化用户表格）：创建用户管理表格，设置列和属性
+/**
+ * @brief 初始化用户表格
+ *
+ * 创建用户管理界面，包括操作区和用户表格，设置列数为8（ID、类型、姓名、密码、电话、邮箱、信用分、限制终止日期）。
+ */
 void AdminWindow::setupUserTable()
 {
     // （创建用户管理容器）：创建用户管理界面的容器
@@ -203,53 +230,43 @@ void AdminWindow::setupUserTable()
     connect(userClearBtn, &QPushButton::clicked, this, &AdminWindow::onUserClear);
 }
 
-// （初始化图书表格）：创建图书管理表格，设置列和属性
+/**
+ * @brief 初始化图书表格
+ *
+ * 创建图书管理界面，包括操作区和图书表格，设置列数为10（ISBN、书名、作者、分类、库存、入库时间、借阅次数、当前借出、状态、预约人数）。
+ */
 void AdminWindow::setupBookTable()
 {
-    //  （创建图书管理容器）：创建图书管理界面的容器
     bookWidget = new QWidget(this);
     QVBoxLayout *bookMainLayout = new QVBoxLayout(bookWidget);
 
-    // （创建操作区容器）：创建操作区的容器
     QWidget *bookOperationWidget = new QWidget(bookWidget);
     QHBoxLayout *bookOperationLayout = new QHBoxLayout(bookOperationWidget);
 
-    // （创建ISBN输入框）：创建图书ISBN查找输入框
     bookISBNLineEdit = new QLineEdit(bookOperationWidget);
     bookISBNLineEdit->setPlaceholderText("ISBN");
     bookISBNLineEdit->setFixedWidth(120);
 
-    // （创建书名输入框）：创建图书书名查找输入框
     bookTitleLineEdit = new QLineEdit(bookOperationWidget);
     bookTitleLineEdit->setPlaceholderText("书名");
     bookTitleLineEdit->setFixedWidth(100);
 
-    // （创建作者输入框）：创建图书作者查找输入框
     bookAuthorLineEdit = new QLineEdit(bookOperationWidget);
     bookAuthorLineEdit->setPlaceholderText("作者");
     bookAuthorLineEdit->setFixedWidth(100);
 
-    // （创建分类输入框）：创建图书分类查找输入框
     bookCategoryLineEdit = new QLineEdit(bookOperationWidget);
     bookCategoryLineEdit->setPlaceholderText("分类");
     bookCategoryLineEdit->setFixedWidth(100);
 
-    // （创建按钮）：创建查找按钮
     bookSearchBtn = new QPushButton("查找", bookOperationWidget);
-    // （创建按钮）：创建增加按钮
     bookAddBtn = new QPushButton("增加", bookOperationWidget);
-    // （创建按钮）：创建删除按钮
     bookDeleteBtn = new QPushButton("删除", bookOperationWidget);
-    // （创建按钮）：创建修改按钮
     bookUpdateBtn = new QPushButton("修改", bookOperationWidget);
-    // （创建按钮）：创建清除按钮
     bookClearBtn = new QPushButton("清除所有图书", bookOperationWidget);
-    // （创建按钮）：创建排序按钮
     bookSortBtn = new QPushButton("按借阅排序", bookOperationWidget);
-    // （创建按钮）：创建按时间排序按钮
     bookSortByTimeBtn = new QPushButton("按入库时间排序", bookOperationWidget);
 
-    // （设置布局）：将控件添加到操作区布局
     bookOperationLayout->addWidget(bookISBNLineEdit);
     bookOperationLayout->addWidget(bookTitleLineEdit);
     bookOperationLayout->addWidget(bookAuthorLineEdit);
@@ -263,28 +280,18 @@ void AdminWindow::setupBookTable()
     bookOperationLayout->addWidget(bookSortByTimeBtn);
     bookOperationLayout->addStretch();
 
-    // （创建表格）：创建图书表格实例
     bookTable = new QTableWidget(bookWidget);
-    // （设置列数）：设置图书表格列数为10
     bookTable->setColumnCount(10);
-    // （设置表头）：设置图书表格表头
     bookTable->setHorizontalHeaderLabels({"ISBN", "书名", "作者", "分类", "库存", "入库时间", "借阅次数", "当前借出", "状态", "预约人数"});
-    // （设置列调整模式）：列自动拉伸填充
     bookTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    // （设置行调整模式）：行高根据内容自动调整
     bookTable->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
-    // （设置编辑属性）：表格只读，不可编辑
     bookTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    // （设置选择行为）：选择整行
     bookTable->setSelectionBehavior(QAbstractItemView::SelectRows);
-    // （设置选择模式）：单选模式
     bookTable->setSelectionMode(QAbstractItemView::SingleSelection);
 
-    // （设置主布局）：将操作区和表格添加到主布局
     bookMainLayout->addWidget(bookOperationWidget);
     bookMainLayout->addWidget(bookTable);
 
-    // （连接按钮信号槽）：连接图书管理按钮信号槽
     connect(bookSearchBtn, &QPushButton::clicked, this, &AdminWindow::onBookSearch);
     connect(bookAddBtn, &QPushButton::clicked, this, &AdminWindow::onBookAdd);
     connect(bookDeleteBtn, &QPushButton::clicked, this, &AdminWindow::onBookDelete);
@@ -294,7 +301,11 @@ void AdminWindow::setupBookTable()
     connect(bookSortByTimeBtn, &QPushButton::clicked, this, &AdminWindow::onBookSortByTime);
 }
 
-// （初始化借阅表格）：创建借阅管理表格，设置列和属性
+/**
+ * @brief 初始化借阅表格
+ *
+ * 创建借阅管理界面，包括操作区和借阅表格，设置列数为12（ISBN、书名、读者ID、读者姓名、借阅时间、应还时间、归还时间、状态、续借状态、罚款金额、已支付罚款、罚款状态）。
+ */
 void AdminWindow::setupBorrowTable()
 {
     // （创建借阅管理容器）：创建借阅管理界面的容器
@@ -409,27 +420,26 @@ void AdminWindow::setupBorrowTable()
     connect(borrowRenewAuditBtn, &QPushButton::clicked, this, &AdminWindow::onBorrowRenewAudit);
 }
 
-// （初始化预约表格）：创建预约管理表格，设置列和属性
+/**
+ * @brief 初始化预约表格
+ *
+ * 创建预约管理界面，包括操作区和预约表格，设置列数为4（ISBN、读者ID、预约时间、状态）。
+ */
 void AdminWindow::setupReservationTable()
 {
-    // （创建预约管理容器）：创建预约管理界面的容器
     reservationWidget = new QWidget(this);
     QVBoxLayout *reservationMainLayout = new QVBoxLayout(reservationWidget);
 
-    // （创建操作区容器）：创建操作区的容器
     QWidget *reservationOperationWidget = new QWidget(reservationWidget);
     QHBoxLayout *reservationOperationLayout = new QHBoxLayout(reservationOperationWidget);
 
-    // （创建按钮）：创建审核预约按钮
     processReservationBtn = new QPushButton("审核预约", reservationOperationWidget);
 
-    // （添加分隔线）：添加垂直分隔线
     QFrame *separator = new QFrame(reservationOperationWidget);
     separator->setFrameShape(QFrame::VLine);
     separator->setFrameShadow(QFrame::Sunken);
     reservationOperationLayout->addWidget(separator);
 
-    // （创建查询输入框）：创建预约查询输入框
     reservationISBNLineEdit = new QLineEdit(reservationOperationWidget);
     reservationISBNLineEdit->setPlaceholderText("ISBN");
     reservationISBNLineEdit->setFixedWidth(120);
@@ -448,10 +458,8 @@ void AdminWindow::setupReservationTable()
     reservationStatusCombo->addItem("审核成功");
     reservationStatusCombo->setFixedWidth(80);
 
-    // （创建按钮）：创建查询预约按钮
     QPushButton *searchReservationBtn = new QPushButton("查询预约", reservationOperationWidget);
 
-    // （设置布局）：将控件添加到操作区布局
     reservationOperationLayout->addWidget(processReservationBtn);
     reservationOperationLayout->addWidget(separator);
     reservationOperationLayout->addWidget(reservationISBNLineEdit);
@@ -461,50 +469,44 @@ void AdminWindow::setupReservationTable()
     reservationOperationLayout->addWidget(searchReservationBtn);
     reservationOperationLayout->addStretch();
 
-    // （创建表格）：创建预约表格实例
     reservationTable = new QTableWidget(reservationWidget);
-    // （设置列数）：设置预约表格列数为4（删除书名列）
     reservationTable->setColumnCount(4);
-    // （设置表头）：设置预约表格表头
     reservationTable->setHorizontalHeaderLabels({"ISBN", "读者ID", "预约时间", "状态"});
-    // （设置列调整模式）：列自动拉伸填充
     reservationTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    // （设置行调整模式）：行高根据内容自动调整
     reservationTable->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
-    // （设置编辑属性）：表格只读，不可编辑
     reservationTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    // （设置选择行为）：选择整行
     reservationTable->setSelectionBehavior(QAbstractItemView::SelectRows);
-    // （设置选择模式）：单选模式
     reservationTable->setSelectionMode(QAbstractItemView::SingleSelection);
 
-    // （设置主布局）：将操作区和表格添加到主布局
     reservationMainLayout->addWidget(reservationOperationWidget);
     reservationMainLayout->addWidget(reservationTable);
 
-    // （连接按钮信号槽）：连接预约管理按钮信号槽
     connect(processReservationBtn, &QPushButton::clicked, this, &AdminWindow::onProcessReservation);
     connect(searchReservationBtn, &QPushButton::clicked, this, &AdminWindow::onSearchReservation);
 }
 
-// （初始化统计表格）：创建统计报表表格，设置列和属性
+/**
+ * @brief 初始化统计报表
+ *
+ * 创建统计报表界面，使用StatisticsWidget组件。
+ */
 void AdminWindow::setupStatisticsTable()
 {
     statisticsWidget = new StatisticsWidget(this, currentUser);
 }
 
-// （加载用户数据）：从数据管理器加载用户数据到表格
+/**
+ * @brief 加载用户数据
+ *
+ * 从数据管理器获取所有用户数据，并显示在用户表格中。
+ */
 void AdminWindow::loadUserData()
 {
-    // （获取数据管理器）：获取数据管理器单例实例
     DataManager *dm = DataManager::getInstance();
-    // （清空表格）：清空用户表格内容
     userTable->setRowCount(0);
 
-    // （获取所有用户）：获取所有用户数据
     std::vector<::User *> users = dm->getUsers();
 
-    // （填充表格）：将用户数据填入表格
     for (::User *user : users)
     {
         int row = userTable->rowCount();
@@ -517,14 +519,13 @@ void AdminWindow::loadUserData()
         userTable->setItem(row, 4, new QTableWidgetItem(user->getPhone()));
         userTable->setItem(row, 5, new QTableWidgetItem(user->getEmail()));
 
-        if (user->getType() == 2) // 读者
+        if (user->getType() == 2)
         {
             ::Reader *reader = dynamic_cast<::Reader *>(user);
             if (reader)
             {
                 userTable->setItem(row, 6, new QTableWidgetItem(QString::number(reader->getCreditScore())));
 
-                // 显示限制终止日期
                 QDateTime banUntil = reader->getBanUntil();
                 if (banUntil.isValid())
                 {
@@ -549,7 +550,11 @@ void AdminWindow::loadUserData()
     }
 }
 
-// （加载图书数据）：从数据管理器加载图书数据到表格
+/**
+ * @brief 加载图书数据
+ *
+ * 从数据管理器获取所有图书数据，并显示在图书表格中。
+ */
 void AdminWindow::loadBookData()
 {
     DataManager *dm = DataManager::getInstance();
@@ -577,7 +582,11 @@ void AdminWindow::loadBookData()
     }
 }
 
-// （图书查找）：查找按钮点击处理
+/**
+ * @brief 图书查找
+ *
+ * 根据ISBN、书名、作者和分类条件查找图书，并显示在图书表格中。
+ */
 void AdminWindow::onBookSearch()
 {
     QString isbn = bookISBNLineEdit->text().trimmed();
@@ -593,15 +602,20 @@ void AdminWindow::onBookSearch()
     }
 }
 
-// （显示图书）：将图书数据显示到表格
+/**
+ * @brief 显示图书
+ * @param books 图书列表
+ *
+ * 将图书数据显示到图书表格中。
+ */
 void AdminWindow::displayBooks(const std::vector<const Book *> &books)
 {
     bookTable->setRowCount(0);
     for (const auto *book : books)
-    { // 改为指针遍历
+    {
         int row = bookTable->rowCount();
         bookTable->insertRow(row);
-        bookTable->setItem(row, 0, new QTableWidgetItem(book->getISBN())); // 使用 ->
+        bookTable->setItem(row, 0, new QTableWidgetItem(book->getISBN()));
         bookTable->setItem(row, 1, new QTableWidgetItem(book->getTitle()));
         bookTable->setItem(row, 2, new QTableWidgetItem(book->getAuthor()));
         bookTable->setItem(row, 3, new QTableWidgetItem(book->getCategory()));
@@ -614,7 +628,11 @@ void AdminWindow::displayBooks(const std::vector<const Book *> &books)
     }
 }
 
-// （图书增加）：增加按钮点击处理
+/**
+ * @brief 添加图书
+ *
+ * 弹出对话框输入图书信息，添加新图书或增加已有图书的库存。
+ */
 void AdminWindow::onBookAdd()
 {
     QPair<QString, bool> result = showInputDialog("增加图书", "请输入图书ISBN：", true);
@@ -806,7 +824,11 @@ void AdminWindow::onBookDelete()
     }
 }
 
-// （图书修改）：修改按钮点击处理
+/**
+ * @brief 修改图书
+ *
+ * 弹出对话框输入修改后的图书信息，修改已有图书的ISBN、书名、作者和分类。
+ */
 void AdminWindow::onBookUpdate()
 {
     QPair<QString, bool> result = showInputDialog("修改图书", "请输入要修改的图书ISBN：", true);
@@ -931,10 +953,13 @@ void AdminWindow::onBookUpdate()
     }
 }
 
-// （图书清除）：清除按钮点击处理
+/**
+ * @brief 清除图书
+ *
+ * 清除所有图书信息，需要二次确认。若存在预约或借出的图书则无法清除。
+ */
 void AdminWindow::onBookClear()
 {
-    // 检查是否有图书存在预约或借出
     DataManager *dm = DataManager::getInstance();
     std::vector<Book> &books = dm->getBooks();
     for (auto &book : books)
@@ -972,7 +997,11 @@ void AdminWindow::onBookClear()
     }
 }
 
-// （图书排序）：按借阅次数排序
+/**
+ * @brief 按借阅次数排序
+ *
+ * 将图书按借阅次数从高到低排序显示。
+ */
 void AdminWindow::onBookSort()
 {
     ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
@@ -985,14 +1014,17 @@ void AdminWindow::onBookSort()
         msgBox.addButton("确定", QMessageBox::AcceptRole);
         msgBox.exec();
 
-        // 发送消息：图书排序
         DataManager *dm = DataManager::getInstance();
         QString msgContent = QString("管理员%1对图书按借阅次数进行了排序").arg(currentUser->getName());
         dm->addAdminMessage(currentUser, currentUser->getID(), currentUser->getName(), msgContent);
     }
 }
 
-// （图书排序）：按入库时间排序
+/**
+ * @brief 按入库时间排序
+ *
+ * 将图书按入库时间排序显示。
+ */
 void AdminWindow::onBookSortByTime()
 {
     ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
@@ -1005,14 +1037,17 @@ void AdminWindow::onBookSortByTime()
         msgBox.addButton("确定", QMessageBox::AcceptRole);
         msgBox.exec();
 
-        // 发送消息：图书排序
         DataManager *dm = DataManager::getInstance();
         QString msgContent = QString("管理员%1对图书按入库时间进行了排序").arg(currentUser->getName());
         dm->addAdminMessage(currentUser, currentUser->getID(), currentUser->getName(), msgContent);
     }
 }
 
-// （加载借阅数据）：从数据管理器加载借阅数据到表格
+/**
+ * @brief 加载借阅数据
+ *
+ * 从数据管理器获取所有借阅记录，并显示在借阅表格中。
+ */
 void AdminWindow::loadBorrowData()
 {
     ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
@@ -1023,7 +1058,11 @@ void AdminWindow::loadBorrowData()
     }
 }
 
-// （借阅查找）：查找按钮点击处理
+/**
+ * @brief 借阅查找
+ *
+ * 根据ISBN、书名、读者ID、借阅时间、应还时间、归还时间、状态、罚款状态和续借状态等条件查找借阅记录。
+ */
 void AdminWindow::onBorrowSearch()
 {
     QString isbn = borrowISBNLineEdit->text().trimmed();
@@ -1118,7 +1157,12 @@ void AdminWindow::onBorrowSearch()
     }
 }
 
-// （显示借阅记录）：将借阅记录显示到表格
+/**
+ * @brief 显示借阅记录
+ * @param records 借阅记录列表
+ *
+ * 将借阅记录显示到借阅表格中，包括ISBN、书名、读者ID、读者姓名、借阅时间、应还时间、归还时间、状态、续借状态、罚款金额、已支付罚款和罚款状态。
+ */
 void AdminWindow::displayBorrowRecords(const std::vector<BorrowRecord> &records)
 {
     borrowTable->setRowCount(0);
@@ -1202,8 +1246,11 @@ void AdminWindow::displayBorrowRecords(const std::vector<BorrowRecord> &records)
     }
 }
 
-// （借阅添加）：借书按钮点击处理
-// （续借审核）：续借审核按钮点击处理
+/**
+ * @brief 续借审核
+ *
+ * 对选中的借阅记录进行续借审核，可以通过或拒绝续借申请。
+ */
 void AdminWindow::onBorrowRenewAudit()
 {
     int currentRow = borrowTable->currentRow();
@@ -1282,18 +1329,18 @@ void AdminWindow::onBorrowRenewAudit()
     }
 }
 
-// （加载预约数据）：从数据管理器加载预约数据到表格
+/**
+ * @brief 加载预约数据
+ *
+ * 从数据管理器获取所有预约数据，并显示在预约表格中。
+ */
 void AdminWindow::loadReservationData()
 {
-    // （获取数据管理器）：获取数据管理器单例实例
     DataManager *dm = DataManager::getInstance();
-    // （清空表格）：清空预约表格内容
     reservationTable->setRowCount(0);
 
-    // （获取所有预约）：获取所有预约数据
     std::vector<Reservation> reservations = dm->getReservations();
 
-    // （填充表格）：将预约数据填入表格
     for (const auto &reservation : reservations)
     {
         int row = reservationTable->rowCount();
@@ -1306,7 +1353,11 @@ void AdminWindow::loadReservationData()
     }
 }
 
-// （加载统计数据）：从数据管理器加载统计数据到表格
+/**
+ * @brief 加载统计数据
+ *
+ * 更新统计报表界面的统计数据。
+ */
 void AdminWindow::loadStatisticsData()
 {
     if (statisticsWidget)
@@ -1315,41 +1366,43 @@ void AdminWindow::loadStatisticsData()
     }
 }
 
-// （用户查找）：查找按钮点击处理
+/**
+ * @brief 用户查找
+ *
+ * 根据用户ID和姓名查找用户，并显示在用户表格中。
+ */
 void AdminWindow::onUserSearch()
 {
-    // （获取输入）：获取用户输入的ID和姓名
     QString id = userIdLineEdit->text().trimmed();
     QString name = userNameLineEdit->text().trimmed();
 
-    // （调用后端）：调用Admin的查找方法
     ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
     if (admin)
     {
         std::vector<::User *> results;
         if (id.isEmpty() && name.isEmpty())
         {
-            // 查找全部用户
             results = admin->findAllUser();
         }
         else
         {
-            // 多关键字查找
             results = admin->findUser(id, name);
         }
 
-        // （显示结果）：将结果显示到表格
         displayUsers(results);
     }
 }
 
-// （显示用户）：将用户数据显示到表格
+/**
+ * @brief 显示用户
+ * @param users 用户列表
+ *
+ * 将用户数据显示到用户表格中。
+ */
 void AdminWindow::displayUsers(const std::vector<::User *> &users)
 {
-    // （清空表格）：清空现有表格内容
     userTable->setRowCount(0);
 
-    // （填充表格）：将用户数据填入表格
     for (::User *user : users)
     {
         int row = userTable->rowCount();
@@ -1362,14 +1415,13 @@ void AdminWindow::displayUsers(const std::vector<::User *> &users)
         userTable->setItem(row, 4, new QTableWidgetItem(user->getPhone()));
         userTable->setItem(row, 5, new QTableWidgetItem(user->getEmail()));
 
-        if (user->getType() == 2) // 读者
+        if (user->getType() == 2)
         {
             ::Reader *reader = dynamic_cast<::Reader *>(user);
             if (reader)
             {
                 userTable->setItem(row, 6, new QTableWidgetItem(QString::number(reader->getCreditScore())));
 
-                // 显示限制终止日期
                 QDateTime banUntil = reader->getBanUntil();
                 if (banUntil.isValid())
                 {
@@ -1394,8 +1446,13 @@ void AdminWindow::displayUsers(const std::vector<::User *> &users)
     }
 }
 
-// （中文输入对话框）：显示带中文按钮的输入对话框
-//  返回 QPair：first=输入内容，second=true表示取消，false表示确定
+/**
+ * @brief 显示输入对话框
+ * @param title 对话框标题
+ * @param label 输入框标签
+ * @param required 是否必填
+ * @return 输入的文本和是否取消（true表示取消）
+ */
 QPair<QString, bool> AdminWindow::showInputDialog(const QString &title, const QString &label, bool required)
 {
     QDialog dialog(this);
@@ -1440,10 +1497,13 @@ QPair<QString, bool> AdminWindow::showInputDialog(const QString &title, const QS
     }
 }
 
-// （用户增加）：增加按钮点击处理
+/**
+ * @brief 添加用户
+ *
+ * 弹出对话框输入用户信息（ID、类型、姓名、密码、电话、邮箱），添加新用户。
+ */
 void AdminWindow::onUserAdd()
 {
-    // （依次输入信息）：逐个弹出输入框让用户输入用户信息
     QPair<QString, bool> result = showInputDialog("增加用户", "请输入用户ID：", true);
     if (result.second)
     {
@@ -1454,7 +1514,6 @@ void AdminWindow::onUserAdd()
     }
     QString id = result.first;
 
-    // 检查用户ID是否已存在
     DataManager *dm = DataManager::getInstance();
     if (dm->findUserById(id))
     {
@@ -1471,7 +1530,6 @@ void AdminWindow::onUserAdd()
         return;
     }
     QString type = result.first;
-    // 检查用户类型是否合法
     if (type != "1" && type != "2")
     {
         QMessageBox msgBox(QMessageBox::Warning, "错误", "用户类型非法！请输入1（管理员）或2（读者）", QMessageBox::NoButton, this);
@@ -1606,10 +1664,13 @@ void AdminWindow::onUserDelete()
     }
 }
 
-// （用户修改）：修改按钮点击处理
+/**
+ * @brief 修改用户
+ *
+ * 弹出对话框输入要修改的用户ID和姓名，然后输入修改后的用户信息（ID、类型、姓名、密码、电话、邮箱）。
+ */
 void AdminWindow::onUserUpdate()
 {
-    // （依次输入信息）：先输入要修改的用户ID和姓名
     QPair<QString, bool> result = showInputDialog("修改用户", "请输入要修改的用户ID：", true);
     if (result.second)
     {
@@ -1630,7 +1691,6 @@ void AdminWindow::onUserUpdate()
     }
     QString name = result.first;
 
-    // （检查原用户是否存在）：提前验证要修改的用户是否存在
     ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
     if (admin)
     {
@@ -1644,7 +1704,6 @@ void AdminWindow::onUserUpdate()
         }
     }
 
-    // （依次输入修改后的信息）：逐个输入修改后的用户信息
     result = showInputDialog("修改用户", "请输入修改后的用户ID：", true);
     if (result.second)
     {
@@ -1664,7 +1723,6 @@ void AdminWindow::onUserUpdate()
         return;
     }
     QString newType = result.first;
-    // 检查用户类型是否合法
     if (newType != "1" && newType != "2")
     {
         QMessageBox msgBox(QMessageBox::Warning, "错误", "用户类型非法！请输入1（管理员）或2（读者）", QMessageBox::NoButton, this);
@@ -1797,50 +1855,66 @@ void AdminWindow::onUserClear()
     }
 }
 
-// （用户管理）：用户管理按钮点击处理，切换到用户管理表格
+/**
+ * @brief 切换到用户管理页面
+ *
+ * 加载用户数据并切换到用户管理表格视图。
+ */
 void AdminWindow::onUserManagement()
 {
-    // （加载数据）：加载用户数据
     loadUserData();
-    // （切换视图）：切换到用户管理表格视图
     stackedWidget->setCurrentIndex(0);
 }
 
-// （图书管理）：图书管理按钮点击处理，切换到图书管理表格
+/**
+ * @brief 切换到图书管理页面
+ *
+ * 加载图书数据并切换到图书管理表格视图。
+ */
 void AdminWindow::onBookManagement()
 {
-    // （加载数据）：加载图书数据
     loadBookData();
-    // （切换视图）：切换到图书管理表格视图
     stackedWidget->setCurrentIndex(1);
 }
 
-// （借阅管理）：借阅管理按钮点击处理，切换到借阅管理表格
+/**
+ * @brief 切换到借阅管理页面
+ *
+ * 加载借阅数据并切换到借阅管理表格视图。
+ */
 void AdminWindow::onBorrowManagement()
 {
-    // （加载数据）：加载借阅数据
     loadBorrowData();
-    // （切换视图）：切换到借阅管理表格视图
     stackedWidget->setCurrentIndex(2);
 }
 
-// （预约管理）：预约管理按钮点击处理，切换到预约管理表格
+/**
+ * @brief 切换到预约管理页面
+ *
+ * 加载预约数据并切换到预约管理表格视图。
+ */
 void AdminWindow::onReservationManagement()
 {
-    // （加载数据）：加载预约数据
     loadReservationData();
-    // （切换视图）：切换到预约管理表格视图
     stackedWidget->setCurrentIndex(3);
 }
 
-// （统计报表）：统计报表按钮点击处理，切换到统计报表表格
+/**
+ * @brief 切换到统计报表页面
+ *
+ * 加载统计数据并切换到统计报表视图。
+ */
 void AdminWindow::onStatistics()
 {
     loadStatisticsData();
     stackedWidget->setCurrentIndex(4);
 }
 
-// （审核预约）：审核预约按钮点击处理
+/**
+ * @brief 审核预约
+ *
+ * 对选中的预约记录进行审核，可以选择审核成功或失败。
+ */
 void AdminWindow::onProcessReservation()
 {
     // （获取选中行）：获取当前选中的预约行
@@ -1903,8 +1977,11 @@ void AdminWindow::onProcessReservation()
     }
 }
 
-// （删除预约）：删除预约按钮点击处理
-// （查询预约）：查询预约按钮点击处理
+/**
+ * @brief 查询预约
+ *
+ * 根据ISBN、读者ID、预约时间和状态等条件筛选预约记录，并显示在预约表格中。
+ */
 void AdminWindow::onSearchReservation()
 {
     DataManager *dm = DataManager::getInstance();
@@ -1961,7 +2038,11 @@ void AdminWindow::onSearchReservation()
     }
 }
 
-// （消息管理）：初始化消息表格
+/**
+ * @brief 设置消息管理页面
+ *
+ * 创建消息管理界面，包括操作按钮、查找输入框和消息列表。
+ */
 void AdminWindow::setupMessageWidget()
 {
     messageWidget = new QWidget(this);
@@ -2041,7 +2122,12 @@ void AdminWindow::setupMessageWidget()
     messageWidget->setLayout(mainLayout);
 }
 
-// （显示消息）：显示消息到消息表格
+/**
+ * @brief 显示消息列表
+ * @param messages 消息列表
+ *
+ * 将消息列表显示到消息表格中。
+ */
 void AdminWindow::displayMessages(const std::vector<Message> &messages)
 {
     messageTable->setRowCount(messages.size());
@@ -2057,7 +2143,11 @@ void AdminWindow::displayMessages(const std::vector<Message> &messages)
     }
 }
 
-// （消息管理）：消息按钮点击处理
+/**
+ * @brief 切换到消息管理页面
+ *
+ * 切换到消息管理视图并加载当前管理员的消息列表。
+ */
 void AdminWindow::onMessage()
 {
     ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
@@ -2070,7 +2160,11 @@ void AdminWindow::onMessage()
     displayMessages(admin->getMessages());
 }
 
-// （退出登录）：退出按钮点击处理
+/**
+ * @brief 退出登录
+ *
+ * 弹出确认对话框，确认后退出登录并发出logout信号。
+ */
 void AdminWindow::onLogout()
 {
     QMessageBox confirmBox(QMessageBox::Question, "确认退出", "确定要退出登录吗？", QMessageBox::NoButton, this);
@@ -2085,7 +2179,11 @@ void AdminWindow::onLogout()
     }
 }
 
-// （删除消息）：删除选中消息
+/**
+ * @brief 删除选中消息
+ *
+ * 删除当前选中的消息。
+ */
 void AdminWindow::onDeleteMessage()
 {
     ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
@@ -2120,7 +2218,11 @@ void AdminWindow::onDeleteMessage()
     }
 }
 
-// （清除所有消息）：清除所有消息
+/**
+ * @brief 清除所有消息
+ *
+ * 清除当前管理员的所有消息。
+ */
 void AdminWindow::onClearAllMessages()
 {
     ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
@@ -2146,7 +2248,11 @@ void AdminWindow::onClearAllMessages()
     }
 }
 
-// （全部设为已读）：将所有未读消息设为已读
+/**
+ * @brief 全部设为已读
+ *
+ * 将当前管理员的所有未读消息标记为已读。
+ */
 void AdminWindow::onMarkAllRead()
 {
     ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
@@ -2184,7 +2290,11 @@ void AdminWindow::onMarkAllRead()
     }
 }
 
-// （查找消息）：查找消息
+/**
+ * @brief 查找消息
+ *
+ * 根据读者ID、读者名、消息时间、消息内容和消息状态等条件筛选消息。
+ */
 void AdminWindow::onSearchMessage()
 {
     ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
@@ -2202,7 +2312,6 @@ void AdminWindow::onSearchMessage()
     std::vector<Message> allMessages = admin->getMessages();
     std::vector<Message> filteredMessages;
 
-    // 如果所有条件都为空，显示全部消息
     if (readerId.isEmpty() && readerName.isEmpty() && time.isEmpty() && content.isEmpty() && status.isEmpty())
     {
         displayMessages(allMessages);
@@ -2214,17 +2323,14 @@ void AdminWindow::onSearchMessage()
         std::vector<QString> fields = msg.getAdminDisplayFields();
         bool match = true;
 
-        // 读者ID匹配
         if (!readerId.isEmpty() && !fields[0].contains(readerId, Qt::CaseInsensitive))
         {
             match = false;
         }
-        // 读者名匹配
         if (match && !readerName.isEmpty() && !fields[1].contains(readerName, Qt::CaseInsensitive))
         {
             match = false;
         }
-        // 消息时间匹配
         if (match && !time.isEmpty() && !fields[2].contains(time, Qt::CaseInsensitive))
         {
             match = false;
