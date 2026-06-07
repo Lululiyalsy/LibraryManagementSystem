@@ -52,6 +52,11 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         statisticswidget.h statisticswidget.cpp
         message.h message.cpp
 
+        BorrowPolicy.h BorrowPolicy.cpp
+        StudentReader.h StudentReader.cpp
+        TeacherReader.h TeacherReader.cpp
+        ExternalReader.h ExternalReader.cpp
+
 
 
 

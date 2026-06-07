@@ -8,6 +8,10 @@
 
 #include "readerwindow.h"
 #include "Reader.h"
+#include "StudentReader.h"
+#include "TeacherReader.h"
+#include "ExternalReader.h"
+#include "BorrowPolicy.h"
 #include "DataManager.h"
 #include <QIcon>
 #include <QDialog>
@@ -564,6 +568,10 @@ void ReaderWindow::onBookReserve()
         {
             QMessageBox::warning(this, "失败", "您因信用分下降被限制操作，暂时无法预约。");
         }
+        else if (result == Reader::ReserveResult::DEPOSIT_REQUIRED)
+        {
+            QMessageBox::warning(this, "失败", "预约失败！您尚未缴纳押金，请先在个人信息页面缴纳押金。");
+        }
     }
 }
 
@@ -707,8 +715,12 @@ void ReaderWindow::onBorrowBook()
             QMessageBox::warning(this, "失败", "借书失败！您有逾期未还图书，请先归还。");
             break;
         case Reader::BorrowResult::EXCEED_LIMIT:
-            QMessageBox::warning(this, "失败", "借书失败！您已达到最大借阅数量（10本）。");
+        {
+            // （显示策略限制）：从借阅策略获取最大借阅数量
+            int maxBooks = reader->getPolicy() ? reader->getPolicy()->getMaxBooks() : reader->getMaxBooks();
+            QMessageBox::warning(this, "失败", QString("借书失败！您已达到最大借阅数量（%1本）。").arg(maxBooks));
             break;
+        }
         case Reader::BorrowResult::ALREADY_BORROWED:
             QMessageBox::warning(this, "失败", "借书失败！您已借阅该图书且尚未归还，不能重复借阅。");
             break;
@@ -717,6 +729,9 @@ void ReaderWindow::onBorrowBook()
             break;
         case Reader::BorrowResult::LOW_CREDIT:
             QMessageBox::warning(this, "失败", "您因信用分下降被限制操作，暂时无法借书。");
+            break;
+        case Reader::BorrowResult::DEPOSIT_REQUIRED:
+            QMessageBox::warning(this, "失败", "借书失败！您尚未缴纳押金，请先在个人信息页面缴纳押金。");
             break;
         }
     }
@@ -789,8 +804,12 @@ void ReaderWindow::onRenewBook()
             QMessageBox::warning(this, "失败", "续借失败！该图书已逾期，不能续借。");
             break;
         case Reader::RenewResult::EXCEED_LIMIT:
-            QMessageBox::warning(this, "失败", "续借失败！续借后借期不得超过90天。");
+        {
+            // （显示续借限制）：续借后借期不得超过策略规定的最大天数
+            int maxRenewTimes = reader->getPolicy() ? reader->getPolicy()->getMaxRenewTimes() : 1;
+            QMessageBox::warning(this, "失败", QString("续借失败！续借次数已达上限（最多续借%1次）。").arg(maxRenewTimes));
             break;
+        }
         case Reader::RenewResult::LOW_CREDIT:
             QMessageBox::warning(this, "失败", "您因信用分下降被限制操作，暂时无法续借。");
             break;
@@ -1043,6 +1062,82 @@ void ReaderWindow::switchToMyReservation()
 }
 
 /**
+ * @brief 缴纳押金按钮点击槽函数
+ *
+ * 校外读者缴纳押金，缴纳后可使用借阅和预约功能。
+ */
+void ReaderWindow::onPayDeposit()
+{
+    ::ExternalReader *extReader = dynamic_cast<::ExternalReader *>(currentUser);
+    if (!extReader)
+        return;
+
+    if (extReader->isDepositPaid())
+    {
+        QMessageBox::information(this, "提示", "您已缴纳押金，无需重复缴纳。");
+        return;
+    }
+
+    double depositAmount = extReader->getPolicy() ? extReader->getPolicy()->getDeposit() : 200.0;
+
+    QMessageBox::StandardButton confirm = QMessageBox::question(
+        this, "确认缴纳押金",
+        QString("您需要缴纳押金 %1 元，缴纳后可使用借阅和预约功能。是否确认缴纳？").arg(depositAmount),
+        QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
+
+    if (confirm == QMessageBox::Yes)
+    {
+        if (extReader->payDeposit())
+        {
+            QMessageBox::information(this, "成功", QString("押金缴纳成功！您已缴纳 %1 元押金，现在可以使用借阅和预约功能。").arg(depositAmount));
+            updateInfoList();
+        }
+        else
+        {
+            QMessageBox::warning(this, "失败", "押金缴纳失败，请稍后重试。");
+        }
+    }
+}
+
+/**
+ * @brief 退还押金按钮点击槽函数
+ *
+ * 校外读者申请退还押金，需确保无未归还图书和未结清罚款。
+ */
+void ReaderWindow::onRefundDeposit()
+{
+    ::ExternalReader *extReader = dynamic_cast<::ExternalReader *>(currentUser);
+    if (!extReader)
+        return;
+
+    if (!extReader->isDepositPaid())
+    {
+        QMessageBox::information(this, "提示", "您尚未缴纳押金，无法退还。");
+        return;
+    }
+
+    double depositAmount = extReader->getPolicy() ? extReader->getPolicy()->getDeposit() : 200.0;
+
+    QMessageBox::StandardButton confirm = QMessageBox::question(
+        this, "确认退还押金",
+        QString("确认退还押金 %1 元？退还后您将无法借阅和预约图书。").arg(depositAmount),
+        QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
+
+    if (confirm == QMessageBox::Yes)
+    {
+        if (extReader->refundDeposit())
+        {
+            QMessageBox::information(this, "成功", QString("押金 %1 元已退还，感谢使用。").arg(depositAmount));
+            updateInfoList();
+        }
+        else
+        {
+            QMessageBox::warning(this, "失败", "押金退还失败！请确保已归还所有图书且无未结清罚款。");
+        }
+    }
+}
+
+/**
  * @brief 显示输入对话框
  * @param title 对话框标题
  * @param label 输入框标签
@@ -1178,6 +1273,35 @@ void ReaderWindow::setupInfoWidget()
 
     mainLayout->addWidget(titleLabel);
     mainLayout->addWidget(infoListWidget);
+
+    // （押金按钮）：校外读者显示缴纳/退还押金按钮
+    ::Reader *reader = dynamic_cast<::Reader *>(currentUser);
+    ::ExternalReader *extReader = dynamic_cast<::ExternalReader *>(reader);
+    if (extReader)
+    {
+        QHBoxLayout *depositLayout = new QHBoxLayout();
+
+        payDepositBtn = new QPushButton("缴纳押金", this);
+        payDepositBtn->setStyleSheet("QPushButton { padding: 8px 16px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; font-size: 14px; }"
+                                     "QPushButton:hover { background-color: #45a049; }");
+
+        refundDepositBtn = new QPushButton("退还押金", this);
+        refundDepositBtn->setStyleSheet("QPushButton { padding: 8px 16px; background-color: #ff9800; color: white; border: none; border-radius: 4px; font-size: 14px; }"
+                                        "QPushButton:hover { background-color: #e68a00; }");
+
+        depositLayout->addWidget(payDepositBtn);
+        depositLayout->addWidget(refundDepositBtn);
+        depositLayout->addStretch();
+        mainLayout->addLayout(depositLayout);
+
+        connect(payDepositBtn, &QPushButton::clicked, this, &ReaderWindow::onPayDeposit);
+        connect(refundDepositBtn, &QPushButton::clicked, this, &ReaderWindow::onRefundDeposit);
+    }
+    else
+    {
+        payDepositBtn = nullptr;
+        refundDepositBtn = nullptr;
+    }
 }
 
 /**
@@ -1192,7 +1316,8 @@ void ReaderWindow::switchToInfo()
 /**
  * @brief 更新个人信息列表
  *
- * 更新显示当前读者的个人信息，包括ID、用户名、手机号、邮箱和信用分。
+ * 更新显示当前读者的个人信息，包括ID、用户名、角色、手机号、邮箱、
+ * 信用分和借阅策略信息（最大借阅数、借阅天数、续借天数、罚款标准等）。
  */
 void ReaderWindow::updateInfoList()
 {
@@ -1204,9 +1329,34 @@ void ReaderWindow::updateInfoList()
 
     infoListWidget->addItem(QString("ID：%1").arg(reader->getID()));
     infoListWidget->addItem(QString("用户名：%1").arg(reader->getName()));
+    infoListWidget->addItem(QString("角色：%1").arg(reader->getRoleString()));
     infoListWidget->addItem(QString("手机号：%1").arg(reader->getPhone()));
     infoListWidget->addItem(QString("邮箱：%1").arg(reader->getEmail()));
     infoListWidget->addItem(QString("信用分：%1").arg(reader->getCreditScore()));
+
+    // （显示策略信息）：根据借阅策略显示详细的借阅规则
+    BorrowPolicy *policy = reader->getPolicy();
+    if (policy)
+    {
+        infoListWidget->addItem("─── 借阅策略 ───");
+        infoListWidget->addItem(QString("  最大借阅数：%1本").arg(policy->getMaxBooks()));
+        infoListWidget->addItem(QString("  借阅天数：%1天").arg(policy->getBorrowDays()));
+        infoListWidget->addItem(QString("  续借延长：%1天").arg(policy->getRenewDays()));
+        infoListWidget->addItem(QString("  最大续借次数：%1次").arg(policy->getMaxRenewTimes()));
+        infoListWidget->addItem(QString("  逾期罚款：%1元/天").arg(policy->getFinePerDay()));
+        infoListWidget->addItem(QString("  是否允许预约：%1").arg(policy->canReserve() ? "是" : "否"));
+        if (policy->canReserve())
+        {
+            infoListWidget->addItem(QString("  最大预约数：%1本").arg(policy->getMaxReservations()));
+        }
+        if (policy->getDeposit() > 0)
+        {
+            // （显示押金状态）：校外读者显示押金缴纳状态
+            ::ExternalReader *extReader = dynamic_cast<::ExternalReader *>(reader);
+            QString depositStatus = (extReader && extReader->isDepositPaid()) ? "已缴纳" : "未缴纳";
+            infoListWidget->addItem(QString("  押金：%1元（%2）").arg(policy->getDeposit()).arg(depositStatus));
+        }
+    }
 
     for (int i = 0; i < infoListWidget->count(); ++i)
     {

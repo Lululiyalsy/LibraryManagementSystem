@@ -8,6 +8,10 @@
 #include "logindialog.h"
 #include "ui_logindialog.h"
 #include "DataManager.h"
+#include "Reader.h"
+#include "StudentReader.h"
+#include "TeacherReader.h"
+#include "ExternalReader.h"
 #include <QString>
 #include <QIcon>
 #include <QMessageBox>
@@ -236,8 +240,35 @@ void LoginDialog::on_commitBtn_clicked()
     // 保存登录成功的用户对象
     loggedInUser = currentUser;
 
-    // 显示登录成功信息
-    QMessageBox::information(this, "提示", "登录成功！");
+    // （显示登录成功信息）：根据用户类型和角色显示详细信息
+    QString welcomeMsg;
+    if (currentUser->getType() == 2)
+    {
+        ::Reader *reader = dynamic_cast<::Reader *>(currentUser);
+        if (reader)
+        {
+            welcomeMsg = QString("登录成功！欢迎，%1 %2！").arg(reader->getRoleString()).arg(reader->getName());
+        }
+        else
+        {
+            welcomeMsg = "登录成功！";
+        }
+    }
+    else
+    {
+        welcomeMsg = QString("登录成功！欢迎，管理员 %1！").arg(currentUser->getName());
+    }
+    QMessageBox::information(this, "提示", welcomeMsg);
+
+    // （校外读者押金提醒）：校外读者未缴纳押金时提醒
+    if (currentUser->getType() == 2)
+    {
+        ::ExternalReader *extReader = dynamic_cast<::ExternalReader *>(currentUser);
+        if (extReader && !extReader->isDepositPaid())
+        {
+            QMessageBox::information(this, "提醒", "您尚未缴纳押金，部分功能可能受限。请及时缴纳押金以使用完整服务。");
+        }
+    }
     
     // 关闭对话框并返回 Accepted
     accept();

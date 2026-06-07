@@ -13,6 +13,7 @@
 #include "Book.h"
 #include "Reservation.h"
 #include "BorrowRecord.h"
+#include "BorrowPolicy.h"
 #include <QString>
 #include <QDateTime>
 #include <vector>
@@ -40,8 +41,10 @@ public:
     /**
      * @brief 获取用户身份标识（实现User的纯虚函数）
      * @return 返回"读者"
+     *
+     * 子类可覆盖此方法返回更具体的身份标识，如"学生读者"、"教师读者"等。
      */
-    QString typeToIdentity() override;
+    virtual QString typeToIdentity();
 
     /**
      * @brief 生成验证码（实现User的纯虚函数）
@@ -99,6 +102,45 @@ public:
      */
     void setBanUntil(QDateTime time);
 
+    // ========== 角色和策略管理 ==========
+
+    /**
+     * @enum Role
+     * @brief 读者角色枚举
+     */
+    enum class Role
+    {
+        STUDENT = 1, ///< 学生读者
+        TEACHER = 2, ///< 教师读者
+        EXTERNAL = 3 ///< 外部读者
+    };
+
+    /**
+     * @brief 获取读者角色
+     * @return 读者角色
+     */
+    Role getRole() const;
+
+    /**
+     * @brief 获取读者角色字符串描述
+     * @return 角色中文名称（"学生读者"/"教师读者"/"外部读者"/"普通读者"）
+     */
+    QString getRoleString() const;
+
+    /**
+     * @brief 设置借阅策略
+     * @param p 借阅策略指针（Reader对象获取所有权）
+     *
+     * 设置策略后会自动更新maxBooks为策略中配置的值。
+     */
+    void setPolicy(BorrowPolicy *p);
+
+    /**
+     * @brief 获取当前借阅策略
+     * @return 借阅策略指针（可能为nullptr）
+     */
+    BorrowPolicy *getPolicy() const;
+
     // ========== 枚举类型定义 ==========
 
     /**
@@ -107,11 +149,12 @@ public:
      */
     enum class ReserveResult
     {
-        SUCCESS,        ///< 预约成功
-        BOOK_NOT_FOUND, ///< 图书不存在
-        ALREADY_EXISTS, ///< 已预约或已借阅该图书
-        EXCEED_LIMIT,   ///< 预约人数已达上限
-        LOW_CREDIT      ///< 信用分不足，被限制操作
+        SUCCESS,          ///< 预约成功
+        BOOK_NOT_FOUND,   ///< 图书不存在
+        ALREADY_EXISTS,   ///< 已预约或已借阅该图书
+        EXCEED_LIMIT,     ///< 预约人数已达上限
+        LOW_CREDIT,       ///< 信用分不足，被限制操作
+        DEPOSIT_REQUIRED  ///< 需要缴纳押金才能预约（校外读者）
     };
 
     /**
@@ -127,7 +170,8 @@ public:
         EXCEED_LIMIT,         ///< 已达最大借阅数量
         ALREADY_BORROWED,     ///< 已借阅该图书且未归还
         NO_VALID_RESERVATION, ///< 未预约成功
-        LOW_CREDIT            ///< 信用分不足，被限制操作
+        LOW_CREDIT,           ///< 信用分不足，被限制操作
+        DEPOSIT_REQUIRED      ///< 需要缴纳押金（校外读者）
     };
 
     /**
@@ -266,6 +310,8 @@ public:
     int creditScore;     ///< 当前信用分（默认100分）
     int prevCreditScore; ///< 之前的信用分（用于判断是否下跌）
     QDateTime banUntil;  ///< 限制到期日（无效表示无限制）
+    Role role;           ///< 读者角色（默认STUDENT）
+    BorrowPolicy *policy;///< 借阅策略指针（由子类注入，Reader拥有所有权）
 };
 
 #endif // READER_H

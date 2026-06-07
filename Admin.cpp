@@ -9,6 +9,9 @@
 #include "Admin.h"
 #include "DataManager.h"
 #include "Reader.h"
+#include "StudentReader.h"
+#include "TeacherReader.h"
+#include "ExternalReader.h"
 #include "Book.h"
 #include <QRandomGenerator>
 #include <QFile>
@@ -68,9 +71,17 @@ QString Admin::generateVerificationCode()
  * @param password 用户密码
  * @param phone 联系电话
  * @param email 电子邮箱
+ * @param role 读者角色（1=学生，2=教师，3=校外人员，默认1；管理员忽略此参数）
+ *
+ * 根据用户类型和角色创建对应的用户子类：
+ * - 管理员(type=1)：创建Admin对象
+ * - 学生读者(type=2,role=1)：创建StudentReader对象
+ * - 教师读者(type=2,role=2)：创建TeacherReader对象
+ * - 校外读者(type=2,role=3)：创建ExternalReader对象
  */
 void Admin::registerUser(const QString &id, const QString &type, const QString &name,
-                         const QString &password, const QString &phone, const QString &email)
+                         const QString &password, const QString &phone, const QString &email,
+                         int role)
 {
     DataManager *dm = DataManager::getInstance();
 
@@ -103,7 +114,19 @@ void Admin::registerUser(const QString &id, const QString &type, const QString &
     }
     else
     {
-        user = new Reader(idRef, nameRef, passwordRef, phoneRef, emailRef);
+        // 根据角色创建对应的读者子类
+        if (role == 2)
+        {
+            user = new TeacherReader(idRef, nameRef, passwordRef, phoneRef, emailRef);
+        }
+        else if (role == 3)
+        {
+            user = new ExternalReader(idRef, nameRef, passwordRef, phoneRef, emailRef);
+        }
+        else
+        {
+            user = new StudentReader(idRef, nameRef, passwordRef, phoneRef, emailRef);
+        }
     }
 
     dm->addUser(user);
@@ -157,11 +180,20 @@ bool Admin::deleteUser(const QString &id, const QString &name)
  * @param password 新密码
  * @param phone 新联系电话
  * @param email 新电子邮箱
+ * @param role 读者角色（1=学生，2=教师，3=校外人员，默认1；管理员忽略此参数）
  * @return 修改成功返回true，失败返回false
+ *
+ * 根据用户类型和角色创建对应的用户子类：
+ * - 管理员(type=1)：创建Admin对象
+ * - 学生读者(type=2,role=1)：创建StudentReader对象
+ * - 教师读者(type=2,role=2)：创建TeacherReader对象
+ * - 校外读者(type=2,role=3)：创建ExternalReader对象
+ * 修改读者时，保留原读者的信用分和限制信息。
  */
 bool Admin::updateUser(const QString &oldId, const QString &oldName,
                        const QString &newId, const QString &newType, const QString &newName,
-                       const QString &password, const QString &phone, const QString &email)
+                       const QString &password, const QString &phone, const QString &email,
+                       int role)
 {
     DataManager *dm = DataManager::getInstance();
 
@@ -169,6 +201,22 @@ bool Admin::updateUser(const QString &oldId, const QString &oldName,
     if (oldId.isEmpty() || oldName.isEmpty())
     {
         return false;
+    }
+
+    // 保留原读者的信用分和限制信息
+    int creditScore = 100;
+    int prevCreditScore = 100;
+    QDateTime banUntil;
+    User *oldUser = dm->findUserById(oldId);
+    if (oldUser && oldUser->getType() == 2)
+    {
+        ::Reader *oldReader = dynamic_cast<::Reader *>(oldUser);
+        if (oldReader)
+        {
+            creditScore = oldReader->getCreditScore();
+            prevCreditScore = oldReader->getPrevCreditScore();
+            banUntil = oldReader->getBanUntil();
+        }
     }
 
     QString idRef = newId;
@@ -184,7 +232,31 @@ bool Admin::updateUser(const QString &oldId, const QString &oldName,
     }
     else
     {
-        newUser = new Reader(idRef, nameRef, passwordRef, phoneRef, emailRef);
+        // 根据角色创建对应的读者子类
+        if (role == 2)
+        {
+            newUser = new TeacherReader(idRef, nameRef, passwordRef, phoneRef, emailRef);
+        }
+        else if (role == 3)
+        {
+            newUser = new ExternalReader(idRef, nameRef, passwordRef, phoneRef, emailRef);
+        }
+        else
+        {
+            newUser = new StudentReader(idRef, nameRef, passwordRef, phoneRef, emailRef);
+        }
+
+        // 恢复信用分和限制信息
+        ::Reader *newReader = dynamic_cast<::Reader *>(newUser);
+        if (newReader)
+        {
+            newReader->setCreditScore(creditScore);
+            newReader->setPrevCreditScore(prevCreditScore);
+            if (banUntil.isValid())
+            {
+                newReader->setBanUntil(banUntil);
+            }
+        }
     }
 
     bool success = dm->updateUser(oldId, oldName, newUser);
@@ -420,6 +492,9 @@ void Admin::generateReport()
     int totalUsers = allUsers.size();
     int readerCount = 0;
     int adminCount = 0;
+    int studentCount = 0;   ///< 学生读者数量
+    int teacherCount = 0;   ///< 教师读者数量
+    int externalCount = 0;  ///< 校外读者数量
 
     // 计算历史借阅总次数（所有图书的借阅次数之和）
     for (auto &book : allBooks)
@@ -427,13 +502,33 @@ void Admin::generateReport()
         totalBorrowCount += book.getBorrowCount();
     }
 
-    // 计算读者和管理员数量
+    // 计算读者和管理员数量，以及各角色读者数量
     for (auto user : allUsers)
     {
         if (user->getType() == 1)
+        {
             adminCount++;
+        }
         else
+        {
             readerCount++;
+            ::Reader *reader = dynamic_cast<::Reader *>(user);
+            if (reader)
+            {
+                switch (reader->getRole())
+                {
+                case ::Reader::Role::STUDENT:
+                    studentCount++;
+                    break;
+                case ::Reader::Role::TEACHER:
+                    teacherCount++;
+                    break;
+                case ::Reader::Role::EXTERNAL:
+                    externalCount++;
+                    break;
+                }
+            }
+        }
     }
 
     // 按分类统计图书
@@ -459,7 +554,10 @@ void Admin::generateReport()
     report += "【用户统计】\n";
     report += QString("  总用户数: %1\n").arg(totalUsers);
     report += QString("  管理员数: %1\n").arg(adminCount);
-    report += QString("  读者数: %1\n\n").arg(readerCount);
+    report += QString("  读者数: %1\n").arg(readerCount);
+    report += QString("    - 学生读者: %1\n").arg(studentCount);
+    report += QString("    - 教师读者: %1\n").arg(teacherCount);
+    report += QString("    - 校外读者: %1\n\n").arg(externalCount);
 
     // 图书统计
     report += "【图书统计】\n";
@@ -628,6 +726,9 @@ bool Admin::approveReservation(const QString &isbn, const QString &readerId, boo
  * @param readerId 读者ID
  * @param approved 是否批准续借
  * @return 审核成功返回true，失败返回false
+ *
+ * 批准续借时，续借天数从读者的借阅策略(policy)中读取，
+ * 不同角色读者的续借天数不同（学生30天、教师30天、校外15天）。
  */
 bool Admin::renewBook(const QString &isbn, const QString &readerId, bool approved)
 {
@@ -660,20 +761,28 @@ bool Admin::renewBook(const QString &isbn, const QString &readerId, bool approve
 
             if (approved)
             {
-                record.setDueTime(record.getDueTime().addDays(30));
+                // 从读者策略获取续借天数，无策略默认30天
+                int renewDays = 30;
+                if (reader->getPolicy())
+                {
+                    renewDays = reader->getPolicy()->getRenewDays();
+                }
+                record.setDueTime(record.getDueTime().addDays(renewDays));
                 record.setRenewStatus(BorrowRecord::RenewStatus::APPROVED);
 
-                QString readerMsgContent = QString("您申请续借图书《%1》(ISBN:%2)已通过审核，借阅期限已延长30天。")
+                QString readerMsgContent = QString("您申请续借图书《%1》(ISBN:%2)已通过审核，借阅期限已延长%3天。")
                                                .arg(bookTitle)
-                                               .arg(isbn);
+                                               .arg(isbn)
+                                               .arg(renewDays);
                 Message readerMsg(readerId, reader->getName(), readerMsgContent);
                 reader->addMessage(readerMsg);
 
-                QString adminMsgContent = QString("您已通过读者 %1 (ID:%2) 的续借申请，图书《%3》(ISBN:%4)，借阅期限已延长30天。")
+                QString adminMsgContent = QString("您已通过读者 %1 (ID:%2) 的续借申请，图书《%3》(ISBN:%4)，借阅期限已延长%5天。")
                                               .arg(reader->getName())
                                               .arg(readerId)
                                               .arg(bookTitle)
-                                              .arg(isbn);
+                                              .arg(isbn)
+                                              .arg(renewDays);
                 Message adminMsg(getID(), getName(), getID(), getName(), adminMsgContent);
                 addMessage(adminMsg);
             }

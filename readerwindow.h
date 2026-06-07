@@ -150,6 +150,16 @@ private slots:
      */
     void onSearchMessage();
 
+    /**
+     * @brief 缴纳押金按钮点击槽函数
+     */
+    void onPayDeposit();
+
+    /**
+     * @brief 退还押金按钮点击槽函数
+     */
+    void onRefundDeposit();
+
 signals:
     /**
      * @brief 退出登录信号
@@ -281,6 +291,8 @@ private:
     QPushButton *returnBtn;      ///< 还书按钮
     QPushButton *renewBtn;       ///< 续借按钮
     QPushButton *payFineBtn;     ///< 支付所有罚款按钮
+    QPushButton *payDepositBtn;  ///< 缴纳押金按钮
+    QPushButton *refundDepositBtn; ///< 退还押金按钮
 
     // 个人信息控件
     QListWidget *infoListWidget; ///< 个人信息列表

@@ -12,6 +12,9 @@
 #include "Admin.h"
 #include "User.h"
 #include "Reader.h"
+#include "StudentReader.h"
+#include "TeacherReader.h"
+#include "ExternalReader.h"
 #include "Book.h"
 #include "BorrowRecord.h"
 #include "Reservation.h"
@@ -191,9 +194,17 @@ void AdminWindow::setupUserTable()
     // （创建按钮）：创建清除按钮
     userClearBtn = new QPushButton("清除所有用户", operationWidget);
 
+    // （创建角色下拉框）：创建用户角色筛选下拉框
+    userRoleCombo = new QComboBox(operationWidget);
+    userRoleCombo->addItem("全部角色");
+    userRoleCombo->addItem("学生读者");
+    userRoleCombo->addItem("教师读者");
+    userRoleCombo->addItem("校外读者");
+
     // （设置布局）：将控件添加到操作区布局
     operationLayout->addWidget(userIdLineEdit);
     operationLayout->addWidget(userNameLineEdit);
+    operationLayout->addWidget(userRoleCombo);
     operationLayout->addWidget(userSearchBtn);
     operationLayout->addWidget(userAddBtn);
     operationLayout->addWidget(userDeleteBtn);
@@ -203,10 +214,10 @@ void AdminWindow::setupUserTable()
 
     // （创建表格）：创建用户表格实例
     userTable = new QTableWidget(userWidget);
-    // （设置列数）：设置用户表格列数为8
-    userTable->setColumnCount(8);
+    // （设置列数）：设置用户表格列数为9
+    userTable->setColumnCount(9);
     // （设置表头）：设置用户表格表头
-    userTable->setHorizontalHeaderLabels({"ID", "类型", "姓名", "密码", "电话", "邮箱", "信用分", "限制终止日期"});
+    userTable->setHorizontalHeaderLabels({"ID", "类型", "角色", "姓名", "密码", "电话", "邮箱", "信用分", "限制终止日期"});
     // （设置列调整模式）：列自动拉伸填充
     userTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     // （设置行调整模式）：行高根据内容自动调整
@@ -228,6 +239,8 @@ void AdminWindow::setupUserTable()
     connect(userDeleteBtn, &QPushButton::clicked, this, &AdminWindow::onUserDelete);
     connect(userUpdateBtn, &QPushButton::clicked, this, &AdminWindow::onUserUpdate);
     connect(userClearBtn, &QPushButton::clicked, this, &AdminWindow::onUserClear);
+    // （连接角色筛选信号槽）：角色下拉框改变时触发筛选
+    connect(userRoleCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &AdminWindow::onUserRoleFilter);
 }
 
 /**
@@ -514,38 +527,57 @@ void AdminWindow::loadUserData()
 
         userTable->setItem(row, 0, new QTableWidgetItem(user->getID()));
         userTable->setItem(row, 1, new QTableWidgetItem(user->getType() == 1 ? "管理员" : "读者"));
-        userTable->setItem(row, 2, new QTableWidgetItem(user->getName()));
-        userTable->setItem(row, 3, new QTableWidgetItem(user->getPassword()));
-        userTable->setItem(row, 4, new QTableWidgetItem(user->getPhone()));
-        userTable->setItem(row, 5, new QTableWidgetItem(user->getEmail()));
+
+        // （显示角色）：管理员显示"-"，读者显示具体角色
+        if (user->getType() == 2)
+        {
+            ::Reader *reader = dynamic_cast<::Reader *>(user);
+            if (reader)
+            {
+                userTable->setItem(row, 2, new QTableWidgetItem(reader->getRoleString()));
+            }
+            else
+            {
+                userTable->setItem(row, 2, new QTableWidgetItem("-"));
+            }
+        }
+        else
+        {
+            userTable->setItem(row, 2, new QTableWidgetItem("-"));
+        }
+
+        userTable->setItem(row, 3, new QTableWidgetItem(user->getName()));
+        userTable->setItem(row, 4, new QTableWidgetItem(user->getPassword()));
+        userTable->setItem(row, 5, new QTableWidgetItem(user->getPhone()));
+        userTable->setItem(row, 6, new QTableWidgetItem(user->getEmail()));
 
         if (user->getType() == 2)
         {
             ::Reader *reader = dynamic_cast<::Reader *>(user);
             if (reader)
             {
-                userTable->setItem(row, 6, new QTableWidgetItem(QString::number(reader->getCreditScore())));
+                userTable->setItem(row, 7, new QTableWidgetItem(QString::number(reader->getCreditScore())));
 
                 QDateTime banUntil = reader->getBanUntil();
                 if (banUntil.isValid())
                 {
-                    userTable->setItem(row, 7, new QTableWidgetItem(banUntil.toString("yyyy-MM-dd HH:mm:ss")));
+                    userTable->setItem(row, 8, new QTableWidgetItem(banUntil.toString("yyyy-MM-dd HH:mm:ss")));
                 }
                 else
                 {
-                    userTable->setItem(row, 7, new QTableWidgetItem("-"));
+                    userTable->setItem(row, 8, new QTableWidgetItem("-"));
                 }
             }
             else
             {
-                userTable->setItem(row, 6, new QTableWidgetItem("-"));
                 userTable->setItem(row, 7, new QTableWidgetItem("-"));
+                userTable->setItem(row, 8, new QTableWidgetItem("-"));
             }
         }
         else
         {
-            userTable->setItem(row, 6, new QTableWidgetItem("-"));
             userTable->setItem(row, 7, new QTableWidgetItem("-"));
+            userTable->setItem(row, 8, new QTableWidgetItem("-"));
         }
     }
 }
@@ -1375,6 +1407,7 @@ void AdminWindow::onUserSearch()
 {
     QString id = userIdLineEdit->text().trimmed();
     QString name = userNameLineEdit->text().trimmed();
+    int roleFilter = userRoleCombo->currentIndex(); // 0=全部, 1=学生, 2=教师, 3=校外
 
     ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
     if (admin)
@@ -1389,8 +1422,36 @@ void AdminWindow::onUserSearch()
             results = admin->findUser(id, name);
         }
 
+        // （角色筛选）：根据下拉框选择的角色进行过滤
+        if (roleFilter > 0)
+        {
+            std::vector<::User *> filtered;
+            for (::User *user : results)
+            {
+                if (user->getType() == 2)
+                {
+                    ::Reader *reader = dynamic_cast<::Reader *>(user);
+                    if (reader && static_cast<int>(reader->getRole()) == roleFilter)
+                    {
+                        filtered.push_back(user);
+                    }
+                }
+            }
+            results = filtered;
+        }
+
         displayUsers(results);
     }
+}
+
+/**
+ * @brief 角色筛选下拉框改变处理
+ *
+ * 当角色筛选下拉框选择改变时，重新执行搜索以应用角色过滤。
+ */
+void AdminWindow::onUserRoleFilter()
+{
+    onUserSearch();
 }
 
 /**
@@ -1410,38 +1471,57 @@ void AdminWindow::displayUsers(const std::vector<::User *> &users)
 
         userTable->setItem(row, 0, new QTableWidgetItem(user->getID()));
         userTable->setItem(row, 1, new QTableWidgetItem(user->getType() == 1 ? "管理员" : "读者"));
-        userTable->setItem(row, 2, new QTableWidgetItem(user->getName()));
-        userTable->setItem(row, 3, new QTableWidgetItem(user->getPassword()));
-        userTable->setItem(row, 4, new QTableWidgetItem(user->getPhone()));
-        userTable->setItem(row, 5, new QTableWidgetItem(user->getEmail()));
+
+        // （显示角色）：管理员显示"-"，读者显示具体角色
+        if (user->getType() == 2)
+        {
+            ::Reader *reader = dynamic_cast<::Reader *>(user);
+            if (reader)
+            {
+                userTable->setItem(row, 2, new QTableWidgetItem(reader->getRoleString()));
+            }
+            else
+            {
+                userTable->setItem(row, 2, new QTableWidgetItem("-"));
+            }
+        }
+        else
+        {
+            userTable->setItem(row, 2, new QTableWidgetItem("-"));
+        }
+
+        userTable->setItem(row, 3, new QTableWidgetItem(user->getName()));
+        userTable->setItem(row, 4, new QTableWidgetItem(user->getPassword()));
+        userTable->setItem(row, 5, new QTableWidgetItem(user->getPhone()));
+        userTable->setItem(row, 6, new QTableWidgetItem(user->getEmail()));
 
         if (user->getType() == 2)
         {
             ::Reader *reader = dynamic_cast<::Reader *>(user);
             if (reader)
             {
-                userTable->setItem(row, 6, new QTableWidgetItem(QString::number(reader->getCreditScore())));
+                userTable->setItem(row, 7, new QTableWidgetItem(QString::number(reader->getCreditScore())));
 
                 QDateTime banUntil = reader->getBanUntil();
                 if (banUntil.isValid())
                 {
-                    userTable->setItem(row, 7, new QTableWidgetItem(banUntil.toString("yyyy-MM-dd HH:mm:ss")));
+                    userTable->setItem(row, 8, new QTableWidgetItem(banUntil.toString("yyyy-MM-dd HH:mm:ss")));
                 }
                 else
                 {
-                    userTable->setItem(row, 7, new QTableWidgetItem("-"));
+                    userTable->setItem(row, 8, new QTableWidgetItem("-"));
                 }
             }
             else
             {
-                userTable->setItem(row, 6, new QTableWidgetItem("-"));
                 userTable->setItem(row, 7, new QTableWidgetItem("-"));
+                userTable->setItem(row, 8, new QTableWidgetItem("-"));
             }
         }
         else
         {
-            userTable->setItem(row, 6, new QTableWidgetItem("-"));
             userTable->setItem(row, 7, new QTableWidgetItem("-"));
+            userTable->setItem(row, 8, new QTableWidgetItem("-"));
         }
     }
 }
@@ -1538,6 +1618,29 @@ void AdminWindow::onUserAdd()
         return;
     }
 
+    // （选择角色）：如果是读者类型，选择角色
+    int role = 1; // 默认学生读者
+    if (type == "2")
+    {
+        result = showInputDialog("增加用户", "请输入读者角色（1-学生/2-教师/3-校外人员）：", true);
+        if (result.second)
+        {
+            QMessageBox msgBox(QMessageBox::Information, "提示", "用户添加已取消！", QMessageBox::NoButton, this);
+            msgBox.addButton("确定", QMessageBox::AcceptRole);
+            msgBox.exec();
+            return;
+        }
+        bool roleOk = false;
+        role = result.first.toInt(&roleOk);
+        if (!roleOk || (role != 1 && role != 2 && role != 3))
+        {
+            QMessageBox msgBox(QMessageBox::Warning, "错误", "角色非法！请输入1（学生）、2（教师）或3（校外人员）", QMessageBox::NoButton, this);
+            msgBox.addButton("确定", QMessageBox::AcceptRole);
+            msgBox.exec();
+            return;
+        }
+    }
+
     result = showInputDialog("增加用户", "请输入用户姓名：", true);
     if (result.second)
     {
@@ -1582,14 +1685,16 @@ void AdminWindow::onUserAdd()
     ::Admin *admin = dynamic_cast<::Admin *>(currentUser);
     if (admin)
     {
-        admin->registerUser(id, type, name, password, phone, email);
+        admin->registerUser(id, type, name, password, phone, email, role);
 
         // （发送消息）：发送用户添加消息给管理员
-        QString msgContent = QString("管理员%1添加了用户：%2（ID: %3, 类型: %4）")
+        QString roleStr = (type == "1") ? "" : QString("-%1").arg(role == 2 ? "教师" : (role == 3 ? "校外人员" : "学生"));
+        QString msgContent = QString("管理员%1添加了用户：%2（ID: %3, 类型: %4%5）")
                                  .arg(currentUser->getName())
                                  .arg(name)
                                  .arg(id)
-                                 .arg(type == "1" ? "管理员" : "读者");
+                                 .arg(type == "1" ? "管理员" : "读者")
+                                 .arg(roleStr);
         dm->addAdminMessage(currentUser, currentUser->getID(), currentUser->getName(), msgContent);
 
         // （刷新表格）：重新加载用户列表
@@ -1731,6 +1836,29 @@ void AdminWindow::onUserUpdate()
         return;
     }
 
+    // （选择角色）：如果是读者类型，选择角色
+    int newRole = 1; // 默认学生读者
+    if (newType == "2")
+    {
+        result = showInputDialog("修改用户", "请输入修改后的读者角色（1-学生/2-教师/3-校外人员）：", true);
+        if (result.second)
+        {
+            QMessageBox msgBox(QMessageBox::Information, "提示", "用户修改已取消！", QMessageBox::NoButton, this);
+            msgBox.addButton("确定", QMessageBox::AcceptRole);
+            msgBox.exec();
+            return;
+        }
+        bool roleOk = false;
+        newRole = result.first.toInt(&roleOk);
+        if (!roleOk || (newRole != 1 && newRole != 2 && newRole != 3))
+        {
+            QMessageBox msgBox(QMessageBox::Warning, "错误", "角色非法！请输入1（学生）、2（教师）或3（校外人员）", QMessageBox::NoButton, this);
+            msgBox.addButton("确定", QMessageBox::AcceptRole);
+            msgBox.exec();
+            return;
+        }
+    }
+
     result = showInputDialog("修改用户", "请输入修改后的用户姓名：", true);
     if (result.second)
     {
@@ -1780,20 +1908,22 @@ void AdminWindow::onUserUpdate()
         User *oldUser = dm->findUserById(id);
         QString oldTypeName = oldUser && oldUser->getType() == 1 ? "管理员" : "读者";
 
-        bool success = admin->updateUser(id, name, newId, newType, newName, newPassword, newPhone, newEmail);
+        bool success = admin->updateUser(id, name, newId, newType, newName, newPassword, newPhone, newEmail, newRole);
 
         if (success)
         {
             // （发送消息）：发送用户修改消息给管理员
             User *updatedUser = dm->findUserById(newId);
-            QString msgContent = QString("管理员%1修改了用户信息：%2（ID: %3, 类型: %4）→ %5（ID: %6, 类型: %7）")
+            QString newRoleStr = (newType == "1") ? "" : QString("-%1").arg(newRole == 2 ? "教师" : (newRole == 3 ? "校外人员" : "学生"));
+            QString msgContent = QString("管理员%1修改了用户信息：%2（ID: %3, 类型: %4）→ %5（ID: %6, 类型: %7%8）")
                                      .arg(currentUser->getName())
                                      .arg(name)
                                      .arg(id)
                                      .arg(oldTypeName)
                                      .arg(newName)
                                      .arg(newId)
-                                     .arg(updatedUser && updatedUser->getType() == 1 ? "管理员" : "读者");
+                                     .arg(updatedUser && updatedUser->getType() == 1 ? "管理员" : "读者")
+                                     .arg(newRoleStr);
             dm->addAdminMessage(currentUser, currentUser->getID(), currentUser->getName(), msgContent);
 
             // （刷新表格）：重新加载用户列表

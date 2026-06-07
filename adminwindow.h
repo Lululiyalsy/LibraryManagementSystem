@@ -202,6 +202,13 @@ private:
     void onUserSearch();
 
     /**
+     * @brief 角色筛选下拉框改变处理
+     *
+     * 当角色筛选下拉框选择改变时，重新执行搜索以应用角色过滤。
+     */
+    void onUserRoleFilter();
+
+    /**
      * @brief 将用户数据显示到表格
      * @param users 用户列表
      */
@@ -323,6 +330,7 @@ private:
     QPushButton *userDeleteBtn;  ///< 用户删除按钮
     QPushButton *userUpdateBtn;  ///< 用户修改按钮
     QPushButton *userClearBtn;   ///< 用户清除按钮
+    QComboBox *userRoleCombo;    ///< 用户角色选择下拉框
 
     // 图书管理控件
     QLineEdit *bookISBNLineEdit;     ///< 图书ISBN查找输入框

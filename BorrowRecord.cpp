@@ -19,6 +19,7 @@
  * @param readerID 读者ID
  * @param borrowTime 借阅时间
  * @param dueTime 应还时间
+ * @param finePerDay 每日逾期罚款金额（默认1.0元）
  *
  * 初始化借阅记录，默认状态：
  * - 未归还 (returned = false)
@@ -27,11 +28,12 @@
  * - 罚款状态未支付 (fineStatus = UNPAID)
  * - 无续借申请 (renewStatus = NONE)
  * - 已扣信用分数为0 (deductedScore = 0)
+ * - 每日罚款金额由参数指定（借出时记录，避免还书时政策已变）
  */
-BorrowRecord::BorrowRecord(QString isbn, QString readerID, QDateTime borrowTime, QDateTime dueTime)
+BorrowRecord::BorrowRecord(QString isbn, QString readerID, QDateTime borrowTime, QDateTime dueTime, double finePerDay)
     : ISBN(isbn), readerID(readerID), borrowTime(borrowTime), dueTime(dueTime),
       returned(false), fineAmount(0), paidFine(0), fineStatus(FineStatus::UNPAID),
-      renewStatus(RenewStatus::NONE), deductedScore(0)
+      renewStatus(RenewStatus::NONE), deductedScore(0), finePerDay(finePerDay)
 {
 }
 
@@ -61,12 +63,12 @@ int BorrowRecord::calculateOverdueDays() const
  * @brief 计算罚款金额
  * @return 罚款金额
  *
- * 罚款规则：每天1元，根据逾期天数计算。
+ * 罚款规则：根据finePerDay（借出时记录的每日罚款金额）和逾期天数计算。
+ * 不同读者类型的罚款标准不同，借出时记录避免还书时政策已变。
  */
 double BorrowRecord::calculateFine() const
 {
     int overdueDays = calculateOverdueDays();
-    const double finePerDay = 1.0; // 每天罚款1元
     return overdueDays * finePerDay;
 }
 
@@ -249,6 +251,15 @@ int BorrowRecord::getDeductedScore() const
     return deductedScore;
 }
 
+/**
+ * @brief 获取每日逾期罚款金额
+ * @return 每日逾期罚款金额
+ */
+double BorrowRecord::getFinePerDay() const
+{
+    return finePerDay;
+}
+
 // ========== setter 方法 ==========
 
 /**
@@ -327,6 +338,15 @@ void BorrowRecord::setRenewStatus(RenewStatus status)
 void BorrowRecord::setDeductedScore(int score)
 {
     deductedScore = score;
+}
+
+/**
+ * @brief 设置每日逾期罚款金额
+ * @param rate 每日逾期罚款金额
+ */
+void BorrowRecord::setFinePerDay(double rate)
+{
+    finePerDay = rate;
 }
 
 /**

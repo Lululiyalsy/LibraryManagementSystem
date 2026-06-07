@@ -8,6 +8,9 @@
 #include "DataManager.h"
 #include "Admin.h"
 #include "Reader.h"
+#include "StudentReader.h"
+#include "TeacherReader.h"
+#include "ExternalReader.h"
 #include <QFile>
 #include <QTextStream>
 #include <QDir>
@@ -323,9 +326,11 @@ int DataManager::getUserCount() const
 /**
  * @brief 初始化读取用户数据
  *
- * 从users.txt文件中读取用户信息，包括ID、类型、姓名、密码、电话、邮箱、
+ * 从users.txt文件中读取用户信息，包括ID、类型、角色、姓名、密码、电话、邮箱、
  * 信用分、之前信用分和限制终止日期。
- * 对于读者类型用户，额外初始化信用分相关信息。
+ * 对于读者类型用户，根据role字段创建对应的子类（StudentReader/TeacherReader/ExternalReader），
+ * 并额外初始化信用分和借阅策略相关信息。
+ * 兼容旧数据格式：缺少role字段时默认创建StudentReader。
  */
 void DataManager::initUser()
 {
@@ -352,27 +357,58 @@ void DataManager::initUser()
 
         QString id = fields[0];
         int type = fields[1].toInt();
-        QString name = fields[2];
-        QString password = fields[3];
-        QString phone = fields[4];
-        QString email = fields[5];
+        int role = 1; // 默认角色为学生读者（兼容旧数据）
+        QString name;
+        QString password;
+        QString phone;
+        QString email;
         int creditScore = 100;     // 默认信用分100
         int prevCreditScore = 100; // 默认之前的信用分等于当前信用分
         QDateTime banUntil;
 
-        if (fields.size() >= 7 && !fields[6].isEmpty())
+        // 新格式：ID|type|role|name|password|phone|email|creditScore|prevCreditScore|banUntil
+        // 旧格式：ID|type|name|password|phone|email|creditScore|prevCreditScore|banUntil
+        // 通过判断fields[2]是否为数字来区分新旧格式
+        if (fields.size() >= 10)
         {
-            creditScore = fields[6].toInt();
+            // 新格式，包含role字段
+            role = fields[2].toInt();
+            name = fields[3];
+            password = fields[4];
+            phone = fields[5];
+            email = fields[6];
+            if (!fields[7].isEmpty())
+            {
+                creditScore = fields[7].toInt();
+            }
+            if (!fields[8].isEmpty())
+            {
+                prevCreditScore = fields[8].toInt();
+            }
+            if (!fields[9].isEmpty())
+            {
+                banUntil = QDateTime::fromString(fields[9], "yyyy-MM-dd HH:mm:ss");
+            }
         }
-
-        if (fields.size() >= 8 && !fields[7].isEmpty())
+        else
         {
-            prevCreditScore = fields[7].toInt();
-        }
-
-        if (fields.size() >= 9 && !fields[8].isEmpty())
-        {
-            banUntil = QDateTime::fromString(fields[8], "yyyy-MM-dd HH:mm:ss");
+            // 旧格式，不含role字段
+            name = fields[2];
+            password = fields[3];
+            phone = fields[4];
+            email = fields[5];
+            if (fields.size() >= 7 && !fields[6].isEmpty())
+            {
+                creditScore = fields[6].toInt();
+            }
+            if (fields.size() >= 8 && !fields[7].isEmpty())
+            {
+                prevCreditScore = fields[7].toInt();
+            }
+            if (fields.size() >= 9 && !fields[8].isEmpty())
+            {
+                banUntil = QDateTime::fromString(fields[8], "yyyy-MM-dd HH:mm:ss");
+            }
         }
 
         ::User *user = nullptr;
@@ -382,7 +418,21 @@ void DataManager::initUser()
         }
         else
         {
-            user = new ::Reader(id, name, password, phone, email);
+            // 根据role创建对应的读者子类
+            if (role == 2)
+            {
+                user = new ::TeacherReader(id, name, password, phone, email);
+            }
+            else if (role == 3)
+            {
+                user = new ::ExternalReader(id, name, password, phone, email);
+            }
+            else
+            {
+                // role == 1 或旧数据默认创建学生读者
+                user = new ::StudentReader(id, name, password, phone, email);
+            }
+
             if (user)
             {
                 ::Reader *reader = dynamic_cast<::Reader *>(user);
@@ -480,8 +530,15 @@ void DataManager::recalculateCreditScores()
         // 只有"不在限制期间、未还且逾期、需要扣分"的记录才扣分
         if (!isBanned && !record.isReturned() && overdueDays > 0 && needDeduct > 0)
         {
+            // 根据读者策略获取每日信用分扣减，无策略默认1分/天
+            int deductPerDay = 1;
+            if (reader->getPolicy())
+            {
+                deductPerDay = reader->getPolicy()->getCreditDeductPerDay();
+            }
+            int actualDeduct = needDeduct * deductPerDay;
             int currentScore = reader->getCreditScore();
-            int newScore = qMax(currentScore - needDeduct, 0);
+            int newScore = qMax(currentScore - actualDeduct, 0);
             reader->setCreditScore(newScore);
 
             // 发送扣分消息给读者
@@ -496,7 +553,7 @@ void DataManager::recalculateCreditScores()
                                      .arg(bookTitle)
                                      .arg(record.getISBN())
                                      .arg(overdueDays)
-                                     .arg(needDeduct)
+                                     .arg(actualDeduct)
                                      .arg(newScore);
             Message msg(readerId, reader->getName(), msgContent);
             reader->addMessage(msg);
@@ -592,9 +649,10 @@ void DataManager::recalculateCreditScores()
 /**
  * @brief 写入用户数据到文件
  *
- * 将所有用户信息写入users.txt文件，包括ID、类型、姓名、密码、电话、邮箱、
+ * 将所有用户信息写入users.txt文件，包括ID、类型、角色、姓名、密码、电话、邮箱、
  * 信用分、之前信用分和限制终止日期。
- * 对于读者类型用户，额外写入信用分相关信息。
+ * 新格式：ID|type|role|name|password|phone|email|creditScore|prevCreditScore|banUntil
+ * 管理员角色字段固定为0。
  */
 void DataManager::writeUser()
 {
@@ -609,6 +667,7 @@ void DataManager::writeUser()
     {
         int creditScore = 100;
         int prevCreditScore = 100;
+        int role = 0; // 管理员角色为0
         QString banUntilStr = "";
         if (user->getType() == 2) // 读者
         {
@@ -617,15 +676,17 @@ void DataManager::writeUser()
             {
                 creditScore = reader->getCreditScore();
                 prevCreditScore = reader->getPrevCreditScore();
+                role = static_cast<int>(reader->getRole());
                 if (reader->getBanUntil().isValid())
                 {
                     banUntilStr = reader->getBanUntil().toString("yyyy-MM-dd HH:mm:ss");
                 }
             }
         }
-        QString line = QString("%1|%2|%3|%4|%5|%6|%7|%8|%9")
+        QString line = QString("%1|%2|%3|%4|%5|%6|%7|%8|%9|%10")
                            .arg(user->getID())
                            .arg(user->getType())
+                           .arg(role)
                            .arg(user->getName())
                            .arg(user->getPassword())
                            .arg(user->getPhone())
@@ -1024,7 +1085,8 @@ std::vector<Book> DataManager::sortBooksByInStockTime()
  *
  * 从borrow_records.txt文件中读取借阅记录，包括ISBN、读者ID、借阅时间、
  * 应还时间、归还时间、归还状态、罚款金额、已支付罚款、罚款状态、
- * 续借状态和已扣信用分数。
+ * 续借状态、已扣信用分数和每日罚款金额。
+ * 兼容旧数据格式：缺少finePerDay字段时默认1.0元/天。
  */
 void DataManager::initBorrowRecord()
 {
@@ -1052,7 +1114,14 @@ void DataManager::initBorrowRecord()
         QDateTime borrowTime = QDateTime::fromString(fields[2], "yyyy-MM-dd HH:mm:ss");
         QDateTime dueTime = QDateTime::fromString(fields[3], "yyyy-MM-dd HH:mm:ss");
 
-        BorrowRecord record(isbn, readerId, borrowTime, dueTime);
+        // 读取每日罚款金额（最后一个字段，兼容旧数据默认1.0）
+        double finePerDay = 1.0;
+        if (fields.size() >= 12 && !fields[11].isEmpty())
+        {
+            finePerDay = fields[11].toDouble();
+        }
+
+        BorrowRecord record(isbn, readerId, borrowTime, dueTime, finePerDay);
 
         if (fields.size() >= 5 && !fields[4].isEmpty())
         {
@@ -1101,7 +1170,7 @@ void DataManager::initBorrowRecord()
  *
  * 将所有借阅记录写入borrow_records.txt文件，包括ISBN、读者ID、借阅时间、
  * 应还时间、归还时间、归还状态、续借状态、罚款金额、已支付罚款、
- * 罚款状态和已扣信用分数。
+ * 罚款状态、已扣信用分数和每日罚款金额。
  */
 void DataManager::writeBorrowRecord()
 {
@@ -1126,7 +1195,8 @@ void DataManager::writeBorrowRecord()
                        QString::number(record.getFineAmount(), 'f', 2) + "|" +
                        QString::number(record.getPaidFine(), 'f', 2) + "|" +
                        QString::number(static_cast<int>(record.getFineStatus())) + "|" +
-                       QString::number(record.getDeductedScore());
+                       QString::number(record.getDeductedScore()) + "|" +
+                       QString::number(record.getFinePerDay(), 'f', 2);
         out << line << "\n";
     }
 

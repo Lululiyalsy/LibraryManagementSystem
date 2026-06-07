@@ -58,9 +58,11 @@ public:
      * @param password 用户密码
      * @param phone 联系电话
      * @param email 电子邮箱
+     * @param role 读者角色（1=学生，2=教师，3=校外人员，默认1；管理员忽略此参数）
      */
     void registerUser(const QString &id, const QString &type, const QString &name,
-                      const QString &password, const QString &phone, const QString &email);
+                      const QString &password, const QString &phone, const QString &email,
+                      int role = 1);
 
     /**
      * @brief 删除用户账号（包括管理员和读者）
@@ -80,11 +82,13 @@ public:
      * @param password 新密码
      * @param phone 新联系电话
      * @param email 新电子邮箱
+     * @param role 读者角色（1=学生，2=教师，3=校外人员，默认1；管理员忽略此参数）
      * @return 修改成功返回true，失败返回false
      */
     bool updateUser(const QString &oldId, const QString &oldName,
                     const QString &newId, const QString &newType, const QString &newName,
-                    const QString &password, const QString &phone, const QString &email);
+                    const QString &password, const QString &phone, const QString &email,
+                    int role = 1);
 
     /**
      * @brief 查看全部用户信息（包括管理员和读者）
