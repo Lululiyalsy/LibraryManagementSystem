@@ -24,11 +24,10 @@ const double ExternalReader::DEPOSIT_AMOUNT = 200.0;
  * - 最大借阅3本
  * - 借期15天
  * - 续借15天
- * - 2元/天罚款
+ * - 3元/天罚款
  * - 2分/天信用扣减
  * - 1分按时奖励
  * - 可预约（需缴纳押金）
- * - 预约上限3本
  * - 200元押金
  */
 ExternalReader::ExternalReader(QString &I, QString &n, QString &pa, QString &ph, QString &e)
@@ -39,7 +38,7 @@ ExternalReader::ExternalReader(QString &I, QString &n, QString &pa, QString &ph,
     borrowDays = 15;
     renewDays = 15;
     maxRenewTimes = 1;
-    finePerDay = 2.0;
+    finePerDay = 3.0;
     creditDeductPerDay = 2;
     creditReward = 1;
 }

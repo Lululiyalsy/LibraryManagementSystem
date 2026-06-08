@@ -1,7 +1,7 @@
 /**
  * @file logindialog.cpp
  * @brief 登录对话框类实现
- * 
+ *
  * 实现LoginDialog类的所有成员函数，包括登录验证流程、验证码生成与验证等功能。
  */
 
@@ -37,7 +37,7 @@ LoginDialog::LoginDialog(QWidget *parent)
     : QDialog(parent), ui(new Ui::LoginDialog), loggedInUser(nullptr)
 {
     ui->setupUi(this);
-    
+
     // 设定固定窗口大小
     setFixedSize(600, 400);
 
@@ -65,7 +65,7 @@ User *LoginDialog::getLoggedInUser() const
 
 /**
  * @brief 确定按钮点击事件处理槽函数
- * 
+ *
  * 处理用户登录请求，包括：
  * 1. 输入校验（账号密码非空、身份选择）
  * 2. 用户身份验证（账号存在、密码正确、身份匹配）
@@ -102,7 +102,7 @@ void LoginDialog::on_commitBtn_clicked()
             break;
         }
     }
-    
+
     // 用户不存在检查
     if (!currentUser)
     {
@@ -269,21 +269,21 @@ void LoginDialog::on_commitBtn_clicked()
             QMessageBox::information(this, "提醒", "您尚未缴纳押金，部分功能可能受限。请及时缴纳押金以使用完整服务。");
         }
     }
-    
+
     // 关闭对话框并返回 Accepted
     accept();
 }
 
 /**
  * @brief 取消按钮点击事件处理槽函数
- * 
+ *
  * 处理用户退出登录请求，弹出确认对话框询问用户是否确定退出
  */
 void LoginDialog::on_cancelBtn_clicked()
 {
     // 弹出确认对话框询问是否退出
     int ret = QMessageBox::question(this, "确认", "确定要退出吗？");
-    
+
     // 如果用户点击"是"则关闭对话框并返回 Rejected
     if (ret == QMessageBox::Yes)
     {

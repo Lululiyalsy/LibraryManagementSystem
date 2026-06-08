@@ -21,7 +21,7 @@
  * - 借期60天
  * - 续借30天
  * - 2次续借机会
- * - 0.5元/天罚款
+ * - 1元/天罚款
  * - 不扣信用分
  * - 1分按时奖励
  * - 可预约，预约上限5本
@@ -35,7 +35,7 @@ TeacherReader::TeacherReader(QString &I, QString &n, QString &pa, QString &ph, Q
     borrowDays = 60;
     renewDays = 30;
     maxRenewTimes = 2;
-    finePerDay = 0.5;
+    finePerDay = 1;
     creditDeductPerDay = 1;
     creditReward = 2;
 }

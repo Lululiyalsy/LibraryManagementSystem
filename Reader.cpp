@@ -268,14 +268,15 @@ Reader::CreditCheckResult Reader::checkCreditScore() const
  * @param book 图书对象指针
  * @param isbn 图书ISBN
  *
- * 当前逻辑：逾期还书不扣分不加分，按时还书根据策略奖励信用分（最高100分）。
- * 如果无策略配置，默认奖励2分。
+ * 信用分计算规则：
+ * - 逾期还书不扣分不加分（逾期扣分在登录时已计算）
+ * - 按时还书根据策略奖励信用分（最高100分）
  */
 void Reader::calculateCreditScore(int overdueDays, Book *book, const QString &isbn)
 {
     if (overdueDays > 0)
     {
-        return; // 逾期还书不扣分不加分
+        return; // 逾期还书不扣分不加分（登录时已计算）
     }
 
     // 按时还书，奖励信用分
