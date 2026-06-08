@@ -365,8 +365,9 @@ void DataManager::initUser()
         int creditScore = 100;     // 默认信用分100
         int prevCreditScore = 100; // 默认之前的信用分等于当前信用分
         QDateTime banUntil;
+        bool depositPaid = false;  // 押金缴纳状态（仅校外读者）
 
-        // 新格式：ID|type|role|name|password|phone|email|creditScore|prevCreditScore|banUntil
+        // 新格式：ID|type|role|name|password|phone|email|creditScore|prevCreditScore|banUntil|depositPaid
         // 旧格式：ID|type|name|password|phone|email|creditScore|prevCreditScore|banUntil
         // 通过判断fields[2]是否为数字来区分新旧格式
         if (fields.size() >= 10)
@@ -388,6 +389,11 @@ void DataManager::initUser()
             if (!fields[9].isEmpty())
             {
                 banUntil = QDateTime::fromString(fields[9], "yyyy-MM-dd HH:mm:ss");
+            }
+            // （读取押金状态）：第11个字段为depositPaid（兼容旧数据默认false）
+            if (fields.size() >= 11 && !fields[10].isEmpty())
+            {
+                depositPaid = (fields[10].toInt() == 1);
             }
         }
         else
@@ -441,6 +447,12 @@ void DataManager::initUser()
                     reader->setCreditScore(creditScore);
                     reader->setPrevCreditScore(prevCreditScore);
                     reader->setBanUntil(banUntil);
+                }
+                // （设置押金状态）：校外读者从文件读取押金缴纳状态
+                ::ExternalReader *extReader = dynamic_cast<::ExternalReader *>(user);
+                if (extReader)
+                {
+                    extReader->setDepositPaid(depositPaid);
                 }
             }
         }
@@ -669,6 +681,7 @@ void DataManager::writeUser()
         int prevCreditScore = 100;
         int role = 0; // 管理员角色为0
         QString banUntilStr = "";
+        int depositPaid = 0; // 押金缴纳状态（0=未缴纳，1=已缴纳，仅校外读者）
         if (user->getType() == 2) // 读者
         {
             ::Reader *reader = dynamic_cast<::Reader *>(user);
@@ -681,9 +694,15 @@ void DataManager::writeUser()
                 {
                     banUntilStr = reader->getBanUntil().toString("yyyy-MM-dd HH:mm:ss");
                 }
+                // （校外读者押金状态）：写入depositPaid字段
+                ::ExternalReader *extReader = dynamic_cast<::ExternalReader *>(reader);
+                if (extReader && extReader->isDepositPaid())
+                {
+                    depositPaid = 1;
+                }
             }
         }
-        QString line = QString("%1|%2|%3|%4|%5|%6|%7|%8|%9|%10")
+        QString line = QString("%1|%2|%3|%4|%5|%6|%7|%8|%9|%10|%11")
                            .arg(user->getID())
                            .arg(user->getType())
                            .arg(role)
@@ -693,7 +712,8 @@ void DataManager::writeUser()
                            .arg(user->getEmail())
                            .arg(creditScore)
                            .arg(prevCreditScore)
-                           .arg(banUntilStr);
+                           .arg(banUntilStr)
+                           .arg(depositPaid);
         out << line << "\n";
     }
 
