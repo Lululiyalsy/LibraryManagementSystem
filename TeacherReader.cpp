@@ -34,7 +34,7 @@ TeacherReader::TeacherReader(QString &I, QString &n, QString &pa, QString &ph, Q
     borrowDays = 60;
     renewDays = 30;
     maxRenewTimes = 2;
-    finePerDay = 1;
+    finePerDay = 1.0;
     creditDeductPerDay = 1;
     creditReward = 2;
 }

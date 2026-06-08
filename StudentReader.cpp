@@ -33,7 +33,7 @@ StudentReader::StudentReader(QString &I, QString &n, QString &pa, QString &ph, Q
     borrowDays = 30;
     renewDays = 30;
     maxRenewTimes = 1;
-    finePerDay = 1.0;
+    finePerDay = 2.0;
     creditDeductPerDay = 2;
     creditReward = 2;
 }
