@@ -3,11 +3,10 @@
  * @brief 教师读者类实现
  *
  * 实现TeacherReader类的构造函数和身份标识方法。
- * 构造时自动设置角色为教师并注入教师借阅策略。
+ * 构造时设置教师借阅策略参数。
  */
 
 #include "TeacherReader.h"
-#include "BorrowPolicy.h"
 
 /**
  * @brief 构造函数
@@ -17,11 +16,14 @@
  * @param ph 联系电话
  * @param e 电子邮箱
  *
- * 初始化教师读者，设置角色为TEACHER，注入教师借阅策略：
+ * 初始化教师读者，设置角色为TEACHER，设置教师借阅策略：
  * - 最大借阅10本
  * - 借期60天
  * - 续借30天
+ * - 2次续借机会
  * - 0.5元/天罚款
+ * - 不扣信用分
+ * - 1分按时奖励
  * - 可预约，预约上限5本
  * - 无押金
  */
@@ -30,8 +32,14 @@ TeacherReader::TeacherReader(QString &I, QString &n, QString &pa, QString &ph, Q
 {
     role = Role::TEACHER;
     maxBooks = 10;
-    BorrowPolicy policy = BorrowPolicy::teacherPolicy();
-    setPolicy(new BorrowPolicy(policy));
+    borrowDays = 60;
+    renewDays = 30;
+    maxRenewTimes = 2;
+    finePerDay = 0.5;
+    creditDeductPerDay = 0;
+    creditReward = 1;
+    m_canReserve = true;
+    maxReservations = 5;
 }
 
 /**

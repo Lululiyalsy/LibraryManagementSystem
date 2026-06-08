@@ -15,7 +15,6 @@
 #include "Book.h"
 #include "BorrowRecord.h"
 #include "Reservation.h"
-#include "BorrowPolicy.h"
 
 class Admin;
 class Reader;

@@ -11,7 +11,6 @@
 #include "StudentReader.h"
 #include "TeacherReader.h"
 #include "ExternalReader.h"
-#include "BorrowPolicy.h"
 #include "DataManager.h"
 #include <QIcon>
 #include <QDialog>
@@ -717,7 +716,7 @@ void ReaderWindow::onBorrowBook()
         case Reader::BorrowResult::EXCEED_LIMIT:
         {
             // （显示策略限制）：从借阅策略获取最大借阅数量
-            int maxBooks = reader->getPolicy() ? reader->getPolicy()->getMaxBooks() : reader->getMaxBooks();
+            int maxBooks = reader->getMaxBooks();
             QMessageBox::warning(this, "失败", QString("借书失败！您已达到最大借阅数量（%1本）。").arg(maxBooks));
             break;
         }
@@ -806,7 +805,7 @@ void ReaderWindow::onRenewBook()
         case Reader::RenewResult::EXCEED_LIMIT:
         {
             // （显示续借限制）：续借后借期不得超过策略规定的最大天数
-            int maxRenewTimes = reader->getPolicy() ? reader->getPolicy()->getMaxRenewTimes() : 1;
+            int maxRenewTimes = reader->getMaxRenewTimes();
             QMessageBox::warning(this, "失败", QString("续借失败！续借次数已达上限（最多续借%1次）。").arg(maxRenewTimes));
             break;
         }
@@ -1078,7 +1077,7 @@ void ReaderWindow::onPayDeposit()
         return;
     }
 
-    double depositAmount = extReader->getPolicy() ? extReader->getPolicy()->getDeposit() : 200.0;
+    double depositAmount = extReader->getDeposit();
 
     QMessageBox::StandardButton confirm = QMessageBox::question(
         this, "确认缴纳押金",
@@ -1116,7 +1115,7 @@ void ReaderWindow::onRefundDeposit()
         return;
     }
 
-    double depositAmount = extReader->getPolicy() ? extReader->getPolicy()->getDeposit() : 200.0;
+    double depositAmount = extReader->getDeposit();
 
     QMessageBox::StandardButton confirm = QMessageBox::question(
         this, "确认退还押金",
@@ -1334,28 +1333,24 @@ void ReaderWindow::updateInfoList()
     infoListWidget->addItem(QString("邮箱：%1").arg(reader->getEmail()));
     infoListWidget->addItem(QString("信用分：%1").arg(reader->getCreditScore()));
 
-    // （显示策略信息）：根据借阅策略显示详细的借阅规则
-    BorrowPolicy *policy = reader->getPolicy();
-    if (policy)
+    infoListWidget->addItem("─── 借阅策略 ───");
+    infoListWidget->addItem(QString("  最大借阅数：%1本").arg(reader->getMaxBooks()));
+    infoListWidget->addItem(QString("  借阅天数：%1天").arg(reader->getBorrowDays()));
+    infoListWidget->addItem(QString("  续借延长：%1天").arg(reader->getRenewDays()));
+    infoListWidget->addItem(QString("  最大续借次数：%1次").arg(reader->getMaxRenewTimes()));
+    infoListWidget->addItem(QString("  逾期罚款：%1元/天").arg(reader->getFinePerDay()));
+    infoListWidget->addItem(QString("  是否允许预约：%1").arg(reader->canReserve() ? "是" : "否"));
+    if (reader->canReserve())
     {
-        infoListWidget->addItem("─── 借阅策略 ───");
-        infoListWidget->addItem(QString("  最大借阅数：%1本").arg(policy->getMaxBooks()));
-        infoListWidget->addItem(QString("  借阅天数：%1天").arg(policy->getBorrowDays()));
-        infoListWidget->addItem(QString("  续借延长：%1天").arg(policy->getRenewDays()));
-        infoListWidget->addItem(QString("  最大续借次数：%1次").arg(policy->getMaxRenewTimes()));
-        infoListWidget->addItem(QString("  逾期罚款：%1元/天").arg(policy->getFinePerDay()));
-        infoListWidget->addItem(QString("  是否允许预约：%1").arg(policy->canReserve() ? "是" : "否"));
-        if (policy->canReserve())
-        {
-            infoListWidget->addItem(QString("  最大预约数：%1本").arg(policy->getMaxReservations()));
-        }
-        if (policy->getDeposit() > 0)
-        {
-            // （显示押金状态）：校外读者显示押金缴纳状态
-            ::ExternalReader *extReader = dynamic_cast<::ExternalReader *>(reader);
-            QString depositStatus = (extReader && extReader->isDepositPaid()) ? "已缴纳" : "未缴纳";
-            infoListWidget->addItem(QString("  押金：%1元（%2）").arg(policy->getDeposit()).arg(depositStatus));
-        }
+        infoListWidget->addItem(QString("  最大预约数：%1本").arg(reader->getMaxReservations()));
+    }
+
+    // （显示押金状态）：校外读者显示押金缴纳状态
+    ::ExternalReader *extReader = dynamic_cast<::ExternalReader *>(reader);
+    if (extReader)
+    {
+        QString depositStatus = extReader->isDepositPaid() ? "已缴纳" : "未缴纳";
+        infoListWidget->addItem(QString("  押金：%1元（%2）").arg(extReader->getDeposit()).arg(depositStatus));
     }
 
     for (int i = 0; i < infoListWidget->count(); ++i)

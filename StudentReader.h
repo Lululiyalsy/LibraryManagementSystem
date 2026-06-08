@@ -3,7 +3,7 @@
  * @brief 学生读者类定义
  *
  * StudentReader类继承自Reader类，表示学生类型的读者。
- * 构造时自动注入学生借阅策略，借阅上限5本，借期30天。
+ * 构造时设置学生借阅策略：最大借阅5本，借期30天，续借30天，1元/天罚款。
  */
 
 #ifndef STUDENTREADER_H
@@ -15,8 +15,14 @@
  * @class StudentReader
  * @brief 学生读者类
  *
- * 继承自Reader类，自动注入学生借阅策略（BorrowPolicy::studentPolicy）。
- * 学生读者特点：5本借阅上限、30天借期、1元/天罚款、可预约、无押金。
+ * 继承自Reader类，设置学生借阅策略：
+ * - 最大借阅5本
+ * - 借期30天
+ * - 续借30天
+ * - 1次续借机会
+ * - 1元/天罚款
+ * - 可预约，预约上限3本
+ * - 无押金
  */
 class StudentReader : public Reader
 {

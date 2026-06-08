@@ -3,7 +3,7 @@
  * @brief 外部读者类定义
  *
  * ExternalReader类继承自Reader类，表示外部类型的读者。
- * 构造时自动注入外部读者借阅策略，借阅上限3本，借期15天，不可预约，需缴纳押金。
+ * 构造时设置外部读者借阅策略：最大借阅3本，借期15天，续借15天，2元/天罚款，需缴纳200元押金。
  */
 
 #ifndef EXTERNALREADER_H
@@ -15,8 +15,17 @@
  * @class ExternalReader
  * @brief 外部读者类
  *
- * 继承自Reader类，自动注入外部读者借阅策略（BorrowPolicy::externalPolicy）。
- * 外部读者特点：3本借阅上限、15天借期、2元/天罚款、不可预约、需缴纳200元押金。
+ * 继承自Reader类，设置外部读者借阅策略：
+ * - 最大借阅3本
+ * - 借期15天
+ * - 续借15天
+ * - 1次续借机会
+ * - 2元/天罚款
+ * - 2分/天信用扣减
+ * - 1分按时奖励
+ * - 可预约（需缴纳押金）
+ * - 预约上限3本
+ * - 200元押金
  * 新增押金管理功能，借书前需先缴纳押金。
  */
 class ExternalReader : public Reader
@@ -69,12 +78,21 @@ public:
     void setDepositPaid(bool paid);
 
     /**
+     * @brief 获取押金金额
+     * @return 押金金额
+     */
+    double getDeposit() const;
+
+    /**
      * @brief 析构函数
      */
     ~ExternalReader();
 
 private:
+    static const double DEPOSIT_AMOUNT; ///< 押金金额常量（200元）
+
     bool depositPaid; ///< 是否已缴纳押金
+    double deposit;  ///< 押金金额
 };
 
 #endif // EXTERNALREADER_H

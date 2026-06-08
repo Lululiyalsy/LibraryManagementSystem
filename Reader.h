@@ -13,7 +13,6 @@
 #include "Book.h"
 #include "Reservation.h"
 #include "BorrowRecord.h"
-#include "BorrowPolicy.h"
 #include <QString>
 #include <QDateTime>
 #include <vector>
@@ -23,7 +22,8 @@
  * @brief 读者类
  *
  * 继承自User类，实现读者的全部功能，包括图书预约、借阅、还书、续借等操作，
- * 以及信用分管理和限制机制。
+ * 以及信用分管理和限制机制。读者类型分为学生、教师和外部读者，
+ * 不同类型具有不同的借阅策略（最大借阅数、借阅天数、续借规则、罚款标准等）。
  */
 class Reader : public User
 {
@@ -102,7 +102,55 @@ public:
      */
     void setBanUntil(QDateTime time);
 
-    // ========== 角色和策略管理 ==========
+    /**
+     * @brief 获取借阅天数
+     * @return 借阅天数
+     */
+    int getBorrowDays() const;
+
+    /**
+     * @brief 获取续借延长天数
+     * @return 续借延长天数
+     */
+    int getRenewDays() const;
+
+    /**
+     * @brief 获取最大续借次数
+     * @return 最大续借次数
+     */
+    int getMaxRenewTimes() const;
+
+    /**
+     * @brief 获取每日逾期罚款金额
+     * @return 每日逾期罚款金额
+     */
+    double getFinePerDay() const;
+
+    /**
+     * @brief 获取每日逾期信用分扣减
+     * @return 每日逾期信用分扣减
+     */
+    int getCreditDeductPerDay() const;
+
+    /**
+     * @brief 获取按时还书信用分奖励
+     * @return 按时还书信用分奖励
+     */
+    int getCreditReward() const;
+
+    /**
+     * @brief 获取是否允许预约
+     * @return true表示允许预约，false表示不允许
+     */
+    bool canReserve() const;
+
+    /**
+     * @brief 获取最大预约数量
+     * @return 最大预约数量
+     */
+    int getMaxReservations() const;
+
+    // ========== 角色管理 ==========
 
     /**
      * @enum Role
@@ -128,18 +176,10 @@ public:
     QString getRoleString() const;
 
     /**
-     * @brief 设置借阅策略
-     * @param p 借阅策略指针（Reader对象获取所有权）
-     *
-     * 设置策略后会自动更新maxBooks为策略中配置的值。
+     * @brief 设置读者角色
+     * @param r 读者角色
      */
-    void setPolicy(BorrowPolicy *p);
-
-    /**
-     * @brief 获取当前借阅策略
-     * @return 借阅策略指针（可能为nullptr）
-     */
-    BorrowPolicy *getPolicy() const;
+    void setRole(Role r);
 
     // ========== 枚举类型定义 ==========
 
@@ -149,12 +189,12 @@ public:
      */
     enum class ReserveResult
     {
-        SUCCESS,          ///< 预约成功
-        BOOK_NOT_FOUND,   ///< 图书不存在
-        ALREADY_EXISTS,   ///< 已预约或已借阅该图书
-        EXCEED_LIMIT,     ///< 预约人数已达上限
-        LOW_CREDIT,       ///< 信用分不足，被限制操作
-        DEPOSIT_REQUIRED  ///< 需要缴纳押金才能预约（校外读者）
+        SUCCESS,         ///< 预约成功
+        BOOK_NOT_FOUND,  ///< 图书不存在
+        ALREADY_EXISTS,  ///< 已预约或已借阅该图书
+        EXCEED_LIMIT,    ///< 预约人数已达上限
+        LOW_CREDIT,      ///< 信用分不足，被限制操作
+        DEPOSIT_REQUIRED ///< 需要缴纳押金才能预约（校外读者）
     };
 
     /**
@@ -306,12 +346,19 @@ public:
 
     // ========== 成员变量 ==========
 
-    int maxBooks;        ///< 最大借阅书量（默认10本）
-    int creditScore;     ///< 当前信用分（默认100分）
-    int prevCreditScore; ///< 之前的信用分（用于判断是否下跌）
-    QDateTime banUntil;  ///< 限制到期日（无效表示无限制）
-    Role role;           ///< 读者角色（默认STUDENT）
-    BorrowPolicy *policy;///< 借阅策略指针（由子类注入，Reader拥有所有权）
+    int maxBooks;           ///< 最大借阅书量（默认10本）
+    int borrowDays;         ///< 借阅天数（默认30天）
+    int renewDays;          ///< 续借延长天数（默认30天）
+    int maxRenewTimes;      ///< 最大续借次数（默认1次）
+    double finePerDay;      ///< 每日逾期罚款金额（默认1.0元）
+    int creditDeductPerDay; ///< 每日逾期信用分扣减（默认1分）
+    int creditReward;       ///< 按时还书信用分奖励（默认2分）
+    bool m_canReserve;      ///< 是否允许预约（默认true）
+    int maxReservations;    ///< 最大预约数量（默认3个）
+    int creditScore;        ///< 当前信用分（默认100分）
+    int prevCreditScore;    ///< 之前的信用分（用于判断是否下跌）
+    QDateTime banUntil;     ///< 限制到期日（无效表示无限制）
+    Role role;              ///< 读者角色（默认STUDENT）
 };
 
 #endif // READER_H

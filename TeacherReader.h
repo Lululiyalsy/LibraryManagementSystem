@@ -3,7 +3,7 @@
  * @brief 教师读者类定义
  *
  * TeacherReader类继承自Reader类，表示教师类型的读者。
- * 构造时自动注入教师借阅策略，借阅上限10本，借期60天。
+ * 构造时设置教师借阅策略：最大借阅10本，借期60天，续借30天，0.5元/天罚款。
  */
 
 #ifndef TEACHERREADER_H
@@ -15,8 +15,16 @@
  * @class TeacherReader
  * @brief 教师读者类
  *
- * 继承自Reader类，自动注入教师借阅策略（BorrowPolicy::teacherPolicy）。
- * 教师读者特点：10本借阅上限、60天借期、0.5元/天罚款、可预约、无押金。
+ * 继承自Reader类，设置教师借阅策略：
+ * - 最大借阅10本
+ * - 借期60天
+ * - 续借30天
+ * - 2次续借机会
+ * - 0.5元/天罚款
+ * - 不扣信用分
+ * - 1分按时奖励
+ * - 可预约，预约上限5本
+ * - 无押金
  */
 class TeacherReader : public Reader
 {

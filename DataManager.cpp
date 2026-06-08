@@ -542,12 +542,8 @@ void DataManager::recalculateCreditScores()
         // 只有"不在限制期间、未还且逾期、需要扣分"的记录才扣分
         if (!isBanned && !record.isReturned() && overdueDays > 0 && needDeduct > 0)
         {
-            // 根据读者策略获取每日信用分扣减，无策略默认1分/天
-            int deductPerDay = 1;
-            if (reader->getPolicy())
-            {
-                deductPerDay = reader->getPolicy()->getCreditDeductPerDay();
-            }
+            // 根据读者策略获取每日信用分扣减
+            int deductPerDay = reader->getCreditDeductPerDay();
             int actualDeduct = needDeduct * deductPerDay;
             int currentScore = reader->getCreditScore();
             int newScore = qMax(currentScore - actualDeduct, 0);

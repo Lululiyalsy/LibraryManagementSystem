@@ -761,12 +761,8 @@ bool Admin::renewBook(const QString &isbn, const QString &readerId, bool approve
 
             if (approved)
             {
-                // 从读者策略获取续借天数，无策略默认30天
-                int renewDays = 30;
-                if (reader->getPolicy())
-                {
-                    renewDays = reader->getPolicy()->getRenewDays();
-                }
+                // 从读者策略获取续借天数
+                int renewDays = reader->getRenewDays();
                 record.setDueTime(record.getDueTime().addDays(renewDays));
                 record.setRenewStatus(BorrowRecord::RenewStatus::APPROVED);
 

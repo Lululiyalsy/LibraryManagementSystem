@@ -1,7 +1,7 @@
 /**
  * @file Reader.cpp
  * @brief 读者类实现
- * 
+ *
  * 实现Reader类的所有成员函数，包括图书预约、借阅、还书、续借等操作，
  * 以及信用分管理和限制机制。
  */
@@ -24,13 +24,21 @@
  * @param e 电子邮箱
  */
 Reader::Reader(QString &I, QString &n, QString &pa, QString &ph, QString &e)
-    : User(I, n, pa, ph, e), policy(nullptr)
+    : User(I, n, pa, ph, e)
 {
-    type = 2;              // 读者类型为2
-    maxBooks = 10;         // 默认最大借阅数量为10本
-    creditScore = 100;     // 默认信用分为100分
-    prevCreditScore = 100; // 初始时之前的信用分等于当前信用分
-    role = Role::STUDENT;  // 默认角色为学生读者
+    type = 2;               // 读者类型为2
+    maxBooks = 10;          // 默认最大借阅数量为10本
+    borrowDays = 30;        // 默认借阅天数为30天
+    renewDays = 30;         // 默认续借延长天数为30天
+    maxRenewTimes = 1;      // 默认最大续借次数为1次
+    finePerDay = 1.0;       // 默认每日逾期罚款为1元
+    creditDeductPerDay = 1; // 默认每日信用分扣减为1分
+    creditReward = 2;       // 默认按时还书信用分奖励为2分
+    m_canReserve = true;    // 默认允许预约
+    maxReservations = 3;    // 默认最大预约数量为3个
+    creditScore = 100;      // 默认信用分为100分
+    prevCreditScore = 100;  // 初始时之前的信用分等于当前信用分
+    role = Role::STUDENT;   // 默认角色为学生读者
 }
 
 /**
@@ -107,7 +115,57 @@ void Reader::setPrevCreditScore(int score) { prevCreditScore = score; }
  */
 void Reader::setBanUntil(QDateTime time) { banUntil = time; }
 
-// ========== 角色和策略管理 ==========
+// ========== 借阅策略 getter 方法 ==========
+
+/**
+ * @brief 获取借阅天数
+ * @return 借阅天数
+ */
+int Reader::getBorrowDays() const { return borrowDays; }
+
+/**
+ * @brief 获取续借延长天数
+ * @return 续借延长天数
+ */
+int Reader::getRenewDays() const { return renewDays; }
+
+/**
+ * @brief 获取最大续借次数
+ * @return 最大续借次数
+ */
+int Reader::getMaxRenewTimes() const { return maxRenewTimes; }
+
+/**
+ * @brief 获取每日逾期罚款金额
+ * @return 每日逾期罚款金额
+ */
+double Reader::getFinePerDay() const { return finePerDay; }
+
+/**
+ * @brief 获取每日逾期信用分扣减
+ * @return 每日逾期信用分扣减
+ */
+int Reader::getCreditDeductPerDay() const { return creditDeductPerDay; }
+
+/**
+ * @brief 获取按时还书信用分奖励
+ * @return 按时还书信用分奖励
+ */
+int Reader::getCreditReward() const { return creditReward; }
+
+/**
+ * @brief 获取是否允许预约
+ * @return true表示允许预约，false表示不允许
+ */
+bool Reader::canReserve() const { return m_canReserve; }
+
+/**
+ * @brief 获取最大预约数量
+ * @return 最大预约数量
+ */
+int Reader::getMaxReservations() const { return maxReservations; }
+
+// ========== 角色管理 ==========
 
 /**
  * @brief 获取读者角色
@@ -135,30 +193,10 @@ QString Reader::getRoleString() const
 }
 
 /**
- * @brief 设置借阅策略
- * @param p 借阅策略指针（Reader对象获取所有权）
- *
- * 设置策略后自动更新maxBooks为策略中配置的值。
- * 如果之前已有策略，先释放旧策略的内存。
+ * @brief 设置读者角色
+ * @param r 读者角色
  */
-void Reader::setPolicy(BorrowPolicy *p)
-{
-    if (policy)
-    {
-        delete policy;
-    }
-    policy = p;
-    if (policy)
-    {
-        maxBooks = policy->getMaxBooks();
-    }
-}
-
-/**
- * @brief 获取当前借阅策略
- * @return 借阅策略指针（可能为nullptr）
- */
-BorrowPolicy *Reader::getPolicy() const { return policy; }
+void Reader::setRole(Role r) { role = r; }
 
 // ========== 信用分管理 ==========
 
@@ -178,7 +216,7 @@ bool Reader::isBanned() const
 /**
  * @brief 检查信用分是否允许操作
  * @return 信用分检查结果
- * 
+ *
  * 根据当前信用分和限制状态，返回对应的限制级别：
  * - OK: 信用分正常（90分及以上）
  * - LOW_CREDIT_90: 低于90分，限制1天
@@ -254,9 +292,8 @@ void Reader::calculateCreditScore(int overdueDays, Book *book, const QString &is
         return; // 逾期还书不扣分不加分
     }
 
-    // 按时还书，根据策略奖励信用分
-    int reward = policy ? policy->getCreditReward() : 2;
-    int newScore = creditScore + reward;
+    // 按时还书，奖励信用分
+    int newScore = creditScore + creditReward;
     creditScore = qMin(newScore, 100); // 最高100分
 }
 
@@ -266,7 +303,7 @@ void Reader::calculateCreditScore(int overdueDays, Book *book, const QString &is
  * @brief 预约图书（按ISBN）
  * @param isbn 图书ISBN
  * @return 预约结果
- * 
+ *
  * 预约流程：
  * 1. 检查图书是否存在
  * 2. 检查是否允许预约（根据策略配置）
@@ -381,7 +418,7 @@ std::vector<Reservation> Reader::viewMyReservations()
  * @brief 借书（按ISBN）
  * @param isbn 图书ISBN
  * @return 借书结果
- * 
+ *
  * 借书流程：
  * 1. 检查图书是否存在
  * 2. 检查库存是否充足
@@ -463,7 +500,6 @@ Reader::BorrowResult Reader::borrowBook(const QString &isbn)
 
     // 创建借阅记录
     QDateTime now = QDateTime::currentDateTime();
-    int borrowDays = policy ? policy->getBorrowDays() : 30;
     QDateTime dueTime = now.addDays(borrowDays);
 
     BorrowRecord record(isbn, ID, now, dueTime);
@@ -504,7 +540,7 @@ Reader::BorrowResult Reader::borrowBook(const QString &isbn)
  * @brief 还书（按ISBN）
  * @param isbn 图书ISBN
  * @return 还书结果
- * 
+ *
  * 还书流程：
  * 1. 查找借阅记录
  * 2. 检查是否存在未支付罚款
@@ -617,7 +653,7 @@ Reader::ReturnResult Reader::returnBook(const QString &isbn)
  * @brief 续借（按ISBN）
  * @param isbn 图书ISBN
  * @return 续借结果
- * 
+ *
  * 续借流程：
  * 1. 查找借阅记录
  * 2. 检查图书是否逾期
@@ -669,7 +705,6 @@ Reader::RenewResult Reader::renewBook(const QString &isbn)
     }
 
     // 检查续借后借期是否超过90天
-    int renewDays = policy ? policy->getRenewDays() : 30;
     QDateTime newDueTime = targetRecord->getDueTime().addDays(renewDays);
     QDateTime maxDueTime = QDateTime::currentDateTime().addDays(90);
     if (newDueTime > maxDueTime)
@@ -742,14 +777,7 @@ std::vector<const Book *> Reader::findBook(const QString &isbn, const QString &t
 
 /**
  * @brief 析构函数
- *
- * 释放借阅策略指针的内存。
  */
 Reader::~Reader()
 {
-    if (policy)
-    {
-        delete policy;
-        policy = nullptr;
-    }
 }

@@ -3,11 +3,10 @@
  * @brief 学生读者类实现
  *
  * 实现StudentReader类的构造函数和身份标识方法。
- * 构造时自动设置角色为学生并注入学生借阅策略。
+ * 构造时设置学生借阅策略参数。
  */
 
 #include "StudentReader.h"
-#include "BorrowPolicy.h"
 
 /**
  * @brief 构造函数
@@ -17,11 +16,13 @@
  * @param ph 联系电话
  * @param e 电子邮箱
  *
- * 初始化学生读者，设置角色为STUDENT，注入学生借阅策略：
+ * 初始化学生读者，设置角色为STUDENT，设置学生借阅策略：
  * - 最大借阅5本
  * - 借期30天
  * - 续借30天
  * - 1元/天罚款
+ * - 1分/天信用扣减
+ * - 2分按时奖励
  * - 可预约，预约上限3本
  * - 无押金
  */
@@ -30,8 +31,14 @@ StudentReader::StudentReader(QString &I, QString &n, QString &pa, QString &ph, Q
 {
     role = Role::STUDENT;
     maxBooks = 5;
-    BorrowPolicy policy = BorrowPolicy::studentPolicy();
-    setPolicy(new BorrowPolicy(policy));
+    borrowDays = 30;
+    renewDays = 30;
+    maxRenewTimes = 1;
+    finePerDay = 1.0;
+    creditDeductPerDay = 1;
+    creditReward = 2;
+    m_canReserve = true;
+    maxReservations = 3;
 }
 
 /**

@@ -3,12 +3,14 @@
  * @brief 外部读者类实现
  *
  * 实现ExternalReader类的构造函数、身份标识方法和押金管理功能。
- * 构造时自动设置角色为外部读者并注入外部读者借阅策略。
+ * 构造时设置外部读者借阅策略参数。
  */
 
 #include "ExternalReader.h"
-#include "BorrowPolicy.h"
 #include "DataManager.h"
+
+// 静态常量定义
+const double ExternalReader::DEPOSIT_AMOUNT = 200.0;
 
 /**
  * @brief 构造函数
@@ -18,21 +20,30 @@
  * @param ph 联系电话
  * @param e 电子邮箱
  *
- * 初始化外部读者，设置角色为EXTERNAL，注入外部读者借阅策略：
+ * 初始化外部读者，设置角色为EXTERNAL，设置外部读者借阅策略：
  * - 最大借阅3本
  * - 借期15天
  * - 续借15天
  * - 2元/天罚款
- * - 不可预约
- * - 需缴纳200元押金
+ * - 2分/天信用扣减
+ * - 1分按时奖励
+ * - 可预约（需缴纳押金）
+ * - 预约上限3本
+ * - 200元押金
  */
 ExternalReader::ExternalReader(QString &I, QString &n, QString &pa, QString &ph, QString &e)
-    : Reader(I, n, pa, ph, e), depositPaid(false)
+    : Reader(I, n, pa, ph, e), depositPaid(false), deposit(DEPOSIT_AMOUNT)
 {
     role = Role::EXTERNAL;
     maxBooks = 3;
-    BorrowPolicy policy = BorrowPolicy::externalPolicy();
-    setPolicy(new BorrowPolicy(policy));
+    borrowDays = 15;
+    renewDays = 15;
+    maxRenewTimes = 1;
+    finePerDay = 2.0;
+    creditDeductPerDay = 2;
+    creditReward = 1;
+    m_canReserve = true;
+    maxReservations = 3;
 }
 
 /**
@@ -64,14 +75,9 @@ bool ExternalReader::payDeposit()
 
     // 发送消息通知读者
     DataManager *dm = DataManager::getInstance();
-    double depositAmount = 0;
-    if (policy)
-    {
-        depositAmount = policy->getDeposit();
-    }
 
     QString msgContent = QString("您已成功缴纳押金%1元，现在可以借阅图书。")
-                             .arg(depositAmount);
+                             .arg(deposit);
     Message msg(ID, getName(), msgContent);
     addMessage(msg);
     dm->writeMessage();
@@ -111,14 +117,8 @@ bool ExternalReader::refundDeposit()
 
     depositPaid = false;
 
-    double depositAmount = 0;
-    if (policy)
-    {
-        depositAmount = policy->getDeposit();
-    }
-
     QString msgContent = QString("您的押金%1元已退还，感谢使用。")
-                             .arg(depositAmount);
+                             .arg(deposit);
     Message msg(ID, getName(), msgContent);
     addMessage(msg);
     dm->writeMessage();
@@ -142,6 +142,15 @@ bool ExternalReader::isDepositPaid() const
 void ExternalReader::setDepositPaid(bool paid)
 {
     depositPaid = paid;
+}
+
+/**
+ * @brief 获取押金金额
+ * @return 押金金额
+ */
+double ExternalReader::getDeposit() const
+{
+    return deposit;
 }
 
 /**
