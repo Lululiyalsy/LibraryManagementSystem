@@ -1254,13 +1254,18 @@ void AdminWindow::displayBorrowRecords(const std::vector<BorrowRecord> &records)
         }
         borrowTable->setItem(row, 8, new QTableWidgetItem(renewStatus));
 
-        double fineAmount = record.calculateFine();
+        // 罚款信息（从读者策略获取罚款标准）
+        user = dm->findUserById(record.getReaderID());
+        ::Reader *reader = dynamic_cast<::Reader *>(user);
+        double finePerDay = reader ? reader->getFinePerDay() : 1.0;
+
+        double fineAmount = record.calculateFine(finePerDay);
         double paidFine = record.getPaidFine();
         borrowTable->setItem(row, 9, new QTableWidgetItem(QString::number(fineAmount, 'f', 2) + "元"));
         borrowTable->setItem(row, 10, new QTableWidgetItem(QString::number(paidFine, 'f', 2) + "元"));
 
         QString fineStatus;
-        switch (record.getFineStatus())
+        switch (record.getFineStatus(finePerDay))
         {
         case BorrowRecord::FineStatus::UNPAID:
             fineStatus = "未支付";

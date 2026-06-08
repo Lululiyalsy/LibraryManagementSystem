@@ -53,9 +53,8 @@ public:
      * @param readerID 读者ID
      * @param borrowTime 借阅时间
      * @param dueTime 应还时间
-     * @param finePerDay 每日逾期罚款金额（默认1.0元）
      */
-    BorrowRecord(QString isbn, QString readerID, QDateTime borrowTime, QDateTime dueTime, double finePerDay = 1.0);
+    BorrowRecord(QString isbn, QString readerID, QDateTime borrowTime, QDateTime dueTime);
 
     /**
      * @brief 计算逾期天数
@@ -65,16 +64,18 @@ public:
 
     /**
      * @brief 计算罚款金额
-     * @return 罚款金额（根据finePerDay和逾期天数计算）
+     * @param finePerDay 每日逾期罚款金额
+     * @return 罚款金额（根据逾期天数和罚款标准计算）
      */
-    double calculateFine() const;
+    double calculateFine(double finePerDay) const;
 
     /**
      * @brief 减免罚款
      * @param amount 减免金额（默认0表示全额减免）
+     * @param finePerDay 每日逾期罚款金额
      * @return 减免成功返回true，失败返回false
      */
-    bool waiveFine(double amount = 0);
+    bool waiveFine(double amount = 0, double finePerDay = 1.0);
 
     // ========== getter 方法 ==========
 
@@ -116,12 +117,13 @@ public:
 
     /**
      * @brief 获取罚款状态
+     * @param finePerDay 每日逾期罚款金额
      * @return 罚款状态
      *
-     * 特殊逻辑：如果已支付金额小于当前罚款金额，说明有新的逾期产生，
-     * 返回未支付状态。
+     * 特殊逻辑：如果当前状态为已支付，但已支付金额小于当前罚款金额，
+     * 说明有新的逾期产生，返回未支付状态。
      */
-    FineStatus getFineStatus() const;
+    FineStatus getFineStatus(double finePerDay = 1.0) const;
 
     /**
      * @brief 获取已支付罚款金额
@@ -142,16 +144,16 @@ public:
     RenewStatus getRenewStatus() const;
 
     /**
+     * @brief 获取当前续借次数
+     * @return 当前续借次数
+     */
+    int getRenewCount() const;
+
+    /**
      * @brief 获取已扣信用分数
      * @return 已扣除的信用分数
      */
     int getDeductedScore() const;
-
-    /**
-     * @brief 获取每日逾期罚款金额
-     * @return 每日逾期罚款金额
-     */
-    double getFinePerDay() const;
 
     // ========== setter 方法 ==========
 
@@ -198,16 +200,21 @@ public:
     void setRenewStatus(RenewStatus status);
 
     /**
+     * @brief 设置当前续借次数
+     * @param count 当前续借次数
+     */
+    void setRenewCount(int count);
+
+    /**
+     * @brief 增加续借次数
+     */
+    void incrementRenewCount();
+
+    /**
      * @brief 设置已扣信用分数
      * @param score 已扣除的信用分数
      */
     void setDeductedScore(int score);
-
-    /**
-     * @brief 设置每日逾期罚款金额
-     * @param rate 每日逾期罚款金额
-     */
-    void setFinePerDay(double rate);
 
     /**
      * @brief 析构函数
@@ -225,8 +232,8 @@ private:
     double paidFine;         ///< 已支付罚款金额
     FineStatus fineStatus;   ///< 罚款状态
     RenewStatus renewStatus; ///< 续借审核状态
+    int renewCount;          ///< 当前续借次数
     int deductedScore;       ///< 已扣信用分数
-    double finePerDay;       ///< 每日逾期罚款金额（借出时记录，避免还书时政策已变）
 };
 
 #endif // BORROWRECORD_H

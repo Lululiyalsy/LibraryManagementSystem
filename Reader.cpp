@@ -34,8 +34,6 @@ Reader::Reader(QString &I, QString &n, QString &pa, QString &ph, QString &e)
     finePerDay = 1.0;       // 默认每日逾期罚款为1元
     creditDeductPerDay = 1; // 默认每日信用分扣减为1分
     creditReward = 2;       // 默认按时还书信用分奖励为2分
-    m_canReserve = true;    // 默认允许预约
-    maxReservations = 3;    // 默认最大预约数量为3个
     creditScore = 100;      // 默认信用分为100分
     prevCreditScore = 100;  // 初始时之前的信用分等于当前信用分
     role = Role::STUDENT;   // 默认角色为学生读者
@@ -152,18 +150,6 @@ int Reader::getCreditDeductPerDay() const { return creditDeductPerDay; }
  * @return 按时还书信用分奖励
  */
 int Reader::getCreditReward() const { return creditReward; }
-
-/**
- * @brief 获取是否允许预约
- * @return true表示允许预约，false表示不允许
- */
-bool Reader::canReserve() const { return m_canReserve; }
-
-/**
- * @brief 获取最大预约数量
- * @return 最大预约数量
- */
-int Reader::getMaxReservations() const { return maxReservations; }
 
 // ========== 角色管理 ==========
 
@@ -575,7 +561,7 @@ Reader::ReturnResult Reader::returnBook(const QString &isbn)
     }
 
     // 检查是否存在未支付罚款
-    double fineAmount = targetRecord->calculateFine();
+    double fineAmount = targetRecord->calculateFine(finePerDay);
     double paidFine = targetRecord->getPaidFine();
 
     if (fineAmount > paidFine)
@@ -704,10 +690,8 @@ Reader::RenewResult Reader::renewBook(const QString &isbn)
         return RenewResult::ALREADY_PENDING;
     }
 
-    // 检查续借后借期是否超过90天
-    QDateTime newDueTime = targetRecord->getDueTime().addDays(renewDays);
-    QDateTime maxDueTime = QDateTime::currentDateTime().addDays(90);
-    if (newDueTime > maxDueTime)
+    // 检查续借次数是否已达上限
+    if (targetRecord->getRenewCount() >= maxRenewTimes)
     {
         return RenewResult::EXCEED_LIMIT;
     }

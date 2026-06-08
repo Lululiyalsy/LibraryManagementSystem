@@ -765,6 +765,7 @@ bool Admin::renewBook(const QString &isbn, const QString &readerId, bool approve
                 int renewDays = reader->getRenewDays();
                 record.setDueTime(record.getDueTime().addDays(renewDays));
                 record.setRenewStatus(BorrowRecord::RenewStatus::APPROVED);
+                record.incrementRenewCount(); // 增加续借次数
 
                 QString readerMsgContent = QString("您申请续借图书《%1》(ISBN:%2)已通过审核，借阅期限已延长%3天。")
                                                .arg(bookTitle)

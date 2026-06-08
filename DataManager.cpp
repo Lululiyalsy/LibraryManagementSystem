@@ -365,7 +365,7 @@ void DataManager::initUser()
         int creditScore = 100;     // 默认信用分100
         int prevCreditScore = 100; // 默认之前的信用分等于当前信用分
         QDateTime banUntil;
-        bool depositPaid = false;  // 押金缴纳状态（仅校外读者）
+        bool depositPaid = false; // 押金缴纳状态（仅校外读者）
 
         // 新格式：ID|type|role|name|password|phone|email|creditScore|prevCreditScore|banUntil|depositPaid
         // 旧格式：ID|type|name|password|phone|email|creditScore|prevCreditScore|banUntil
@@ -529,7 +529,9 @@ void DataManager::recalculateCreditScores()
         if (!reader)
             continue;
 
-        record.setFineAmount(record.calculateFine());
+        // 从读者策略获取每日罚款金额
+        double finePerDay = reader->getFinePerDay();
+        record.setFineAmount(record.calculateFine(finePerDay));
 
         bool isBanned = reader->isBanned();
 
@@ -677,7 +679,7 @@ void DataManager::writeUser()
         int prevCreditScore = 100;
         int role = 0; // 管理员角色为0
         QString banUntilStr = "";
-        int depositPaid = 0; // 押金缴纳状态（0=未缴纳，1=已缴纳，仅校外读者）
+        int depositPaid = 0;      // 押金缴纳状态（0=未缴纳，1=已缴纳，仅校外读者）
         if (user->getType() == 2) // 读者
         {
             ::Reader *reader = dynamic_cast<::Reader *>(user);
@@ -1130,14 +1132,7 @@ void DataManager::initBorrowRecord()
         QDateTime borrowTime = QDateTime::fromString(fields[2], "yyyy-MM-dd HH:mm:ss");
         QDateTime dueTime = QDateTime::fromString(fields[3], "yyyy-MM-dd HH:mm:ss");
 
-        // 读取每日罚款金额（最后一个字段，兼容旧数据默认1.0）
-        double finePerDay = 1.0;
-        if (fields.size() >= 12 && !fields[11].isEmpty())
-        {
-            finePerDay = fields[11].toDouble();
-        }
-
-        BorrowRecord record(isbn, readerId, borrowTime, dueTime, finePerDay);
+        BorrowRecord record(isbn, readerId, borrowTime, dueTime);
 
         if (fields.size() >= 5 && !fields[4].isEmpty())
         {
@@ -1155,24 +1150,36 @@ void DataManager::initBorrowRecord()
             record.setRenewStatus(static_cast<BorrowRecord::RenewStatus>(fields[6].toInt()));
         }
 
+        // 兼容旧数据：续借次数字段位置可能不同
         if (fields.size() >= 8)
         {
-            record.setFineAmount(fields[7].toDouble());
+            // 新格式：字段7是renewCount
+            record.setRenewCount(fields[7].toInt());
+        }
+        else if (fields.size() >= 13)
+        {
+            // 旧格式：字段12是renewCount（兼容旧数据）
+            record.setRenewCount(fields[12].toInt());
         }
 
         if (fields.size() >= 9)
         {
-            record.setPaidFine(fields[8].toDouble());
+            record.setFineAmount(fields[8].toDouble());
         }
 
         if (fields.size() >= 10)
         {
-            record.setFineStatus(static_cast<BorrowRecord::FineStatus>(fields[9].toInt()));
+            record.setPaidFine(fields[9].toDouble());
         }
 
         if (fields.size() >= 11)
         {
-            record.setDeductedScore(fields[10].toInt());
+            record.setFineStatus(static_cast<BorrowRecord::FineStatus>(fields[10].toInt()));
+        }
+
+        if (fields.size() >= 12)
+        {
+            record.setDeductedScore(fields[11].toInt());
         }
 
         borrowRecords.push_back(record);
@@ -1208,11 +1215,11 @@ void DataManager::writeBorrowRecord()
                        returnTimeStr + "|" +
                        (record.isReturned() ? "true" : "false") + "|" +
                        QString::number(static_cast<int>(record.getRenewStatus())) + "|" +
+                       QString::number(record.getRenewCount()) + "|" +
                        QString::number(record.getFineAmount(), 'f', 2) + "|" +
                        QString::number(record.getPaidFine(), 'f', 2) + "|" +
                        QString::number(static_cast<int>(record.getFineStatus())) + "|" +
-                       QString::number(record.getDeductedScore()) + "|" +
-                       QString::number(record.getFinePerDay(), 'f', 2);
+                       QString::number(record.getDeductedScore());
         out << line << "\n";
     }
 

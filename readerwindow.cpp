@@ -271,8 +271,8 @@ void ReaderWindow::setupMyBorrowWidget()
 
     // 借阅记录表格
     myBorrowTable = new QTableWidget(this);
-    myBorrowTable->setColumnCount(10);
-    QStringList headers = {"ISBN", "书名", "借阅时间", "应还时间", "归还时间", "状态", "续借状态", "罚款金额", "已支付罚款", "罚款状态"};
+    myBorrowTable->setColumnCount(11);
+    QStringList headers = {"ISBN", "书名", "借阅时间", "应还时间", "归还时间", "状态", "续借状态", "续借次数", "罚款金额", "已支付罚款", "罚款状态"};
     myBorrowTable->setHorizontalHeaderLabels(headers);
     myBorrowTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     myBorrowTable->setSelectionBehavior(QTableWidget::SelectRows);
@@ -472,14 +472,18 @@ void ReaderWindow::displayMyBorrowRecords()
             }
             myBorrowTable->setItem(row, 6, new QTableWidgetItem(renewStatus));
 
-            // 罚款信息
-            double fineAmount = record.calculateFine();
+            // 续借次数
+            myBorrowTable->setItem(row, 7, new QTableWidgetItem(QString::number(record.getRenewCount())));
+
+            // 罚款信息（使用读者策略的罚款标准）
+            double finePerDay = reader->getFinePerDay();
+            double fineAmount = record.calculateFine(finePerDay);
             double paidFine = record.getPaidFine();
-            myBorrowTable->setItem(row, 7, new QTableWidgetItem(QString::number(fineAmount, 'f', 2) + "元"));
-            myBorrowTable->setItem(row, 8, new QTableWidgetItem(QString::number(paidFine, 'f', 2) + "元"));
+            myBorrowTable->setItem(row, 8, new QTableWidgetItem(QString::number(fineAmount, 'f', 2) + "元"));
+            myBorrowTable->setItem(row, 9, new QTableWidgetItem(QString::number(paidFine, 'f', 2) + "元"));
 
             QString fineStatus;
-            switch (record.getFineStatus())
+            switch (record.getFineStatus(finePerDay))
             {
             case BorrowRecord::FineStatus::UNPAID:
                 fineStatus = "未支付";
@@ -493,7 +497,7 @@ void ReaderWindow::displayMyBorrowRecords()
             default:
                 fineStatus = "未知";
             }
-            myBorrowTable->setItem(row, 9, new QTableWidgetItem(fineStatus));
+            myBorrowTable->setItem(row, 10, new QTableWidgetItem(fineStatus));
         }
     }
 }
@@ -837,6 +841,8 @@ void ReaderWindow::onSearchBorrow()
     if (!reader)
         return;
 
+    double finePerDay = reader->getFinePerDay(); // 获取读者策略的罚款标准
+
     DataManager *dm = DataManager::getInstance();
     std::vector<BorrowRecord> allRecords = dm->getBorrowRecords();
     std::vector<BorrowRecord> filteredRecords;
@@ -883,7 +889,7 @@ void ReaderWindow::onSearchBorrow()
 
         if (!fineStatus.isEmpty())
         {
-            BorrowRecord::FineStatus fs = record.getFineStatus();
+            BorrowRecord::FineStatus fs = record.getFineStatus(finePerDay);
             if (fineStatus == "未支付" && fs != BorrowRecord::FineStatus::UNPAID)
                 match = false;
             if (fineStatus == "已支付" && fs != BorrowRecord::FineStatus::PAID)
@@ -950,13 +956,16 @@ void ReaderWindow::onSearchBorrow()
         }
         myBorrowTable->setItem(row, 6, new QTableWidgetItem(renewStatusText));
 
-        double fineAmount = record.calculateFine();
+        // 续借次数
+        myBorrowTable->setItem(row, 7, new QTableWidgetItem(QString::number(record.getRenewCount())));
+
+        double fineAmount = record.calculateFine(finePerDay);
         double paidFine = record.getPaidFine();
-        myBorrowTable->setItem(row, 7, new QTableWidgetItem(QString::number(fineAmount, 'f', 2) + "元"));
-        myBorrowTable->setItem(row, 8, new QTableWidgetItem(QString::number(paidFine, 'f', 2) + "元"));
+        myBorrowTable->setItem(row, 8, new QTableWidgetItem(QString::number(fineAmount, 'f', 2) + "元"));
+        myBorrowTable->setItem(row, 9, new QTableWidgetItem(QString::number(paidFine, 'f', 2) + "元"));
 
         QString fineStatusText;
-        switch (record.getFineStatus())
+        switch (record.getFineStatus(finePerDay))
         {
         case BorrowRecord::FineStatus::UNPAID:
             fineStatusText = "未支付";
@@ -970,7 +979,7 @@ void ReaderWindow::onSearchBorrow()
         default:
             fineStatusText = "未知";
         }
-        myBorrowTable->setItem(row, 9, new QTableWidgetItem(fineStatusText));
+        myBorrowTable->setItem(row, 10, new QTableWidgetItem(fineStatusText));
     }
 }
 
@@ -986,6 +995,8 @@ void ReaderWindow::onPayAllFines()
     if (!reader)
         return;
 
+    double finePerDay = reader->getFinePerDay(); // 获取读者策略的罚款标准
+
     DataManager *dm = DataManager::getInstance();
     std::vector<BorrowRecord> &allRecords = dm->getBorrowRecords();
 
@@ -994,7 +1005,7 @@ void ReaderWindow::onPayAllFines()
     {
         if (record.getReaderID() == reader->getID() && !record.isReturned())
         {
-            totalFine += record.calculateFine() - record.getPaidFine();
+            totalFine += record.calculateFine(finePerDay) - record.getPaidFine();
         }
     }
 
@@ -1014,10 +1025,10 @@ void ReaderWindow::onPayAllFines()
         {
             if (record.getReaderID() == reader->getID() && !record.isReturned())
             {
-                double remaining = record.calculateFine() - record.getPaidFine();
+                double remaining = record.calculateFine(finePerDay) - record.getPaidFine();
                 if (remaining > 0)
                 {
-                    record.setPaidFine(record.calculateFine());
+                    record.setPaidFine(record.calculateFine(finePerDay));
                     record.setFineStatus(BorrowRecord::FineStatus::PAID);
                 }
             }
@@ -1339,11 +1350,6 @@ void ReaderWindow::updateInfoList()
     infoListWidget->addItem(QString("  续借延长：%1天").arg(reader->getRenewDays()));
     infoListWidget->addItem(QString("  最大续借次数：%1次").arg(reader->getMaxRenewTimes()));
     infoListWidget->addItem(QString("  逾期罚款：%1元/天").arg(reader->getFinePerDay()));
-    infoListWidget->addItem(QString("  是否允许预约：%1").arg(reader->canReserve() ? "是" : "否"));
-    if (reader->canReserve())
-    {
-        infoListWidget->addItem(QString("  最大预约数：%1本").arg(reader->getMaxReservations()));
-    }
 
     // （显示押金状态）：校外读者显示押金缴纳状态
     ::ExternalReader *extReader = dynamic_cast<::ExternalReader *>(reader);

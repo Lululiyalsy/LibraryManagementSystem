@@ -138,18 +138,6 @@ public:
      */
     int getCreditReward() const;
 
-    /**
-     * @brief 获取是否允许预约
-     * @return true表示允许预约，false表示不允许
-     */
-    bool canReserve() const;
-
-    /**
-     * @brief 获取最大预约数量
-     * @return 最大预约数量
-     */
-    int getMaxReservations() const;
-
     // ========== 角色管理 ==========
 
     /**
@@ -353,8 +341,6 @@ public:
     double finePerDay;      ///< 每日逾期罚款金额（默认1.0元）
     int creditDeductPerDay; ///< 每日逾期信用分扣减（默认1分）
     int creditReward;       ///< 按时还书信用分奖励（默认2分）
-    bool m_canReserve;      ///< 是否允许预约（默认true）
-    int maxReservations;    ///< 最大预约数量（默认3个）
     int creditScore;        ///< 当前信用分（默认100分）
     int prevCreditScore;    ///< 之前的信用分（用于判断是否下跌）
     QDateTime banUntil;     ///< 限制到期日（无效表示无限制）

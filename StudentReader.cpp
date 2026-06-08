@@ -35,10 +35,8 @@ StudentReader::StudentReader(QString &I, QString &n, QString &pa, QString &ph, Q
     renewDays = 30;
     maxRenewTimes = 1;
     finePerDay = 1.0;
-    creditDeductPerDay = 1;
+    creditDeductPerDay = 2;
     creditReward = 2;
-    m_canReserve = true;
-    maxReservations = 3;
 }
 
 /**

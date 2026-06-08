@@ -42,8 +42,6 @@ ExternalReader::ExternalReader(QString &I, QString &n, QString &pa, QString &ph,
     finePerDay = 2.0;
     creditDeductPerDay = 2;
     creditReward = 1;
-    m_canReserve = true;
-    maxReservations = 3;
 }
 
 /**
@@ -108,8 +106,8 @@ bool ExternalReader::refundDeposit()
         {
             return false; // 存在未归还图书，无法退还押金
         }
-        // 检查是否有未结清罚款
-        if (record.calculateFine() > record.getPaidFine() + 0.01)
+        // 检查是否有未结清罚款（使用读者策略的罚款标准）
+        if (record.calculateFine(finePerDay) > record.getPaidFine() + 0.01)
         {
             return false; // 存在未结清罚款，无法退还押金
         }
