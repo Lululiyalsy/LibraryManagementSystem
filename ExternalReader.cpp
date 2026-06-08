@@ -38,7 +38,7 @@ ExternalReader::ExternalReader(QString &I, QString &n, QString &pa, QString &ph,
     borrowDays = 15;
     renewDays = 15;
     maxRenewTimes = 1;
-    finePerDay = 3.0;
+    finePerDay = 3;
     creditDeductPerDay = 2;
     creditReward = 1;
 }

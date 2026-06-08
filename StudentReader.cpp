@@ -20,10 +20,9 @@
  * - 最大借阅5本
  * - 借期30天
  * - 续借30天
- * - 1元/天罚款
+ * - 2元/天罚款
  * - 1分/天信用扣减
  * - 2分按时奖励
- * - 可预约，预约上限3本
  * - 无押金
  */
 StudentReader::StudentReader(QString &I, QString &n, QString &pa, QString &ph, QString &e)

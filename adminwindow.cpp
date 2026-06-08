@@ -388,7 +388,6 @@ void AdminWindow::setupBorrowTable()
     borrowFineCombo->addItem("");
     borrowFineCombo->addItem("未支付");
     borrowFineCombo->addItem("已支付");
-    borrowFineCombo->addItem("已减免");
     borrowFineCombo->setFixedWidth(80);
 
     // （创建按钮）：创建查找按钮
@@ -1165,8 +1164,6 @@ void AdminWindow::onBorrowSearch()
                     match = false;
                 if (fineStatus == "已支付" && fs != BorrowRecord::FineStatus::PAID)
                     match = false;
-                if (fineStatus == "已减免" && fs != BorrowRecord::FineStatus::WAIVED)
-                    match = false;
             }
 
             if (!renewStatus.isEmpty())
@@ -1272,9 +1269,6 @@ void AdminWindow::displayBorrowRecords(const std::vector<BorrowRecord> &records)
             break;
         case BorrowRecord::FineStatus::PAID:
             fineStatus = "已支付";
-            break;
-        case BorrowRecord::FineStatus::WAIVED:
-            fineStatus = "已减免";
             break;
         default:
             fineStatus = "未知";

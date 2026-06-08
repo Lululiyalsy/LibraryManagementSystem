@@ -22,9 +22,8 @@
  * - 续借30天
  * - 2次续借机会
  * - 1元/天罚款
- * - 不扣信用分
- * - 1分按时奖励
- * - 可预约，预约上限5本
+ * - 1分逾期扣除
+ * - 2分按时奖励
  * - 无押金
  */
 TeacherReader::TeacherReader(QString &I, QString &n, QString &pa, QString &ph, QString &e)

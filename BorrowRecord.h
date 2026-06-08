@@ -31,8 +31,7 @@ public:
     enum class FineStatus
     {
         UNPAID, ///< 未支付
-        PAID,   ///< 已支付
-        WAIVED  ///< 已减免
+        PAID    ///< 已支付
     };
 
     /**
@@ -68,14 +67,6 @@ public:
      * @return 罚款金额（根据逾期天数和罚款标准计算）
      */
     double calculateFine(double finePerDay) const;
-
-    /**
-     * @brief 减免罚款
-     * @param amount 减免金额（默认0表示全额减免）
-     * @param finePerDay 每日逾期罚款金额
-     * @return 减免成功返回true，失败返回false
-     */
-    bool waiveFine(double amount = 0, double finePerDay = 1.0);
 
     // ========== getter 方法 ==========
 

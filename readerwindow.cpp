@@ -251,7 +251,6 @@ void ReaderWindow::setupMyBorrowWidget()
     borrowFineCombo->addItem("");
     borrowFineCombo->addItem("未支付");
     borrowFineCombo->addItem("已支付");
-    borrowFineCombo->addItem("已减免");
     borrowFineCombo->setFixedWidth(80);
 
     QPushButton *searchBorrowBtn = new QPushButton("查找", this);
@@ -490,9 +489,6 @@ void ReaderWindow::displayMyBorrowRecords()
                 break;
             case BorrowRecord::FineStatus::PAID:
                 fineStatus = "已支付";
-                break;
-            case BorrowRecord::FineStatus::WAIVED:
-                fineStatus = "已减免";
                 break;
             default:
                 fineStatus = "未知";
@@ -894,8 +890,6 @@ void ReaderWindow::onSearchBorrow()
                 match = false;
             if (fineStatus == "已支付" && fs != BorrowRecord::FineStatus::PAID)
                 match = false;
-            if (fineStatus == "已减免" && fs != BorrowRecord::FineStatus::WAIVED)
-                match = false;
         }
 
         if (!renewStatus.isEmpty())
@@ -973,9 +967,7 @@ void ReaderWindow::onSearchBorrow()
         case BorrowRecord::FineStatus::PAID:
             fineStatusText = "已支付";
             break;
-        case BorrowRecord::FineStatus::WAIVED:
-            fineStatusText = "已减免";
-            break;
+
         default:
             fineStatusText = "未知";
         }
