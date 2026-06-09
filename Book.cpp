@@ -16,7 +16,7 @@
  * - currentBorrowed: 0
  * - reservationCount: 0
  */
-Book::Book() : stock(0), borrowCount(0), currentBorrowed(0), reservationCount(0) {}
+Book::Book() : stock(0), borrowCount(0), currentBorrowed(0), reservationCount(0), overdueReturnCount(0) {}
 
 /**
  * @brief 构造函数
@@ -31,9 +31,9 @@ Book::Book() : stock(0), borrowCount(0), currentBorrowed(0), reservationCount(0)
  * @param rc 预约人数（默认0）
  */
 Book::Book(const QString &I, const QString &t, const QString &a, const QString &c,
-           int s, const QDateTime &in, int b, int cb, int rc)
+           int s, const QDateTime &in, int b, int cb, int rc, int orc)
     : ISBN(I), title(t), author(a), category(c), stock(s), inStockTime(in),
-      borrowCount(b), currentBorrowed(cb), reservationCount(rc) {}
+      borrowCount(b), currentBorrowed(cb), reservationCount(rc), overdueReturnCount(orc) {}
 
 // ========== getter 方法 ==========
 
@@ -91,6 +91,12 @@ int Book::getCurrentBorrowed() const { return currentBorrowed; }
  */
 int Book::getReservationCount() const { return reservationCount; }
 
+/**
+ * @brief 获取逾期归还次数
+ * @return 逾期归还次数
+ */
+int Book::getOverdueReturnCount() const { return overdueReturnCount; }
+
 // ========== setter 方法 ==========
 
 /**
@@ -146,6 +152,17 @@ void Book::setCurrentBorrowed(int count) { currentBorrowed = count; }
  * @param count 预约人数
  */
 void Book::setReservationCount(int count) { reservationCount = count; }
+
+/**
+ * @brief 设置逾期归还次数
+ * @param count 逾期归还次数
+ */
+void Book::setOverdueReturnCount(int count) { overdueReturnCount = count; }
+
+/**
+ * @brief 增加逾期归还次数
+ */
+void Book::incrementOverdueReturnCount() { overdueReturnCount++; }
 
 // ========== 状态查询 ==========
 

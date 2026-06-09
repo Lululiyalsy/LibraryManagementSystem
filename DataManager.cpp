@@ -739,11 +739,9 @@ void DataManager::initBook()
         if (line.isEmpty())
             continue;
 
-        QStringList fields = line.split("|", Qt::SkipEmptyParts);
-        if (fields.size() < 8)
-        {
+        QStringList fields = line.split("|");
+        if (fields.size() != 10)
             continue;
-        }
 
         QString isbn = fields[0];
         QString title = fields[1];
@@ -752,10 +750,11 @@ void DataManager::initBook()
         int stock = fields[4].toInt();
         QDateTime inStockTime = QDateTime::fromString(fields[5], "yyyy-MM-dd HH:mm:ss");
         int borrowCount = fields[6].toInt();
-        int currentBorrowed = fields[7].toInt();
-        int reservationCount = (fields.size() >= 9) ? fields[8].toInt() : 0;
+        int overdueReturnCount = fields[7].toInt();
+        int currentBorrowed = fields[8].toInt();
+        int reservationCount = fields[9].toInt();
 
-        books.push_back(Book(isbn, title, author, category, stock, inStockTime, borrowCount, currentBorrowed, reservationCount));
+        books.push_back(Book(isbn, title, author, category, stock, inStockTime, borrowCount, currentBorrowed, reservationCount, overdueReturnCount));
     }
 
     file.close();
@@ -778,16 +777,7 @@ void DataManager::writeBook()
     QTextStream out(&file);
     for (auto &book : books)
     {
-        QString line = QString("%1|%2|%3|%4|%5|%6|%7|%8|%9")
-                           .arg(book.getISBN())
-                           .arg(book.getTitle())
-                           .arg(book.getAuthor())
-                           .arg(book.getCategory())
-                           .arg(book.getStock())
-                           .arg(book.getInStockTime().toString("yyyy-MM-dd HH:mm:ss"))
-                           .arg(book.getBorrowCount())
-                           .arg(book.getCurrentBorrowed())
-                           .arg(book.getReservationCount());
+        QString line = book.getISBN() + "|" + book.getTitle() + "|" + book.getAuthor() + "|" + book.getCategory() + "|" + QString::number(book.getStock()) + "|" + book.getInStockTime().toString("yyyy-MM-dd HH:mm:ss") + "|" + QString::number(book.getBorrowCount()) + "|" + QString::number(book.getOverdueReturnCount()) + "|" + QString::number(book.getCurrentBorrowed()) + "|" + QString::number(book.getReservationCount());
         out << line << "\n";
     }
 

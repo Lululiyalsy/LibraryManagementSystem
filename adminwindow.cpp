@@ -246,7 +246,7 @@ void AdminWindow::setupUserTable()
 /**
  * @brief 初始化图书表格
  *
- * 创建图书管理界面，包括操作区和图书表格，设置列数为10（ISBN、书名、作者、分类、库存、入库时间、借阅次数、当前借出、状态、预约人数）。
+ * 创建图书管理界面，包括操作区和图书表格，设置列数为11（ISBN、书名、作者、分类、库存、入库时间、借阅次数、逾期次数、当前借出、状态、预约人数）。
  */
 void AdminWindow::setupBookTable()
 {
@@ -277,7 +277,7 @@ void AdminWindow::setupBookTable()
     bookDeleteBtn = new QPushButton("删除", bookOperationWidget);
     bookUpdateBtn = new QPushButton("修改", bookOperationWidget);
     bookClearBtn = new QPushButton("清除所有图书", bookOperationWidget);
-    bookSortBtn = new QPushButton("按借阅排序", bookOperationWidget);
+    bookSortBtn = new QPushButton("按借阅次数排序", bookOperationWidget);
     bookSortByTimeBtn = new QPushButton("按入库时间排序", bookOperationWidget);
 
     bookOperationLayout->addWidget(bookISBNLineEdit);
@@ -294,8 +294,8 @@ void AdminWindow::setupBookTable()
     bookOperationLayout->addStretch();
 
     bookTable = new QTableWidget(bookWidget);
-    bookTable->setColumnCount(10);
-    bookTable->setHorizontalHeaderLabels({"ISBN", "书名", "作者", "分类", "库存", "入库时间", "借阅次数", "当前借出", "状态", "预约人数"});
+    bookTable->setColumnCount(11);
+    bookTable->setHorizontalHeaderLabels({"ISBN", "书名", "作者", "分类", "库存", "入库时间", "借阅次数", "逾期次数", "当前借出", "状态", "预约人数"});
     bookTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     bookTable->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     bookTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -606,9 +606,10 @@ void AdminWindow::loadBookData()
             bookTable->setItem(row, 4, new QTableWidgetItem(QString::number(book->getStock())));
             bookTable->setItem(row, 5, new QTableWidgetItem(book->getInStockTime().toString("yyyy-MM-dd HH:mm:ss")));
             bookTable->setItem(row, 6, new QTableWidgetItem(QString::number(book->getBorrowCount())));
-            bookTable->setItem(row, 7, new QTableWidgetItem(QString::number(book->getCurrentBorrowed())));
-            bookTable->setItem(row, 8, new QTableWidgetItem(book->getStatus()));
-            bookTable->setItem(row, 9, new QTableWidgetItem(QString::number(book->getReservationCount())));
+            bookTable->setItem(row, 7, new QTableWidgetItem(QString::number(book->getOverdueReturnCount())));
+            bookTable->setItem(row, 8, new QTableWidgetItem(QString::number(book->getCurrentBorrowed())));
+            bookTable->setItem(row, 9, new QTableWidgetItem(book->getStatus()));
+            bookTable->setItem(row, 10, new QTableWidgetItem(QString::number(book->getReservationCount())));
         }
     }
 }
@@ -653,9 +654,10 @@ void AdminWindow::displayBooks(const std::vector<const Book *> &books)
         bookTable->setItem(row, 4, new QTableWidgetItem(QString::number(book->getStock())));
         bookTable->setItem(row, 5, new QTableWidgetItem(book->getInStockTime().toString("yyyy-MM-dd HH:mm:ss")));
         bookTable->setItem(row, 6, new QTableWidgetItem(QString::number(book->getBorrowCount())));
-        bookTable->setItem(row, 7, new QTableWidgetItem(QString::number(book->getCurrentBorrowed())));
-        bookTable->setItem(row, 8, new QTableWidgetItem(book->getStatus()));
-        bookTable->setItem(row, 9, new QTableWidgetItem(QString::number(book->getReservationCount())));
+        bookTable->setItem(row, 7, new QTableWidgetItem(QString::number(book->getOverdueReturnCount())));
+        bookTable->setItem(row, 8, new QTableWidgetItem(QString::number(book->getCurrentBorrowed())));
+        bookTable->setItem(row, 9, new QTableWidgetItem(book->getStatus()));
+        bookTable->setItem(row, 10, new QTableWidgetItem(QString::number(book->getReservationCount())));
     }
 }
 

@@ -59,6 +59,25 @@ int BorrowRecord::calculateOverdueDays() const
 }
 
 /**
+ * @brief 计算归还时的逾期天数
+ * @return 归还时的逾期天数（未归还返回0）
+ *
+ * 使用归还时间计算逾期天数，用于统计历史逾期记录。
+ */
+int BorrowRecord::calculateOverdueDaysAtReturn() const
+{
+    if (!returned || !returnTime.isValid())
+    {
+        return 0;
+    }
+    if (returnTime > dueTime)
+    {
+        return dueTime.daysTo(returnTime);
+    }
+    return 0;
+}
+
+/**
  * @brief 计算罚款金额
  * @param finePerDay 每日逾期罚款金额
  * @return 罚款金额

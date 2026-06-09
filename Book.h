@@ -37,9 +37,10 @@ public:
      * @param b 借阅次数
      * @param cb 当前借出数量
      * @param rc 预约人数（默认0）
+     * @param orc 逾期归还次数（默认0）
      */
     Book(const QString &I, const QString &t, const QString &a, const QString &c,
-         int s, const QDateTime &in, int b, int cb, int rc = 0);
+         int s, const QDateTime &in, int b, int cb, int rc = 0, int orc = 0);
 
     // ========== getter 方法 ==========
 
@@ -97,6 +98,12 @@ public:
      */
     int getReservationCount() const;
 
+    /**
+     * @brief 获取逾期归还次数
+     * @return 逾期归还次数
+     */
+    int getOverdueReturnCount() const;
+
     // ========== setter 方法 ==========
 
     /**
@@ -153,6 +160,17 @@ public:
      */
     void setReservationCount(int count);
 
+    /**
+     * @brief 设置逾期归还次数
+     * @param count 逾期归还次数
+     */
+    void setOverdueReturnCount(int count);
+
+    /**
+     * @brief 增加逾期归还次数
+     */
+    void incrementOverdueReturnCount();
+
     // ========== 状态查询 ==========
 
     /**
@@ -168,15 +186,16 @@ public:
 
     // ========== 成员变量 ==========
 
-    QString ISBN;          ///< 书本ISBN编号
-    QString title;         ///< 书名
-    QString author;        ///< 作者
-    QString category;      ///< 分类
-    int stock;             ///< 库存数量
-    QDateTime inStockTime; ///< 入库时间
-    int borrowCount;       ///< 借阅次数（累计）
-    int currentBorrowed;   ///< 当前借出数量
-    int reservationCount;  ///< 预约人数
+    QString ISBN;           ///< 书本ISBN编号
+    QString title;          ///< 书名
+    QString author;         ///< 作者
+    QString category;       ///< 分类
+    int stock;              ///< 库存数量
+    QDateTime inStockTime;  ///< 入库时间
+    int borrowCount;        ///< 借阅次数（累计）
+    int currentBorrowed;    ///< 当前借出数量
+    int reservationCount;   ///< 预约人数
+    int overdueReturnCount; ///< 逾期归还次数（累计）
 };
 
 #endif // BOOK_H

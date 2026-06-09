@@ -578,6 +578,13 @@ Reader::ReturnResult Reader::returnBook(const QString &isbn)
     calculateCreditScore(overdueDays, book, isbn);
     dm->writeUser();
 
+    // 如果逾期归还，增加图书的逾期归还次数
+    if (overdueDays > 0 && book)
+    {
+        book->incrementOverdueReturnCount();
+        dm->writeBook();
+    }
+
     // 删除借阅记录
     allRecords.erase(allRecords.begin() + recordIndex);
     dm->writeBorrowRecord();

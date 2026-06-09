@@ -62,6 +62,14 @@ public:
     int calculateOverdueDays() const;
 
     /**
+     * @brief 计算归还时的逾期天数
+     * @return 归还时的逾期天数（未归还返回0）
+     *
+     * 使用归还时间计算逾期天数，用于统计历史逾期记录。
+     */
+    int calculateOverdueDaysAtReturn() const;
+
+    /**
      * @brief 计算罚款金额
      * @param finePerDay 每日逾期罚款金额
      * @return 罚款金额（根据逾期天数和罚款标准计算）

@@ -169,25 +169,33 @@ void StatisticsWidget::updateStatistics()
     std::vector<BorrowRecord> records = dm->getBorrowRecords();
     int currentBorrowCount = records.size(); // 当前借阅数量（未归还）
     int totalBorrowCount = 0;                // 总借阅次数（历史总和）
+    int totalOverdueReturnCount = 0;         // 图书的总逾期归还次数
 
-    // 计算历史借阅总次数（所有图书的借阅次数之和）
+    // 计算历史借阅总次数和图书的总逾期归还次数
     for (auto &book : books)
     {
         totalBorrowCount += book.getBorrowCount();
+        totalOverdueReturnCount += book.getOverdueReturnCount();
     }
 
     // 统计当前逾期数量
-    int overdueCount = 0;
+    int currentOverdueCount = 0; // 当前逾期数量（未归还且逾期）
+
     for (auto &record : records)
     {
+        // 未归还记录
         if (!record.isReturned() && record.calculateOverdueDays() > 0)
-            overdueCount++;
+        {
+            currentOverdueCount++; // 当前逾期
+        }
     }
 
-    // 计算归还率和逾期率
-    int returnedCount = totalBorrowCount - currentBorrowCount; // 已归还次数
+    // 计算归还率和按时归还率
+    int returnedCount = totalBorrowCount - currentBorrowCount;        // 已归还次数
+    int historicalOverdueCount = totalOverdueReturnCount;             // 历史逾期数量（图书的逾期归还次数总和）
+    int onTimeReturnedCount = returnedCount - historicalOverdueCount; // 按时归还次数
     double returnRate = totalBorrowCount > 0 ? (double)returnedCount / totalBorrowCount * 100 : 0;
-    double overdueRate = currentBorrowCount > 0 ? (double)overdueCount / currentBorrowCount * 100 : 0;
+    double onTimeReturnRate = returnedCount > 0 ? (double)onTimeReturnedCount / returnedCount * 100 : 0;
 
     // 更新统计摘要表格
     summaryTable->setRowCount(0);
@@ -200,8 +208,10 @@ void StatisticsWidget::updateStatistics()
         "当前借阅数量", QString::number(currentBorrowCount), // 当前未归还数量
         "已归还次数", QString::number(returnedCount),        // 历史已归还
         "归还率", QString::number(returnRate, 'f', 1) + "%",
-        "逾期数量", QString::number(overdueCount),
-        "逾期率", QString::number(overdueRate, 'f', 1) + "%"};
+        "历史逾期数量", QString::number(historicalOverdueCount), // 已归还但曾逾期
+        "当前逾期数量", QString::number(currentOverdueCount),    // 当前未归还且逾期
+        "按时归还次数", QString::number(onTimeReturnedCount),    // 按时归还次数
+        "按时归还率", QString::number(onTimeReturnRate, 'f', 1) + "%"};
     for (int i = 0; i < items.size(); i += 2)
     {
         int row = summaryTable->rowCount();
@@ -287,22 +297,31 @@ void StatisticsWidget::onGenerateReportClicked()
 
     int currentBorrowCount = records.size(); // 当前借阅数量（未归还）
     int totalBorrowCount = 0;                // 总借阅次数（历史总和）
+    int totalOverdueReturnCount = 0;         // 图书的总逾期归还次数
 
-    // 计算历史借阅总次数（所有图书的借阅次数之和）
+    // 计算历史借阅总次数和图书的总逾期归还次数
     for (auto &book : books)
     {
         totalBorrowCount += book.getBorrowCount();
+        totalOverdueReturnCount += book.getOverdueReturnCount();
     }
 
     // 统计当前逾期数量
-    int overdueCount = 0;
+    int currentOverdueCount = 0; // 当前逾期数量（未归还且逾期）
+
     for (auto &record : records)
     {
+        // 未归还记录
         if (!record.isReturned() && record.calculateOverdueDays() > 0)
-            overdueCount++;
+        {
+            currentOverdueCount++; // 当前逾期
+        }
     }
 
-    int returned = totalBorrowCount - currentBorrowCount; // 已归还次数
+    // 计算已归还次数、历史逾期数量和按时归还次数
+    int returned = totalBorrowCount - currentBorrowCount;        // 已归还次数
+    int historicalOverdueCount = totalOverdueReturnCount;        // 历史逾期数量（图书的逾期归还次数总和）
+    int onTimeReturnedCount = returned - historicalOverdueCount; // 按时归还次数
 
     // 获取热门图书排行
     std::vector<Book> sortedBooks = dm->sortBooksByBorrowCount();
@@ -319,15 +338,17 @@ void StatisticsWidget::onGenerateReportClicked()
 
     // 计算比率
     double returnRate = totalBorrowCount > 0 ? (double)returned / totalBorrowCount * 100 : 0;
-    double overdueRate = currentBorrowCount > 0 ? (double)overdueCount / currentBorrowCount * 100 : 0;
+    double onTimeReturnRate = returned > 0 ? (double)onTimeReturnedCount / returned * 100 : 0;
 
-    report += QString("[借阅统计]\n  总借阅次数: %1\n  当前借阅数量: %2\n  已归还次数: %3\n  借阅归还率: %4%\n  逾期数量: %5\n  逾期率: %6%\n\n")
+    report += QString("[借阅统计]\n  总借阅次数: %1\n  当前借阅数量: %2\n  已归还次数: %3\n  借阅归还率: %4%\n  历史逾期数量: %5\n  当前逾期数量: %6\n  按时归还次数: %7\n  按时归还率: %8%\n\n")
                   .arg(totalBorrowCount)
                   .arg(currentBorrowCount)
                   .arg(returned)
                   .arg(QString::number(returnRate, 'f', 2))
-                  .arg(overdueCount)
-                  .arg(QString::number(overdueRate, 'f', 2));
+                  .arg(historicalOverdueCount)
+                  .arg(currentOverdueCount)
+                  .arg(onTimeReturnedCount)
+                  .arg(QString::number(onTimeReturnRate, 'f', 2));
 
     // 添加热门图书 TOP5
     report += "[热门图书 TOP5]\n";
