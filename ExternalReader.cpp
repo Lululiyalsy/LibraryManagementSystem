@@ -96,16 +96,17 @@ bool ExternalReader::refundDeposit()
         return false; // 未缴纳，无法退还
     }
 
-    // 检查是否有未归还的图书
+    // 检查是否有未归还的图书（归还后记录会被删除）
     DataManager *dm = DataManager::getInstance();
     std::vector<BorrowRecord> records = dm->getBorrowRecordsByReader(ID);
+    if (!records.empty())
+    {
+        return false; // 存在未归还图书，无法退还押金
+    }
+
+    // 检查是否有未结清罚款（归还后不应该有罚款记录，但为了安全检查一下）
     for (const auto &record : records)
     {
-        if (!record.isReturned())
-        {
-            return false; // 存在未归还图书，无法退还押金
-        }
-        // 检查是否有未结清罚款（使用读者策略的罚款标准）
         if (record.calculateFine(finePerDay) > record.getPaidFine() + 0.01)
         {
             return false; // 存在未结清罚款，无法退还押金

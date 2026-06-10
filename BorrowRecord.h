@@ -57,17 +57,9 @@ public:
 
     /**
      * @brief 计算逾期天数
-     * @return 逾期天数（未逾期或已归还返回0）
+     * @return 逾期天数（未逾期返回0）
      */
     int calculateOverdueDays() const;
-
-    /**
-     * @brief 计算归还时的逾期天数
-     * @return 归还时的逾期天数（未归还返回0）
-     *
-     * 使用归还时间计算逾期天数，用于统计历史逾期记录。
-     */
-    int calculateOverdueDaysAtReturn() const;
 
     /**
      * @brief 计算罚款金额
@@ -101,18 +93,6 @@ public:
      * @return 应还时间
      */
     QDateTime getDueTime() const;
-
-    /**
-     * @brief 获取归还时间
-     * @return 归还时间（未归还返回无效时间）
-     */
-    QDateTime getReturnTime() const;
-
-    /**
-     * @brief 判断是否已归还
-     * @return true表示已归还，false表示未归还
-     */
-    bool isReturned() const;
 
     /**
      * @brief 获取罚款状态
@@ -161,18 +141,6 @@ public:
      * @param time 新的应还时间
      */
     void setDueTime(QDateTime time);
-
-    /**
-     * @brief 设置归还时间
-     * @param time 归还时间
-     */
-    void setReturnTime(QDateTime time);
-
-    /**
-     * @brief 设置是否已归还
-     * @param isReturned 是否已归还
-     */
-    void setReturned(bool isReturned);
 
     /**
      * @brief 设置已支付罚款金额
@@ -225,8 +193,6 @@ private:
     QString readerID;        ///< 关联的读者ID
     QDateTime borrowTime;    ///< 借阅时间
     QDateTime dueTime;       ///< 应还时间
-    QDateTime returnTime;    ///< 实际归还时间
-    bool returned;           ///< 是否已归还
     double fineAmount;       ///< 罚款金额
     double paidFine;         ///< 已支付罚款金额
     FineStatus fineStatus;   ///< 罚款状态

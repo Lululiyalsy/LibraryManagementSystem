@@ -335,7 +335,7 @@ Reader::ReserveResult Reader::reserveBook(const QString &isbn)
     std::vector<BorrowRecord> &allRecords = dm->getBorrowRecords();
     for (const auto &record : allRecords)
     {
-        if (record.getISBN() == isbn && record.getReaderID() == ID && !record.isReturned())
+        if (record.getISBN() == isbn && record.getReaderID() == ID)
         {
             return ReserveResult::ALREADY_EXISTS;
         }
@@ -448,7 +448,7 @@ Reader::BorrowResult Reader::borrowBook(const QString &isbn)
     std::vector<BorrowRecord> myRecords = dm->getBorrowRecordsByReader(ID);
     for (const auto &record : myRecords)
     {
-        if (record.getISBN() == isbn && !record.isReturned())
+        if (record.getISBN() == isbn)
         {
             return BorrowResult::ALREADY_BORROWED;
         }
@@ -548,7 +548,7 @@ Reader::ReturnResult Reader::returnBook(const QString &isbn)
 
     for (int i = 0; i < allRecords.size(); ++i)
     {
-        if (allRecords[i].getISBN() == isbn && allRecords[i].getReaderID() == ID && !allRecords[i].isReturned())
+        if (allRecords[i].getISBN() == isbn && allRecords[i].getReaderID() == ID)
         {
             targetRecord = &allRecords[i];
             recordIndex = i;
@@ -667,7 +667,7 @@ Reader::RenewResult Reader::renewBook(const QString &isbn)
 
     for (auto &record : allRecords)
     {
-        if (record.getISBN() == isbn && record.getReaderID() == ID && !record.isReturned())
+        if (record.getISBN() == isbn && record.getReaderID() == ID)
         {
             targetRecord = &record;
             break;

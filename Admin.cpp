@@ -1,7 +1,7 @@
 /**
  * @file Admin.cpp
  * @brief 管理员类实现
- * 
+ *
  * 实现Admin类的所有成员函数，包括用户管理、图书管理、预约管理、
  * 借阅管理和统计报表生成等功能。
  */
@@ -470,7 +470,7 @@ std::vector<const Book *> Admin::sortBookByInStockTime()
 
 /**
  * @brief 生成统计报表（主要是借书情况）
- * 
+ *
  * 生成包含用户统计、图书统计、借阅统计、热门图书和逾期图书列表的报表，
  * 并保存到reports目录下。
  */
@@ -492,9 +492,9 @@ void Admin::generateReport()
     int totalUsers = allUsers.size();
     int readerCount = 0;
     int adminCount = 0;
-    int studentCount = 0;   ///< 学生读者数量
-    int teacherCount = 0;   ///< 教师读者数量
-    int externalCount = 0;  ///< 校外读者数量
+    int studentCount = 0;  ///< 学生读者数量
+    int teacherCount = 0;  ///< 教师读者数量
+    int externalCount = 0; ///< 校外读者数量
 
     // 计算历史借阅总次数（所有图书的借阅次数之和）
     for (auto &book : allBooks)
@@ -737,7 +737,7 @@ bool Admin::renewBook(const QString &isbn, const QString &readerId, bool approve
 
     for (auto &record : allRecords)
     {
-        if (record.getISBN() == isbn && record.getReaderID() == readerId && !record.isReturned())
+        if (record.getISBN() == isbn && record.getReaderID() == readerId)
         {
             if (record.getRenewStatus() != BorrowRecord::RenewStatus::PENDING)
             {
@@ -834,7 +834,7 @@ std::vector<BorrowRecord> Admin::viewOverdueRecords()
     QDateTime now = QDateTime::currentDateTime();
     for (auto &record : allRecords)
     {
-        if (!record.isReturned() && now > record.getDueTime())
+        if (now > record.getDueTime())
         {
             overdueRecords.push_back(record);
         }

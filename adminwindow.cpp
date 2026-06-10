@@ -409,9 +409,9 @@ void AdminWindow::setupBorrowTable()
     // （创建表格）：创建借阅表格实例
     borrowTable = new QTableWidget(borrowWidget);
     // （设置列数）：设置借阅表格列数为12
-    borrowTable->setColumnCount(12);
+    borrowTable->setColumnCount(11);
     // （设置表头）：设置借阅表格表头
-    borrowTable->setHorizontalHeaderLabels({"ISBN", "书名", "读者ID", "读者姓名", "借阅时间", "应还时间", "归还时间", "状态", "续借状态", "罚款金额", "已支付罚款", "罚款状态"});
+    borrowTable->setHorizontalHeaderLabels({"ISBN", "书名", "读者ID", "读者姓名", "借阅时间", "应还时间", "状态", "续借状态", "续借次数", "罚款金额", "已支付罚款"});
     // （设置列调整模式）：列自动拉伸填充
     borrowTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     // （设置行调整模式）：行高根据内容自动调整
@@ -1138,19 +1138,12 @@ void AdminWindow::onBorrowSearch()
             if (!dueTime.isEmpty() && !record.getDueTime().toString("yyyy-MM-dd").contains(dueTime))
                 match = false;
 
-            if (!returnTime.isEmpty())
-            {
-                QString recordReturnTime = record.isReturned() ? record.getReturnTime().toString("yyyy-MM-dd") : "";
-                if (!recordReturnTime.contains(returnTime))
-                    match = false;
-            }
+            // 归还记录会被删除，所以不需要搜索归还时间
 
             if (!status.isEmpty())
             {
                 QString recordStatus;
-                if (record.isReturned())
-                    recordStatus = "已归还";
-                else if (record.calculateOverdueDays() > 0)
+                if (record.calculateOverdueDays() > 0)
                     recordStatus = QString("逾期%1天").arg(record.calculateOverdueDays());
                 else
                     recordStatus = "借阅中";
@@ -1219,19 +1212,12 @@ void AdminWindow::displayBorrowRecords(const std::vector<BorrowRecord> &records)
         borrowTable->setItem(row, 4, new QTableWidgetItem(record.getBorrowTime().toString("yyyy-MM-dd HH:mm:ss")));
         borrowTable->setItem(row, 5, new QTableWidgetItem(record.getDueTime().toString("yyyy-MM-dd HH:mm:ss")));
 
-        QString returnTime = record.isReturned() ? record.getReturnTime().toString("yyyy-MM-dd HH:mm:ss") : "未归还";
-        borrowTable->setItem(row, 6, new QTableWidgetItem(returnTime));
-
         QString status = "借阅中";
-        if (record.isReturned())
-        {
-            status = "已归还";
-        }
-        else if (record.calculateOverdueDays() > 0)
+        if (record.calculateOverdueDays() > 0)
         {
             status = QString("逾期%1天").arg(record.calculateOverdueDays());
         }
-        borrowTable->setItem(row, 7, new QTableWidgetItem(status));
+        borrowTable->setItem(row, 6, new QTableWidgetItem(status));
 
         QString renewStatus;
         switch (record.getRenewStatus())
@@ -1251,7 +1237,9 @@ void AdminWindow::displayBorrowRecords(const std::vector<BorrowRecord> &records)
         default:
             renewStatus = "未知";
         }
-        borrowTable->setItem(row, 8, new QTableWidgetItem(renewStatus));
+        borrowTable->setItem(row, 7, new QTableWidgetItem(renewStatus));
+
+        borrowTable->setItem(row, 8, new QTableWidgetItem(QString::number(record.getRenewCount())));
 
         // 罚款信息（从读者策略获取罚款标准）
         user = dm->findUserById(record.getReaderID());
@@ -1262,20 +1250,6 @@ void AdminWindow::displayBorrowRecords(const std::vector<BorrowRecord> &records)
         double paidFine = record.getPaidFine();
         borrowTable->setItem(row, 9, new QTableWidgetItem(QString::number(fineAmount, 'f', 2) + "元"));
         borrowTable->setItem(row, 10, new QTableWidgetItem(QString::number(paidFine, 'f', 2) + "元"));
-
-        QString fineStatus;
-        switch (record.getFineStatus(finePerDay))
-        {
-        case BorrowRecord::FineStatus::UNPAID:
-            fineStatus = "未支付";
-            break;
-        case BorrowRecord::FineStatus::PAID:
-            fineStatus = "已支付";
-            break;
-        default:
-            fineStatus = "未知";
-        }
-        borrowTable->setItem(row, 11, new QTableWidgetItem(fineStatus));
     }
 }
 

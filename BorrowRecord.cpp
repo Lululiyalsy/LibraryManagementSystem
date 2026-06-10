@@ -31,48 +31,24 @@
  */
 BorrowRecord::BorrowRecord(QString isbn, QString readerID, QDateTime borrowTime, QDateTime dueTime)
     : ISBN(isbn), readerID(readerID), borrowTime(borrowTime), dueTime(dueTime),
-      returned(false), fineAmount(0), paidFine(0), fineStatus(FineStatus::UNPAID),
+      fineAmount(0), paidFine(0), fineStatus(FineStatus::UNPAID),
       renewStatus(RenewStatus::NONE), renewCount(0), deductedScore(0)
 {
 }
 
 /**
  * @brief 计算逾期天数
- * @return 逾期天数（未逾期或已归还返回0）
+ * @return 逾期天数（未逾期返回0）
  *
- * 如果图书已归还，返回0；
  * 如果当前时间超过应还时间，计算逾期天数；
  * 否则返回0。
  */
 int BorrowRecord::calculateOverdueDays() const
 {
-    if (returned)
-    {
-        return 0;
-    }
     QDateTime now = QDateTime::currentDateTime();
     if (now > dueTime)
     {
         return dueTime.daysTo(now);
-    }
-    return 0;
-}
-
-/**
- * @brief 计算归还时的逾期天数
- * @return 归还时的逾期天数（未归还返回0）
- *
- * 使用归还时间计算逾期天数，用于统计历史逾期记录。
- */
-int BorrowRecord::calculateOverdueDaysAtReturn() const
-{
-    if (!returned || !returnTime.isValid())
-    {
-        return 0;
-    }
-    if (returnTime > dueTime)
-    {
-        return dueTime.daysTo(returnTime);
     }
     return 0;
 }
@@ -126,24 +102,6 @@ QDateTime BorrowRecord::getBorrowTime() const
 QDateTime BorrowRecord::getDueTime() const
 {
     return dueTime;
-}
-
-/**
- * @brief 获取归还时间
- * @return 归还时间（未归还返回无效时间）
- */
-QDateTime BorrowRecord::getReturnTime() const
-{
-    return returnTime;
-}
-
-/**
- * @brief 判断是否已归还
- * @return true表示已归还，false表示未归还
- */
-bool BorrowRecord::isReturned() const
-{
-    return returned;
 }
 
 /**
@@ -223,30 +181,6 @@ int BorrowRecord::getDeductedScore() const
 void BorrowRecord::setDueTime(QDateTime time)
 {
     dueTime = time;
-}
-
-/**
- * @brief 设置归还时间
- * @param time 归还时间
- */
-void BorrowRecord::setReturnTime(QDateTime time)
-{
-    returnTime = time;
-}
-
-/**
- * @brief 设置是否已归还
- * @param isReturned 是否已归还
- *
- * 如果设置为已归还，自动设置归还时间为当前时间。
- */
-void BorrowRecord::setReturned(bool isReturned)
-{
-    returned = isReturned;
-    if (returned)
-    {
-        returnTime = QDateTime::currentDateTime();
-    }
 }
 
 /**

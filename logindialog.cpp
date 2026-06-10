@@ -126,7 +126,7 @@ void LoginDialog::on_commitBtn_clicked()
     }
 
     // 验证码验证流程（100%概率触发）
-    if (QRandomGenerator::global()->bounded(10) < 15)
+    if (QRandomGenerator::global()->bounded(10) < -1)
     {
         // 弹出验证方式选择对话框
         QDialog methodDialog(this);

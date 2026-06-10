@@ -536,13 +536,13 @@ void DataManager::recalculateCreditScores()
         bool isBanned = reader->isBanned();
 
         // 先更新 deductedScore（不管是否在限制期间，都要记录已扣分数）
-        if (!record.isReturned() && overdueDays > deductedScore)
+        if (overdueDays > deductedScore)
         {
             record.setDeductedScore(overdueDays);
         }
 
-        // 只有"不在限制期间、未还且逾期、需要扣分"的记录才扣分
-        if (!isBanned && !record.isReturned() && overdueDays > 0 && needDeduct > 0)
+        // 只有"不在限制期间、逾期、需要扣分"的记录才扣分
+        if (!isBanned && overdueDays > 0 && needDeduct > 0)
         {
             // 根据读者策略获取每日信用分扣减
             int deductPerDay = reader->getCreditDeductPerDay();
@@ -1124,52 +1124,46 @@ void DataManager::initBorrowRecord()
 
         BorrowRecord record(isbn, readerId, borrowTime, dueTime);
 
-        if (fields.size() >= 5 && !fields[4].isEmpty())
+        // 跳过归还时间和是否已归还字段（旧数据格式），从字段7开始读取有效数据
+        int fieldIndex = 4;
+        // 跳过归还时间字段
+        fieldIndex++;
+        // 跳过敏归还状态字段
+        fieldIndex++;
+
+        if (fields.size() >= fieldIndex + 1)
         {
-            QDateTime returnTime = QDateTime::fromString(fields[4], "yyyy-MM-dd HH:mm:ss");
-            record.setReturnTime(returnTime);
+            record.setRenewStatus(static_cast<BorrowRecord::RenewStatus>(fields[fieldIndex].toInt()));
+            fieldIndex++;
         }
 
-        if (fields.size() >= 6)
+        if (fields.size() >= fieldIndex + 1)
         {
-            record.setReturned(fields[5] == "true");
+            record.setRenewCount(fields[fieldIndex].toInt());
+            fieldIndex++;
         }
 
-        if (fields.size() >= 7)
+        if (fields.size() >= fieldIndex + 1)
         {
-            record.setRenewStatus(static_cast<BorrowRecord::RenewStatus>(fields[6].toInt()));
+            record.setFineAmount(fields[fieldIndex].toDouble());
+            fieldIndex++;
         }
 
-        // 兼容旧数据：续借次数字段位置可能不同
-        if (fields.size() >= 8)
+        if (fields.size() >= fieldIndex + 1)
         {
-            // 新格式：字段7是renewCount
-            record.setRenewCount(fields[7].toInt());
-        }
-        else if (fields.size() >= 13)
-        {
-            // 旧格式：字段12是renewCount（兼容旧数据）
-            record.setRenewCount(fields[12].toInt());
+            record.setPaidFine(fields[fieldIndex].toDouble());
+            fieldIndex++;
         }
 
-        if (fields.size() >= 9)
+        if (fields.size() >= fieldIndex + 1)
         {
-            record.setFineAmount(fields[8].toDouble());
+            record.setFineStatus(static_cast<BorrowRecord::FineStatus>(fields[fieldIndex].toInt()));
+            fieldIndex++;
         }
 
-        if (fields.size() >= 10)
+        if (fields.size() >= fieldIndex + 1)
         {
-            record.setPaidFine(fields[9].toDouble());
-        }
-
-        if (fields.size() >= 11)
-        {
-            record.setFineStatus(static_cast<BorrowRecord::FineStatus>(fields[10].toInt()));
-        }
-
-        if (fields.size() >= 12)
-        {
-            record.setDeductedScore(fields[11].toInt());
+            record.setDeductedScore(fields[fieldIndex].toInt());
         }
 
         borrowRecords.push_back(record);
@@ -1196,14 +1190,10 @@ void DataManager::writeBorrowRecord()
     QTextStream out(&file);
     for (auto &record : borrowRecords)
     {
-        QString returnTimeStr = record.getReturnTime().isValid() ? record.getReturnTime().toString("yyyy-MM-dd HH:mm:ss") : "";
-
         QString line = record.getISBN() + "|" +
                        record.getReaderID() + "|" +
                        record.getBorrowTime().toString("yyyy-MM-dd HH:mm:ss") + "|" +
                        record.getDueTime().toString("yyyy-MM-dd HH:mm:ss") + "|" +
-                       returnTimeStr + "|" +
-                       (record.isReturned() ? "true" : "false") + "|" +
                        QString::number(static_cast<int>(record.getRenewStatus())) + "|" +
                        QString::number(record.getRenewCount()) + "|" +
                        QString::number(record.getFineAmount(), 'f', 2) + "|" +
@@ -1253,8 +1243,7 @@ bool DataManager::renewBorrowRecord(const QString &isbn, const QString &readerId
     for (auto &record : borrowRecords)
     {
         if (record.getISBN() == isbn &&
-            record.getReaderID() == readerId &&
-            !record.isReturned())
+            record.getReaderID() == readerId)
         {
             QDateTime newDueTime = record.getDueTime().addDays(days);
             record.setDueTime(newDueTime);
@@ -1294,7 +1283,7 @@ int DataManager::getBorrowCountByReader(const QString &readerId)
     int count = 0;
     for (auto &record : borrowRecords)
     {
-        if (record.getReaderID() == readerId && !record.isReturned())
+        if (record.getReaderID() == readerId)
         {
             count++;
         }
@@ -1313,7 +1302,6 @@ bool DataManager::hasOverdueBooks(const QString &readerId)
     for (auto &record : borrowRecords)
     {
         if (record.getReaderID() == readerId &&
-            !record.isReturned() &&
             now > record.getDueTime())
         {
             return true;

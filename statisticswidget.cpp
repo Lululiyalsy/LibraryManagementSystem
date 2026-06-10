@@ -183,8 +183,8 @@ void StatisticsWidget::updateStatistics()
 
     for (auto &record : records)
     {
-        // 未归还记录
-        if (!record.isReturned() && record.calculateOverdueDays() > 0)
+        // 所有记录都是未归还的（归还后会被删除），只需检查逾期天数
+        if (record.calculateOverdueDays() > 0)
         {
             currentOverdueCount++; // 当前逾期
         }
@@ -236,7 +236,7 @@ void StatisticsWidget::updateStatistics()
     overdueTable->setRowCount(0);
     for (auto &record : records)
     {
-        if (!record.isReturned() && record.calculateOverdueDays() > 0)
+        if (record.calculateOverdueDays() > 0)
         {
             Book *book = dm->findBookByISBN(record.getISBN());
             int row = overdueTable->rowCount();
@@ -311,8 +311,8 @@ void StatisticsWidget::onGenerateReportClicked()
 
     for (auto &record : records)
     {
-        // 未归还记录
-        if (!record.isReturned() && record.calculateOverdueDays() > 0)
+        // 所有记录都是未归还的（归还后会被删除），只需检查逾期天数
+        if (record.calculateOverdueDays() > 0)
         {
             currentOverdueCount++; // 当前逾期
         }
@@ -362,7 +362,7 @@ void StatisticsWidget::onGenerateReportClicked()
     bool hasOverdue = false;
     for (auto &record : records)
     {
-        if (!record.isReturned() && record.calculateOverdueDays() > 0)
+        if (record.calculateOverdueDays() > 0)
         {
             hasOverdue = true;
             Book *book = dm->findBookByISBN(record.getISBN());
