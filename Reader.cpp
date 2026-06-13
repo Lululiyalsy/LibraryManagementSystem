@@ -238,28 +238,18 @@ Reader::CreditCheckResult Reader::checkCreditScore() const
         }
     }
 
-    // 不在限制期间，根据信用分判断是否需要限制
-    if (creditScore < 50)
+    // 不在限制期间，信用分低不限制操作（限制已过期）
+    // 信用分低于90分只是提示，不限制操作
+    if (creditScore >= 90)
     {
-        return CreditCheckResult::LOW_CREDIT_50;
+        return CreditCheckResult::OK;
     }
-    else if (creditScore < 60)
+    else
     {
-        return CreditCheckResult::LOW_CREDIT_60;
+        // 不在限制期间时，信用分低只返回OK，允许正常操作
+        // 信用分可以通过正常借阅归还来提升
+        return CreditCheckResult::OK;
     }
-    else if (creditScore < 70)
-    {
-        return CreditCheckResult::LOW_CREDIT_70;
-    }
-    else if (creditScore < 80)
-    {
-        return CreditCheckResult::LOW_CREDIT_80;
-    }
-    else if (creditScore < 90)
-    {
-        return CreditCheckResult::LOW_CREDIT_90;
-    }
-    return CreditCheckResult::OK;
 }
 
 /**

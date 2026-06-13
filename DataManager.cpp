@@ -584,6 +584,12 @@ void DataManager::recalculateCreditScores()
         int prevCreditScore = reader->getPrevCreditScore();
         bool isBanned = reader->isBanned();
 
+        // 清除过期的限制状态
+        if (!isBanned && reader->getBanUntil().isValid())
+        {
+            reader->setBanUntil(QDateTime());
+        }
+
         int currentTier = getCreditTier(creditScore);
         int prevTier = getCreditTier(prevCreditScore);
 
